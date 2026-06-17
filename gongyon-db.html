@@ -10,18 +10,16 @@
 :root{
   --bg:#0e0e10;--bg2:#17171a;--bg3:#1f1f24;
   --line:rgba(255,255,255,0.08);--muted:rgba(255,255,255,0.35);--text:rgba(255,255,255,0.88);
-  --accent:#c8a96e;--tag-actor:#6eb5c8;--tag-actor-bg:rgba(110,181,200,0.12);
-  --tag-staff:#c8a96e;--tag-staff-bg:rgba(200,169,110,0.12);
+  --accent:#c8a96e;--actor:#6eb5c8;--actor-bg:rgba(110,181,200,0.12);
+  --staff:#c8a96e;--staff-bg:rgba(200,169,110,0.12);
 }
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-weight:300;min-height:100vh}
 header{padding:1.8rem 2rem 1rem;border-bottom:1px solid var(--line);display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .site-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(1.4rem,3vw,2rem);letter-spacing:0.1em}
 .site-title span{display:block;font-size:0.6em;letter-spacing:0.3em;color:var(--muted);margin-bottom:0.3rem;font-family:'Noto Sans KR',sans-serif}
-nav{display:flex}
 nav button{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.82rem;letter-spacing:0.08em;padding:0.4rem 1rem;cursor:pointer;transition:color .2s,border-color .2s}
 nav button.active,nav button:hover{color:var(--text);border-bottom-color:var(--accent)}
 .app{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 90px)}
-@media(max-width:700px){.app{grid-template-columns:1fr}}
 aside{border-right:1px solid var(--line);padding:1.2rem 0;overflow-y:auto;max-height:calc(100vh - 90px);position:sticky;top:0}
 .sidebar-label{font-size:0.68rem;letter-spacing:0.2em;color:var(--muted);padding:0 1.2rem 0.5rem;text-transform:uppercase}
 .list-item{display:block;width:100%;text-align:left;background:none;border:none;padding:0.6rem 1.2rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;cursor:pointer;transition:background .15s,color .15s;border-left:2px solid transparent}
@@ -33,27 +31,27 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .loading::before{content:'';width:14px;height:14px;border:1.5px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .detail-header{margin-bottom:2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line)}
-.detail-eyebrow{font-size:0.7rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:0.6rem}
+.eyebrow{font-size:0.7rem;letter-spacing:0.25em;color:var(--accent);text-transform:uppercase;margin-bottom:0.6rem}
 .detail-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:clamp(1.4rem,3vw,2rem);letter-spacing:0.04em;line-height:1.3}
 .detail-meta{font-size:0.78rem;color:var(--muted);display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:0.6rem}
-.section{margin-bottom:2rem}
-.section-label{font-size:0.68rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.8rem}
-.section-label::after{content:'';flex:1;height:1px;background:var(--line)}
+.sec{margin-bottom:2rem}
+.sec-label{font-size:0.68rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.8rem}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--line)}
 .cast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.5rem}
-.cast-card{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.8rem 1rem;cursor:pointer;transition:background .15s,border-color .15s}
-.cast-card:hover{background:var(--bg3);border-color:rgba(255,255,255,0.15)}
+.cast-card{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.8rem 1rem;cursor:pointer;transition:background .15s}
+.cast-card:hover{background:var(--bg3)}
 .cast-name{font-size:0.88rem;font-weight:400;margin-bottom:0.25rem}
 .cast-role{font-size:0.73rem;color:var(--muted)}
 .tag{display:inline-block;font-size:0.63rem;letter-spacing:0.1em;padding:0.18rem 0.5rem;border-radius:3px;margin-right:0.3rem}
-.tag-actor{background:var(--tag-actor-bg);color:var(--tag-actor)}
-.tag-staff{background:var(--tag-staff-bg);color:var(--tag-staff)}
-.history-list{display:flex;flex-direction:column;gap:0.4rem}
-.history-item{display:flex;align-items:center;gap:0.8rem;padding:0.75rem 1rem;background:var(--bg2);border-radius:6px;border:1px solid var(--line);cursor:pointer;transition:background .15s}
-.history-item:hover{background:var(--bg3)}
+.tag-a{background:var(--actor-bg);color:var(--actor)}
+.tag-s{background:var(--staff-bg);color:var(--staff)}
+.hist-list{display:flex;flex-direction:column;gap:0.4rem}
+.hist-item{display:flex;align-items:center;gap:0.8rem;padding:0.75rem 1rem;background:var(--bg2);border-radius:6px;border:1px solid var(--line);cursor:pointer;transition:background .15s}
+.hist-item:hover{background:var(--bg3)}
 .hi-name{font-size:0.88rem;flex:1}
 .hi-role{font-size:0.75rem;color:var(--muted)}
 .empty{color:var(--muted);font-size:0.83rem;padding:2rem 0}
-.home-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:2.5rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-bottom:2.5rem}
 .stat-card{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:1.1rem}
 .stat-num{font-family:'Noto Serif KR',serif;font-size:1.8rem;font-weight:300;color:var(--accent);line-height:1;margin-bottom:0.3rem}
 .stat-label{font-size:0.72rem;color:var(--muted);letter-spacing:0.08em}
@@ -63,12 +61,12 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .home-row-num{font-size:0.72rem;color:var(--muted);width:1.4rem;text-align:right;flex-shrink:0}
 .home-row-title{font-size:0.92rem;flex:1;transition:color .2s}
 .home-row-sub{font-size:0.75rem;color:var(--muted)}
-#api-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999}
+#overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999}
 .api-box{max-width:440px;width:90%}
-.api-box-title{font-family:'Noto Serif KR',serif;font-size:1.5rem;font-weight:300;letter-spacing:0.08em;margin-bottom:0.4rem}
-.api-box-sub{font-size:0.68rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:2rem;text-transform:uppercase}
+.api-title-big{font-family:'Noto Serif KR',serif;font-size:1.5rem;font-weight:300;letter-spacing:0.08em;margin-bottom:0.4rem}
+.api-sub{font-size:0.68rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:2rem;text-transform:uppercase}
 .api-inner{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:1.6rem}
-.api-title{font-size:0.83rem;color:var(--accent);font-weight:500;margin-bottom:0.4rem}
+.api-label{font-size:0.83rem;color:var(--accent);font-weight:500;margin-bottom:0.4rem}
 .api-desc{font-size:0.78rem;color:var(--muted);line-height:1.7;margin-bottom:1rem}
 .api-desc code{color:var(--accent);font-size:0.72rem}
 .api-form{display:flex;gap:0.5rem}
@@ -76,25 +74,24 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .api-input:focus{border-color:var(--accent)}
 .api-input::placeholder{color:var(--muted)}
 .btn{background:var(--accent);color:#0e0e10;border:none;border-radius:4px;padding:0.5rem 1rem;font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;white-space:nowrap}
-.btn:hover{opacity:.85}
 .err{font-size:0.75rem;color:#e06c6c;margin-top:0.6rem;display:none}
 </style>
 </head>
 <body>
 
-<div id="api-overlay">
+<div id="overlay">
   <div class="api-box">
-    <div class="api-box-title">공연 아카이브</div>
-    <div class="api-box-sub">Performance Archive</div>
+    <div class="api-title-big">공연 아카이브</div>
+    <div class="api-sub">Performance Archive</div>
     <div class="api-inner">
-      <div class="api-title">에어테이블 연결</div>
+      <div class="api-label">에어테이블 연결</div>
       <div class="api-desc">
         Personal Access Token을 입력하세요.<br>
         <code>airtable.com → 계정 → Developer Hub → Personal access tokens</code><br>
         scope: <code>data.records:read</code>
       </div>
       <div class="api-form">
-        <input class="api-input" id="token-input" type="password" placeholder="pat..." autofocus>
+        <input class="api-input" id="tok" type="password" placeholder="pat..." autofocus>
         <button class="btn" id="connect-btn">연결</button>
       </div>
       <div class="err" id="err-msg">토큰이 올바르지 않거나 권한이 없습니다.</div>
@@ -103,367 +100,309 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 </div>
 
 <header>
-  <div class="site-title">
-    <span>PERFORMANCE ARCHIVE</span>
-    공연 아카이브
-  </div>
+  <div class="site-title"><span>PERFORMANCE ARCHIVE</span>공연 아카이브</div>
   <nav>
-    <button class="active" onclick="showView('home')">홈</button>
-    <button onclick="showView('shows')">공연</button>
-    <button onclick="showView('people')">참여자</button>
+    <button id="nav-home" class="active" onclick="goHome()">홈</button>
+    <button id="nav-shows" onclick="goShows()">공연</button>
+    <button id="nav-people" onclick="goPeople()">참여자</button>
   </nav>
 </header>
 <div class="app">
-  <aside id="sidebar"></aside>
-  <main id="main"></main>
+  <aside id="sb"></aside>
+  <main id="mn"></main>
 </div>
 
 <script>
-const BASE_ID = 'appQtwYrSzJvmt9NA';
-let TOKEN = '';
+var BASE = 'appQtwYrSzJvmt9NA';
+var TOKEN = '';
+var DB = { shows:[], people:[], history:[], roles:[], staffRoles:[] };
+var MAP = {}; // id -> name
+var CUR = { view:'home', sel:null };
 
-// 테이블 ID
-const TABLES = {
-  shows:      'tblQ5oPChjABDqfsF',
-  people:     'tblOC3tLzU62ick8h',
-  history:    'tblozdPlUPzZXU2A6',
-  roles:      'tblTdJpe7J7LGKCM9',
-  staffRoles: 'tblA3YldoCySlRh3E',
-};
-
-// 한글 필드명 (returnFieldsByFieldId 없이 호출)
-const F = {
-  showName:   '공연명',
-  showWork:   '작품',
-  showTroupe: '극단',
-  showVenue:  '극장',
-  showDate:   '날짜',
-  personName: '이름',
-  histName:   '참여 이력명',
-  histShow:   '공연',
-  histPerson: '참여자',
-  histRole:   '배역',
-  histStaff:  '스텝 역할',
-  histType:   '역할 타입',
-};
-
-let state = { view:'home', selected:null, data:{shows:[],people:[],history:[],roles:[],staffRoles:[]}, map:{} };
-
-function fv(rec, key) {
-  return rec && rec.fields ? rec.fields[key] : null;
-}
-
-function first(arr) {
-  return (arr && arr[0]) ? arr[0] : null;
-}
-
-// 링크 레코드에서 이름 추출 (객체 또는 문자열 id 모두 처리)
-function linkName(val) {
-  if (!val) return '';
-  if (typeof val === 'string') return val; // id만 있을 때
-  return val.name || '';
-}
-
-function linkId(val) {
-  if (!val) return '';
-  if (typeof val === 'string') return val;
-  return val.id || '';
-}
-
-async function fetchTable(tableId) {
-  const res = await fetch(
-    'https://api.airtable.com/v0/' + BASE_ID + '/' + tableId + '?pageSize=100',
-    { headers: { 'Authorization': 'Bearer ' + TOKEN } }
-  );
-  if (!res.ok) throw new Error(res.status);
-  const json = await res.json();
-  return json.records || [];
-}
-
-async function loadAll() {
-  // 각각 독립적으로 fetch (하나 실패해도 나머지는 진행)
-  const results = await Promise.allSettled([
-    fetchTable(TABLES.shows),
-    fetchTable(TABLES.people),
-    fetchTable(TABLES.history),
-    fetchTable(TABLES.roles),
-    fetchTable(TABLES.staffRoles),
-  ]);
-
-  const shows      = results[0].status === 'fulfilled' ? results[0].value : [];
-  const people     = results[1].status === 'fulfilled' ? results[1].value : [];
-  const history    = results[2].status === 'fulfilled' ? results[2].value : [];
-  const roles      = results[3].status === 'fulfilled' ? results[3].value : [];
-  const staffRoles = results[4].status === 'fulfilled' ? results[4].value : [];
-
-  state.data = { shows, people, history, roles, staffRoles };
-
-  // ID -> name 조회용 맵 생성
-  state.map = {};
-  shows.forEach(function(r){
-    if (r && r.id) state.map[r.id] = fv(r, F.showName) || '';
-  });
-  people.forEach(function(r){
-    if (r && r.id) state.map[r.id] = fv(r, F.personName) || '';
-  });
-  roles.forEach(function(r){
-    if (r && r.id) {
-      var name = fv(r, '배역명') || fv(r, 'Name') || fv(r, '이름') || '';
-      state.map[r.id] = name;
-    }
-  });
-  staffRoles.forEach(function(r){
-    if (r && r.id) {
-      var name = fv(r, 'Name') || fv(r, '이름') || fv(r, '스텝 역할명') || '';
-      state.map[r.id] = name;
-    }
-  });
-
-  console.log('map size:', Object.keys(state.map).length);
-  console.log('shows:', shows.length, 'people:', people.length, 'history:', history.length, 'roles:', roles.length, 'staffRoles:', staffRoles.length);
-}
-
-function idToName(id) {
-  if (!id) return '';
-  return state.map[id] || id;
-}
-
-function validH(h) {
-  const name = fv(h, F.histName) || '';
-  return name.replace(/ - /g,'').trim() !== '' && fv(h, F.histType);
-}
-
-function getLinkedIds(val) {
+function $(id){ return document.getElementById(id); }
+function sb(h){ $('sb').innerHTML = h; }
+function mn(h){ $('mn').innerHTML = h; }
+function fld(rec, key){ return (rec && rec.fields && rec.fields[key] !== undefined) ? rec.fields[key] : null; }
+function ids(val){ // 링크 필드에서 ID 배열 추출
   if (!val) return [];
+  if (!Array.isArray(val)) return [];
   return val.map(function(v){ return typeof v === 'string' ? v : v.id; });
 }
+function nm(id){ return MAP[id] || ''; } // ID -> 이름
 
-function getLinkedNames(val) {
-  if (!val) return [];
-  return val.map(function(v){ return typeof v === 'string' ? v : (v.name || ''); });
+async function api(table) {
+  var res = await fetch('https://api.airtable.com/v0/' + BASE + '/' + table + '?pageSize=100', {
+    headers: { Authorization: 'Bearer ' + TOKEN }
+  });
+  if (!res.ok) throw new Error(res.status);
+  return (await res.json()).records || [];
 }
 
-function showHist(sid) {
-  return state.data.history.filter(function(h) {
-    if (!validH(h)) return false;
-    var ids = getLinkedIds(fv(h, F.histShow) || []);
-    return ids.indexOf(sid) > -1;
+async function load() {
+  var r = await Promise.allSettled([
+    api('tblQ5oPChjABDqfsF'), // 공연
+    api('tblOC3tLzU62ick8h'), // 참여자
+    api('tblozdPlUPzZXU2A6'), // 참여 이력
+    api('tblTdJpe7J7LGKCM9'), // 배역
+    api('tblA3YldoCySlRh3E'), // 스텝 역할
+    api('tblewL5MuJ0aaSwQu'), // 작품
+    api('tblCg9DzicDbjJJKl'), // 극단
+    api('tblhezC6tdH4o7xo7'), // 극장
+  ]);
+  DB.shows     = r[0].value || [];
+  DB.people    = r[1].value || [];
+  DB.history   = r[2].value || [];
+  DB.roles     = r[3].value || [];
+  DB.staffRoles= r[4].value || [];
+  DB.works     = r[5].value || [];
+  DB.troupes   = r[6].value || [];
+  DB.venues    = r[7].value || [];
+
+  MAP = {};
+  DB.shows.forEach(function(r){ MAP[r.id] = fld(r,'공연명')||''; });
+  DB.people.forEach(function(r){ MAP[r.id] = fld(r,'이름')||''; });
+  DB.roles.forEach(function(r){ MAP[r.id] = fld(r,'배역명')||''; });
+  DB.staffRoles.forEach(function(r){ MAP[r.id] = fld(r,'Name')||''; });
+  DB.works.forEach(function(r){ MAP[r.id] = fld(r,'작품명')||''; });
+  DB.troupes.forEach(function(r){ MAP[r.id] = fld(r,'극단명')||''; });
+  DB.venues.forEach(function(r){ MAP[r.id] = fld(r,'극장명')||''; });
+}
+
+function isValidHist(h) {
+  var name = fld(h,'참여 이력명') || '';
+  var type = fld(h,'역할 타입');
+  return name.replace(/ - /g,'').trim() !== '' && type;
+}
+
+function histByShow(sid) {
+  return DB.history.filter(function(h){
+    if (!isValidHist(h)) return false;
+    return ids(fld(h,'공연')).indexOf(sid) > -1;
   });
 }
 
-function personHist(pid) {
-  return state.data.history.filter(function(h) {
-    if (!validH(h)) return false;
-    var ids = getLinkedIds(fv(h, F.histPerson) || []);
-    return ids.indexOf(pid) > -1;
+function histByPerson(pid) {
+  return DB.history.filter(function(h){
+    if (!isValidHist(h)) return false;
+    return ids(fld(h,'참여자')).indexOf(pid) > -1;
   });
+}
+
+function typeName(h) {
+  var t = fld(h,'역할 타입');
+  if (!t) return '';
+  return typeof t === 'string' ? t : (t.name || '');
 }
 
 function setNav(v) {
-  document.querySelectorAll('nav button').forEach(function(b, i) {
-    b.classList.toggle('active', ['home','shows','people'][i] === v);
+  ['home','shows','people'].forEach(function(n){
+    $('nav-'+n).classList.toggle('active', n===v);
   });
 }
 
 // ── 홈 ──
-function renderHome() {
-  var shows   = state.data.shows.filter(function(s){ return fv(s, F.showName); });
-  var people  = state.data.people.filter(function(p){ return fv(p, F.personName); });
-  var history = state.data.history.filter(validH);
-  document.getElementById('sidebar').innerHTML = '';
-  document.getElementById('main').innerHTML =
-    '<div class="home-stats">' +
-      '<div class="stat-card"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>' +
-      '<div class="stat-card"><div class="stat-num">'+people.length+'</div><div class="stat-label">참여자</div></div>' +
-      '<div class="stat-card"><div class="stat-num">'+history.length+'</div><div class="stat-label">참여 이력</div></div>' +
+function goHome() {
+  CUR.view='home'; CUR.sel=null; setNav('home');
+  var shows   = DB.shows.filter(function(s){ return fld(s,'공연명'); });
+  var people  = DB.people.filter(function(p){ return fld(p,'이름'); });
+  var history = DB.history.filter(isValidHist);
+  sb('');
+  mn(
+    '<div class="stats">' +
+    '<div class="stat-card"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>' +
+    '<div class="stat-card"><div class="stat-num">'+people.length+'</div><div class="stat-label">참여자</div></div>' +
+    '<div class="stat-card"><div class="stat-num">'+history.length+'</div><div class="stat-label">참여 이력</div></div>' +
     '</div>' +
-    '<div class="section-label">공연 목록</div>' +
+    '<div class="sec-label">공연 목록</div>' +
     '<div class="home-list">' +
-    shows.map(function(s, i) {
-      var work = first(fv(s, F.showWork));
-      return '<div class="home-row" onclick="selectShow(\''+s.id+'\')">' +
+    shows.map(function(s,i){
+      var wid = ids(fld(s,'작품'))[0]||'';
+      return '<div class="home-row" onclick="showShow(\''+s.id+'\')">' +
         '<span class="home-row-num">'+String(i+1).padStart(2,'0')+'</span>' +
-        '<span class="home-row-title">'+fv(s, F.showName)+'</span>' +
-        '<span class="home-row-sub">'+(work ? work.name : '')+'</span>' +
+        '<span class="home-row-title">'+fld(s,'공연명')+'</span>' +
+        '<span class="home-row-sub">'+nm(wid)+'</span>' +
         '</div>';
     }).join('') +
-    '</div>';
+    '</div>'
+  );
 }
 
 // ── 공연 ──
-function renderShows() {
-  var shows = state.data.shows.filter(function(s){ return fv(s, F.showName); });
-  document.getElementById('sidebar').innerHTML =
-    '<div class="sidebar-label">공연 목록</div>' +
-    shows.map(function(s) {
-      var work = first(fv(s, F.showWork));
-      return '<button class="list-item '+(state.selected===s.id?'active':'')+'" onclick="selectShow(\''+s.id+'\')">' +
-        fv(s, F.showName) +
-        '<span class="sub">'+(work ? work.name : '')+'</span>' +
-        '</button>';
-    }).join('');
-  if (state.selected && shows.find(function(s){ return s.id===state.selected; })) {
-    renderShowDetail(state.selected);
-  } else if (shows[0]) {
-    selectShow(shows[0].id, false);
-  }
+function goShows() {
+  CUR.view='shows'; CUR.sel=null; setNav('shows');
+  var shows = DB.shows.filter(function(s){ return fld(s,'공연명'); });
+  sb('<div class="sidebar-label">공연 목록</div>' +
+    shows.map(function(s){
+      var wid = ids(fld(s,'작품'))[0]||'';
+      return '<button class="list-item" onclick="showShow(\''+s.id+'\')">' +
+        fld(s,'공연명') + '<span class="sub">'+nm(wid)+'</span></button>';
+    }).join('')
+  );
+  if (shows[0]) showShow(shows[0].id);
+  else mn('<div class="empty">공연 데이터가 없습니다.</div>');
 }
 
-function selectShow(id, update) {
-  state.selected = id; state.view = 'shows'; setNav('shows');
-  if (update !== false) renderShows(); else renderShowDetail(id);
-}
-
-function renderShowDetail(id) {
-  var show = state.data.shows.find(function(s){ return s.id===id; });
-  if (!show) return;
-  document.querySelectorAll('#sidebar .list-item').forEach(function(el) {
-    el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
+function showShow(sid) {
+  CUR.sel = sid;
+  setNav('shows');
+  // 사이드바 active
+  document.querySelectorAll('#sb .list-item').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('onclick').indexOf(sid)>-1);
   });
-  var hist   = showHist(id);
-  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='배우'; });
-  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='스텝'; });
-  var work   = first(fv(show, F.showWork));
-  var troupe = first(fv(show, F.showTroupe));
-  var venue  = first(fv(show, F.showVenue));
-  var date   = fv(show, F.showDate) || '';
-  var html =
+  // 사이드바가 비어있으면 다시 그리기
+  if (!$('sb').innerHTML) {
+    var shows = DB.shows.filter(function(s){ return fld(s,'공연명'); });
+    sb('<div class="sidebar-label">공연 목록</div>' +
+      shows.map(function(s){
+        var wid = ids(fld(s,'작품'))[0]||'';
+        return '<button class="list-item'+(s.id===sid?' active':'')+'" onclick="showShow(\''+s.id+'\')">' +
+          fld(s,'공연명') + '<span class="sub">'+nm(wid)+'</span></button>';
+      }).join('')
+    );
+  }
+
+  var show = DB.shows.find(function(s){ return s.id===sid; });
+  if (!show) return;
+
+  var hist   = histByShow(sid);
+  var actors = hist.filter(function(h){ return typeName(h)==='배우'; });
+  var staff  = hist.filter(function(h){ return typeName(h)==='스텝'; });
+  var wid    = ids(fld(show,'작품'))[0]||'';
+  var trid   = ids(fld(show,'극단'))[0]||'';
+  var vid    = ids(fld(show,'극장'))[0]||'';
+  var date   = fld(show,'날짜')||'';
+
+  var h =
     '<div class="detail-header">' +
-      '<div class="detail-eyebrow">'+(work ? work.name : '공연')+'</div>' +
-      '<div class="detail-title">'+fv(show, F.showName)+'</div>' +
+      '<div class="eyebrow">'+(nm(wid)||'공연')+'</div>' +
+      '<div class="detail-title">'+fld(show,'공연명')+'</div>' +
       '<div class="detail-meta">' +
-        (troupe ? '<span>🏢 '+troupe.name+'</span>' : '') +
-        (venue  ? '<span>📍 '+venue.name+'</span>'  : '') +
-        (date   ? '<span>📅 '+date+'</span>'         : '') +
+        (nm(trid)?'<span>🏢 '+nm(trid)+'</span>':'') +
+        (nm(vid) ?'<span>📍 '+nm(vid)+'</span>':'') +
+        (date    ?'<span>📅 '+date+'</span>':'') +
       '</div>' +
     '</div>';
+
   if (actors.length) {
-    html += '<div class="section"><div class="section-label">출연진</div><div class="cast-grid">' +
-      actors.map(function(h) {
-        var person = first(fv(h, F.histPerson));
-        var role   = first(fv(h, F.histRole));
-        var pid    = person ? person.id : '';
-        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')">'+
-          '<div class="cast-name">'+(person ? person.name : '')+'</div>'+
-          '<div class="cast-role">'+(role ? role.name : '')+'</div>'+
+    h += '<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">' +
+      actors.map(function(rec){
+        var pid = ids(fld(rec,'참여자'))[0]||'';
+        var rid = ids(fld(rec,'배역'))[0]||'';
+        return '<div class="cast-card" onclick="showPerson(\''+pid+'\')">' +
+          '<div class="cast-name">'+nm(pid)+'</div>' +
+          '<div class="cast-role">'+nm(rid)+'</div>' +
           '</div>';
       }).join('') + '</div></div>';
   }
   if (staff.length) {
-    html += '<div class="section"><div class="section-label">스텝</div><div class="cast-grid">' +
-      staff.map(function(h) {
-        var person = first(fv(h, F.histPerson));
-        var role   = first(fv(h, F.histStaff));
-        var pid    = person ? person.id : '';
-        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')">'+
-          '<div class="cast-name">'+(person ? person.name : '')+'</div>'+
-          '<div class="cast-role" style="color:var(--tag-staff)">'+(role ? role.name : '')+'</div>'+
+    h += '<div class="sec"><div class="sec-label">스텝</div><div class="cast-grid">' +
+      staff.map(function(rec){
+        var pid = ids(fld(rec,'참여자'))[0]||'';
+        var rid = ids(fld(rec,'스텝'))[0]||'';
+        return '<div class="cast-card" onclick="showPerson(\''+pid+'\')">' +
+          '<div class="cast-name">'+nm(pid)+'</div>' +
+          '<div class="cast-role" style="color:var(--staff)">'+nm(rid)+'</div>' +
           '</div>';
       }).join('') + '</div></div>';
   }
-  if (!actors.length && !staff.length) html += '<div class="empty">참여 이력이 없습니다.</div>';
-  document.getElementById('main').innerHTML = html;
+  if (!actors.length && !staff.length) h += '<div class="empty">참여 이력이 없습니다.</div>';
+  mn(h);
 }
 
 // ── 참여자 ──
-function renderPeople() {
-  var people = state.data.people.filter(function(p){ return fv(p, F.personName); });
-  document.getElementById('sidebar').innerHTML =
-    '<div class="sidebar-label">참여자 목록</div>' +
-    people.map(function(p) {
-      return '<button class="list-item '+(state.selected===p.id?'active':'')+'" onclick="selectPerson(\''+p.id+'\')">' +
-        fv(p, F.personName) +
-        '<span class="sub">'+personHist(p.id).length+'개 이력</span>' +
-        '</button>';
-    }).join('');
-  if (state.selected && people.find(function(p){ return p.id===state.selected; })) {
-    renderPersonDetail(state.selected);
-  } else if (people[0]) {
-    selectPerson(people[0].id, false);
-  }
+function goPeople() {
+  CUR.view='people'; CUR.sel=null; setNav('people');
+  var people = DB.people.filter(function(p){ return fld(p,'이름'); });
+  sb('<div class="sidebar-label">참여자 목록</div>' +
+    people.map(function(p){
+      return '<button class="list-item" onclick="showPerson(\''+p.id+'\')">' +
+        fld(p,'이름') + '<span class="sub">'+histByPerson(p.id).length+'개 이력</span></button>';
+    }).join('')
+  );
+  if (people[0]) showPerson(people[0].id);
+  else mn('<div class="empty">참여자 데이터가 없습니다.</div>');
 }
 
-function selectPerson(id, update) {
-  state.selected = id; state.view = 'people'; setNav('people');
-  if (update !== false) renderPeople(); else renderPersonDetail(id);
-}
-
-function renderPersonDetail(id) {
-  var person = state.data.people.find(function(p){ return p.id===id; });
-  if (!person) return;
-  document.querySelectorAll('#sidebar .list-item').forEach(function(el) {
-    el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
+function showPerson(pid) {
+  CUR.sel = pid;
+  setNav('people');
+  document.querySelectorAll('#sb .list-item').forEach(function(el){
+    el.classList.toggle('active', el.getAttribute('onclick').indexOf(pid)>-1);
   });
-  var hist   = personHist(id);
-  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='배우'; });
-  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='스텝'; });
-  var html =
+  if (!$('sb').innerHTML) {
+    var people = DB.people.filter(function(p){ return fld(p,'이름'); });
+    sb('<div class="sidebar-label">참여자 목록</div>' +
+      people.map(function(p){
+        return '<button class="list-item'+(p.id===pid?' active':'')+'" onclick="showPerson(\''+p.id+'\')">' +
+          fld(p,'이름') + '<span class="sub">'+histByPerson(p.id).length+'개 이력</span></button>';
+      }).join('')
+    );
+  }
+
+  var person = DB.people.find(function(p){ return p.id===pid; });
+  if (!person) return;
+
+  var hist   = histByPerson(pid);
+  var actors = hist.filter(function(h){ return typeName(h)==='배우'; });
+  var staff  = hist.filter(function(h){ return typeName(h)==='스텝'; });
+
+  var h =
     '<div class="detail-header">' +
-      '<div class="detail-eyebrow">참여자</div>' +
-      '<div class="detail-title">'+fv(person, F.personName)+'</div>' +
+      '<div class="eyebrow">참여자</div>' +
+      '<div class="detail-title">'+fld(person,'이름')+'</div>' +
       '<div class="detail-meta">' +
-        (actors.length ? '<span>🎭 배우 '+actors.length+'회</span>' : '') +
-        (staff.length  ? '<span>🎬 스텝 '+staff.length+'회</span>'  : '') +
+        (actors.length?'<span>🎭 배우 '+actors.length+'회</span>':'') +
+        (staff.length ?'<span>🎬 스텝 '+staff.length+'회</span>':'') +
       '</div>' +
     '</div>';
+
   if (actors.length) {
-    html += '<div class="section"><div class="section-label">배우로 참여한 공연</div><div class="history-list">' +
-      actors.map(function(h) {
-        var show = first(fv(h, F.histShow));
-        var role = first(fv(h, F.histRole));
-        var sid  = show ? show.id : '';
-        return '<div class="history-item" onclick="selectShow(\''+sid+'\')">'+
-          '<span class="hi-name">'+(show ? show.name : '')+'</span>'+
-          '<span class="tag tag-actor">배우</span>'+
-          '<span class="hi-role">'+(role ? role.name : '')+'</span>'+
+    h += '<div class="sec"><div class="sec-label">배우로 참여한 공연</div><div class="hist-list">' +
+      actors.map(function(rec){
+        var sid = ids(fld(rec,'공연'))[0]||'';
+        var rid = ids(fld(rec,'배역'))[0]||'';
+        return '<div class="hist-item" onclick="showShow(\''+sid+'\')">' +
+          '<span class="hi-name">'+nm(sid)+'</span>' +
+          '<span class="tag tag-a">배우</span>' +
+          '<span class="hi-role">'+nm(rid)+'</span>' +
           '</div>';
       }).join('') + '</div></div>';
   }
   if (staff.length) {
-    html += '<div class="section"><div class="section-label">스텝으로 참여한 공연</div><div class="history-list">' +
-      staff.map(function(h) {
-        var show = first(fv(h, F.histShow));
-        var role = first(fv(h, F.histStaff));
-        var sid  = show ? show.id : '';
-        return '<div class="history-item" onclick="selectShow(\''+sid+'\')">'+
-          '<span class="hi-name">'+(show ? show.name : '')+'</span>'+
-          '<span class="tag tag-staff">스텝</span>'+
-          '<span class="hi-role">'+(role ? role.name : '')+'</span>'+
+    h += '<div class="sec"><div class="sec-label">스텝으로 참여한 공연</div><div class="hist-list">' +
+      staff.map(function(rec){
+        var sid = ids(fld(rec,'공연'))[0]||'';
+        var rid = ids(fld(rec,'스텝'))[0]||'';
+        return '<div class="hist-item" onclick="showShow(\''+sid+'\')">' +
+          '<span class="hi-name">'+nm(sid)+'</span>' +
+          '<span class="tag tag-s">스텝</span>' +
+          '<span class="hi-role">'+nm(rid)+'</span>' +
           '</div>';
       }).join('') + '</div></div>';
   }
-  if (!hist.length) html += '<div class="empty">참여 이력이 없습니다.</div>';
-  document.getElementById('main').innerHTML = html;
+  if (!hist.length) h += '<div class="empty">참여 이력이 없습니다.</div>';
+  mn(h);
 }
 
-function showView(v) {
-  state.view = v; state.selected = null; setNav(v);
-  if (v==='home')   renderHome();
-  if (v==='shows')  renderShows();
-  if (v==='people') renderPeople();
-}
-
-document.getElementById('connect-btn').addEventListener('click', async function() {
-  var val = document.getElementById('token-input').value.trim();
+// ── 연결 ──
+$('connect-btn').addEventListener('click', async function(){
+  var val = $('tok').value.trim();
   if (!val) return;
-  var btn = document.getElementById('connect-btn');
-  var err = document.getElementById('err-msg');
-  btn.textContent = '연결 중...'; btn.disabled = true; err.style.display = 'none';
+  var btn = $('connect-btn');
+  var err = $('err-msg');
+  btn.textContent='연결 중...'; btn.disabled=true; err.style.display='none';
   try {
     TOKEN = val;
-    await loadAll();
-    document.getElementById('api-overlay').style.display = 'none';
-    renderHome();
+    await load();
+    $('overlay').style.display='none';
+    goHome();
   } catch(e) {
-    TOKEN = '';
-    err.style.display = 'block';
-    btn.textContent = '연결'; btn.disabled = false;
+    TOKEN='';
+    err.style.display='block';
+    btn.textContent='연결'; btn.disabled=false;
   }
 });
-
-document.getElementById('token-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') document.getElementById('connect-btn').click();
-});
+$('tok').addEventListener('keydown', function(e){ if(e.key==='Enter') $('connect-btn').click(); });
 </script>
 </body>
 </html>
