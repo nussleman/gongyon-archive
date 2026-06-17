@@ -259,18 +259,9 @@ function showShow(sid){
     (date?'<span>📅 '+date+'</span>':'')+
     '</div></div></div></div>';
   if(actors.length){
-    var rg={},ro=[];
-    actors.forEach(function(rec){
-      var rid=ids(fld(rec,'배역'))[0]||'';
-      var rn=nm(rid)||'기타';
-      if(!rg[rn]){rg[rn]=[];ro.push({name:rn,id:rid});}
-      rg[rn].push(rec);
-    });
+  if(actors.length){
     h+='<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">';
-    ro.forEach(function(role){
-      h+='<div class="role-divider">'+(role.id?'<span class="link" onclick="showRole(\''+role.id+'\')">'+role.name+'</span>':role.name)+'</div>';
-      rg[role.name].forEach(function(rec){h+=actorCard(rec);});
-    });
+    actors.forEach(function(rec){h+=actorCard(rec);});
     h+='</div></div>';
   }
   if(staff.length){
