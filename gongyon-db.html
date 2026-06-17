@@ -124,9 +124,11 @@ let TOKEN = '';
 
 // 테이블 ID
 const TABLES = {
-  shows:   'tblQ5oPChjABDqfsF',
-  people:  'tblOC3tLzU62ick8h',
-  history: 'tblozdPlUPzZXU2A6',
+  shows:      'tblQ5oPChjABDqfsF',
+  people:     'tblOC3tLzU62ick8h',
+  history:    'tblozdPlUPzZXU2A6',
+  roles:      'tblTdJpe7J7LGKCM9',
+  staffRoles: 'tblA3YldoCySlRh3E',
 };
 
 // 한글 필드명 (returnFieldsByFieldId 없이 호출)
@@ -145,7 +147,7 @@ const F = {
   histType:   '역할 타입',
 };
 
-let state = { view:'home', selected:null, data:{shows:[],people:[],history:[]} };
+let state = { view:'home', selected:null, data:{shows:[],people:[],history:[],roles:[],staffRoles:[]}, map:{} };
 
 function fv(rec, key) {
   return rec && rec.fields ? rec.fields[key] : null;
@@ -179,12 +181,26 @@ async function fetchTable(tableId) {
 }
 
 async function loadAll() {
-  const [shows, people, history] = await Promise.all([
+  const [shows, people, history, roles, staffRoles] = await Promise.all([
     fetchTable(TABLES.shows),
     fetchTable(TABLES.people),
     fetchTable(TABLES.history),
+    fetchTable(TABLES.roles),
+    fetchTable(TABLES.staffRoles),
   ]);
-  state.data = { shows, people, history };
+  state.data = { shows, people, history, roles, staffRoles };
+
+  // ID -> name 조회용 맵 생성
+  state.map = {};
+  shows.forEach(function(r){ state.map[r.id] = fv(r, F.showName) || ''; });
+  people.forEach(function(r){ state.map[r.id] = fv(r, F.personName) || ''; });
+  roles.forEach(function(r){ state.map[r.id] = fv(r, '배역명') || ''; });
+  staffRoles.forEach(function(r){ state.map[r.id] = fv(r, 'Name') || ''; });
+}
+
+function idToName(id) {
+  if (!id) return '';
+  return state.map[id] || id;
 }
 
 function validH(h) {
@@ -203,27 +219,18 @@ function getLinkedNames(val) {
 }
 
 function showHist(sid) {
-  var show = state.data.shows.find(function(s){ return s.id === sid; });
-  var showName = show ? fv(show, F.showName) : '';
   return state.data.history.filter(function(h) {
     if (!validH(h)) return false;
-    // ID 매칭 먼저, 안되면 공연명으로 매칭
     var ids = getLinkedIds(fv(h, F.histShow) || []);
-    if (ids.indexOf(sid) > -1) return true;
-    var names = getLinkedNames(fv(h, F.histShow) || []);
-    return showName && names.indexOf(showName) > -1;
+    return ids.indexOf(sid) > -1;
   });
 }
 
 function personHist(pid) {
-  var person = state.data.people.find(function(p){ return p.id === pid; });
-  var personName = person ? fv(person, F.personName) : '';
   return state.data.history.filter(function(h) {
     if (!validH(h)) return false;
     var ids = getLinkedIds(fv(h, F.histPerson) || []);
-    if (ids.indexOf(pid) > -1) return true;
-    var names = getLinkedNames(fv(h, F.histPerson) || []);
-    return personName && names.indexOf(personName) > -1;
+    return ids.indexOf(pid) > -1;
   });
 }
 
@@ -289,8 +296,8 @@ function renderShowDetail(id) {
     el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
   });
   var hist   = showHist(id);
-  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='배우'; });
-  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='스텝'; });
+  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='배우'; });
+  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='스텝'; });
   var work   = first(fv(show, F.showWork));
   var troupe = first(fv(show, F.showTroupe));
   var venue  = first(fv(show, F.showVenue));
@@ -363,8 +370,8 @@ function renderPersonDetail(id) {
     el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
   });
   var hist   = personHist(id);
-  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='배우'; });
-  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='스텝'; });
+  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='배우'; });
+  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && (typeof t==='string'?t:t.name)==='스텝'; });
   var html =
     '<div class="detail-header">' +
       '<div class="detail-eyebrow">참여자</div>' +
