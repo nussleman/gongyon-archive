@@ -42,6 +42,8 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .cast-card:hover{background:var(--bg3)}
 .cast-name{font-size:0.88rem;font-weight:400;margin-bottom:0.25rem}
 .cast-role{font-size:0.73rem;color:var(--muted)}
+.cast-img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;margin-bottom:0.6rem;background:var(--bg3)}
+.cast-img-placeholder{width:100%;aspect-ratio:3/4;background:var(--bg3);border-radius:4px;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--muted)}
 .tag{display:inline-block;font-size:0.63rem;letter-spacing:0.1em;padding:0.18rem 0.5rem;border-radius:3px;margin-right:0.3rem}
 .tag-a{background:var(--actor-bg);color:var(--actor)}
 .tag-s{background:var(--staff-bg);color:var(--staff)}
@@ -117,6 +119,7 @@ var BASE = 'appQtwYrSzJvmt9NA';
 var TOKEN = '';
 var DB = { shows:[], people:[], history:[], roles:[], staffRoles:[] };
 var MAP = {}; // id -> name
+var STAFF_ORDER = {}; // staffRole id -> 순서
 var CUR = { view:'home', sel:null };
 
 function $(id){ return document.getElementById(id); }
@@ -166,6 +169,13 @@ async function load() {
   DB.works.forEach(function(r){ MAP[r.id] = fld(r,'작품명')||''; });
   DB.troupes.forEach(function(r){ MAP[r.id] = fld(r,'극단명')||''; });
   DB.venues.forEach(function(r){ MAP[r.id] = fld(r,'극장명')||''; });
+
+  // 스텝 역할 순서 맵
+  STAFF_ORDER = {};
+  DB.staffRoles.forEach(function(r){
+    var order = fld(r,'순서');
+    if (order !== null && order !== undefined) STAFF_ORDER[r.id] = order;
+  });
 }
 
 function isValidHist(h) {
