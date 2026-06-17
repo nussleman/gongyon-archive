@@ -140,7 +140,7 @@ function fv(rec, key){ return rec && rec.fields ? rec.fields[key] : null; }
 
 async function fetchTable(tableId) {
   const res = await fetch(
-    'https://api.airtable.com/v0/' + BASE_ID + '/' + tableId + '?pageSize=100',
+    'https://api.airtable.com/v0/' + BASE_ID + '/' + tableId + '?pageSize=100&returnFieldsByFieldId=true',
     { headers: { 'Authorization': 'Bearer ' + TOKEN } }
   );
   if (!res.ok) throw new Error(res.status);
