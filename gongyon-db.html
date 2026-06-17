@@ -86,25 +86,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 </style>
 </head>
 <body>
-<div id="overlay">
-  <div class="api-box">
-    <div class="api-title-big">공연 아카이브</div>
-    <div class="api-sub">Performance Archive</div>
-    <div class="api-inner">
-      <div class="api-label">에어테이블 연결</div>
-      <div class="api-desc">
-        Personal Access Token을 입력하세요.<br>
-        <code>airtable.com → 계정 → Developer Hub → Personal access tokens</code><br>
-        scope: <code>data.records:read</code>
-      </div>
-      <div class="api-form">
-        <input class="api-input" id="tok" type="password" placeholder="pat..." autofocus>
-        <button class="btn" id="connect-btn">연결</button>
-      </div>
-      <div class="err" id="err-msg">토큰이 올바르지 않거나 권한이 없습니다.</div>
-    </div>
-  </div>
-</div>
+
 <header>
   <div class="site-title" onclick="goHome()"><span>PERFORMANCE ARCHIVE</span>공연 아카이브</div>
   <nav>
@@ -121,7 +103,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
   <main id="mn"></main>
 </div>
 <script>
-var BASE='appQtwYrSzJvmt9NA',TOKEN='';
+var BASE='appQtwYrSzJvmt9NA',TOKEN='patGrndUzESpEA1Dw.741c774c92d507034565c813ea223d26291c105e0a35b6282b5a2c501226e05d';
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[]};
 var MAP={},STAFF_ORDER={},POSTER={};
 
@@ -475,24 +457,10 @@ function showTroupe(tid){
 }
 
 // ── 연결 ──
-$('connect-btn').addEventListener('click',async function(){
-  var val=$('tok').value.trim();
-  if(!val)return;
-  var btn=$('connect-btn'),err=$('err-msg');
-  btn.textContent='연결 중...';btn.disabled=true;err.style.display='none';
-  try{
-    TOKEN=val;
-    await load();
-    var ov=$('overlay');
-    ov.parentNode.removeChild(ov);
-    goHome();
-  }catch(e){
-    TOKEN='';
-    err.style.display='block';
-    btn.textContent='연결';btn.disabled=false;
-  }
-});
-$('tok').addEventListener('keydown',function(e){if(e.key==='Enter')$('connect-btn').click();});
+(async function(){
+  try{ await load(); goHome(); }
+  catch(e){ document.getElementById('mn').innerHTML='<div style="color:#e06c6c;padding:2rem">연결 실패: '+e.message+'</div>'; }
+})();
 </script>
 </body>
 </html>
