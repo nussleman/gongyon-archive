@@ -408,30 +408,45 @@ function showPerson(pid){
       '</div>' +
     '</div>';
 
+
   if (actors.length) {
-    h += '<div class="sec"><div class="sec-label">배우로 참여한 공연</div><div class="hist-list">' +
-      actors.map(function(rec){
-        var sid=ids(fld(rec,'공연'))[0]||'';
-        var rid=ids(fld(rec,'배역'))[0]||'';
-        return '<div class="hist-item" onclick="showShow(\''+sid+'\')">' +
-          '<span class="hi-name">'+nm(sid)+'</span>' +
-          '<span class="tag tag-a">배우</span>' +
-          '<span class="hi-role">'+nm(rid)+'</span></div>';
-      }).join('') + '</div></div>';
+    h += '<div class="sec"><div class="sec-label">배우로 참여한 공연</div><div class="cast-grid">';
+    actors.forEach(function(rec){
+      var sid    = ids(fld(rec,'공연'))[0]||'';
+      var rid    = ids(fld(rec,'배역'))[0]||'';
+      var poster = POSTER[sid]||'';
+      var imgH   = poster
+        ? '<img class="cast-img" src="'+poster+'" alt="'+nm(sid)+'">'
+        : '<div class="cast-img-ph">🎭</div>';
+      h += '<div class="cast-card" onclick="showShow(''+sid+'')">' +
+        imgH +
+        '<div class="cast-name">'+nm(sid)+'</div>' +
+        '<div class="cast-role">'+nm(rid)+'</div>' +
+        '</div>';
+    });
+    h += '</div></div>';
   }
   if (staff.length) {
-    h += '<div class="sec"><div class="sec-label">스텝으로 참여한 공연</div><div class="hist-list">' +
-      staff.map(function(rec){
-        var sid=ids(fld(rec,'공연'))[0]||'';
-        var rid=ids(fld(rec,'스텝'))[0]||'';
-        return '<div class="hist-item" onclick="showShow(\''+sid+'\')">' +
-          '<span class="hi-name">'+nm(sid)+'</span>' +
-          '<span class="tag tag-s">스텝</span>' +
-          '<span class="hi-role">'+nm(rid)+'</span></div>';
-      }).join('') + '</div></div>';
+    h += '<div class="sec"><div class="sec-label">스텝으로 참여한 공연</div><div class="cast-grid">';
+    staff.forEach(function(rec){
+      var sid    = ids(fld(rec,'공연'))[0]||'';
+      var rid    = ids(fld(rec,'스텝'))[0]||'';
+      var poster = POSTER[sid]||'';
+      var imgH   = poster
+        ? '<img class="cast-img" src="'+poster+'" alt="'+nm(sid)+'">'
+        : '<div class="cast-img-ph">🎭</div>';
+      h += '<div class="cast-card" onclick="showShow(''+sid+'')">' +
+        imgH +
+        '<div class="cast-name">'+nm(sid)+'</div>' +
+        '<div class="cast-role" style="color:var(--staff)">'+nm(rid)+'</div>' +
+        '</div>';
+    });
+    h += '</div></div>';
   }
   if (!hist.length) h += '<div class="empty">참여 이력이 없습니다.</div>';
   mn(h);
+}
+
 }
 
 // ── 작품 ──
