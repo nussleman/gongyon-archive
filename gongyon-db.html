@@ -49,6 +49,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .cast-name{font-size:0.85rem;font-weight:400;margin-bottom:0.2rem}
 .cast-role{font-size:0.72rem;color:var(--muted)}
 .role-title{font-size:0.75rem;color:var(--muted);letter-spacing:0.12em;margin-bottom:0.5rem;padding-bottom:0.35rem;border-bottom:1px solid var(--line)}
+.role-divider{grid-column:1/-1;font-size:0.75rem;color:var(--muted);letter-spacing:0.12em;padding:0.6rem 0 0.4rem;border-bottom:1px solid var(--line);margin-bottom:0.2rem}
 /* 이력 리스트 */
 .tag{display:inline-block;font-size:0.63rem;letter-spacing:0.1em;padding:0.18rem 0.5rem;border-radius:3px;margin-right:0.3rem}
 .tag-a{background:var(--actor-bg);color:var(--actor)}
@@ -203,6 +204,18 @@ async function load() {
   DB.staffRoles.forEach(function(r){
     var o = fld(r,'순서');
     if (o !== null && o !== undefined) STAFF_ORDER[r.id] = o;
+  });
+}
+
+// 공연 날짜 내림차순 정렬
+function sortShows(shows){
+  return shows.slice().sort(function(a,b){
+    var da = fld(a,'날짜')||'';
+    var db = fld(b,'날짜')||'';
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return db.localeCompare(da);
   });
 }
 
@@ -445,7 +458,7 @@ function showWork(wid){
   var work = DB.works.find(function(w){ return w.id===wid; });
   if (!work) return;
 
-  var shows = DB.shows.filter(function(s){ return ids(fld(s,'작품')).indexOf(wid)>-1; });
+  var shows = sortShows(DB.shows.filter(function(s){ return ids(fld(s,'작품')).indexOf(wid)>-1; }));
   var roles = DB.roles.filter(function(r){ return ids(fld(r,'작품')).indexOf(wid)>-1; });
   var workName = fld(work,'작품명')||'';
   var engName  = fld(work,'작품명 (영문)')||'';
@@ -543,7 +556,7 @@ function showVenue(vid){
   var venue = DB.venues.find(function(v){ return v.id===vid; });
   if (!venue) return;
 
-  var shows = DB.shows.filter(function(s){ return ids(fld(s,'극장')).indexOf(vid)>-1; });
+  var shows = sortShows(DB.shows.filter(function(s){ return ids(fld(s,'극장')).indexOf(vid)>-1; }));
 
   var h =
     '<div class="detail-header">' +
@@ -594,7 +607,7 @@ function showTroupe(tid){
   var troupe = DB.troupes.find(function(t){ return t.id===tid; });
   if (!troupe) return;
 
-  var shows = DB.shows.filter(function(s){ return ids(fld(s,'극단')).indexOf(tid)>-1; });
+  var shows = sortShows(DB.shows.filter(function(s){ return ids(fld(s,'극단')).indexOf(tid)>-1; }));
 
   var h =
     '<div class="detail-header">' +
