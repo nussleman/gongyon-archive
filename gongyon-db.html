@@ -492,7 +492,8 @@ $('connect-btn').addEventListener('click',async function(){
   try{
     TOKEN=val;
     await load();
-    $('overlay').style.display='none';
+    var ov=$('overlay');
+    ov.parentNode.removeChild(ov);
     goHome();
   }catch(e){
     TOKEN='';
