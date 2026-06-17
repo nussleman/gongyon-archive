@@ -121,26 +121,43 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 <script>
 const BASE_ID = 'appQtwYrSzJvmt9NA';
 let TOKEN = '';
+
+// 테이블 ID
 const TABLES = {
   shows:   'tblQ5oPChjABDqfsF',
   people:  'tblOC3tLzU62ick8h',
   history: 'tblozdPlUPzZXU2A6',
 };
+
+// 한글 필드명 (returnFieldsByFieldId 없이 호출)
 const F = {
-  showName:'fldga2ckTqLCSdqyc', showWork:'fldRfS2UQe6i50pcQ',
-  showTroupe:'fldm2UcQy0LQpwyUM', showVenue:'fldwZncXkUbAI0yqS', showDate:'fldQXTFDBkPxRC3Fz',
-  personName:'fld7Sc8GnccvyDq9C',
-  histName:'fldVlPAMOrICQr7M1', histShow:'fldYA9Sx9QwrMDctk',
-  histPerson:'fldh1XrpCxetVbgVz', histRole:'fldif9eQPtle1IWK3',
-  histStaff:'fldhj1uDIi9868iWL', histType:'fldOm5MX0yPB6xneh',
+  showName:   '공연명',
+  showWork:   '작품',
+  showTroupe: '극단',
+  showVenue:  '극장',
+  showDate:   '날짜',
+  personName: '이름',
+  histName:   '참여 이력명',
+  histShow:   '공연',
+  histPerson: '참여자',
+  histRole:   '배역',
+  histStaff:  '스텝',
+  histType:   '역할 타입',
 };
+
 let state = { view:'home', selected:null, data:{shows:[],people:[],history:[]} };
 
-function fv(rec, key){ return rec && rec.fields ? rec.fields[key] : null; }
+function fv(rec, key) {
+  return rec && rec.fields ? rec.fields[key] : null;
+}
+
+function first(arr) {
+  return (arr && arr[0]) ? arr[0] : null;
+}
 
 async function fetchTable(tableId) {
   const res = await fetch(
-    'https://api.airtable.com/v0/' + BASE_ID + '/' + tableId + '?pageSize=100&returnFieldsByFieldId=true',
+    'https://api.airtable.com/v0/' + BASE_ID + '/' + tableId + '?pageSize=100',
     { headers: { 'Authorization': 'Bearer ' + TOKEN } }
   );
   if (!res.ok) throw new Error(res.status);
@@ -161,47 +178,71 @@ function validH(h) {
   const name = fv(h, F.histName) || '';
   return name.replace(/ - /g,'').trim() !== '' && fv(h, F.histType);
 }
-function showHist(sid){ return state.data.history.filter(h => validH(h) && (fv(h,F.histShow)||[]).some(s=>s.id===sid)); }
-function personHist(pid){ return state.data.history.filter(h => validH(h) && (fv(h,F.histPerson)||[]).some(p=>p.id===pid)); }
 
-function setNav(v){ document.querySelectorAll('nav button').forEach((b,i)=>b.classList.toggle('active',['home','shows','people'][i]===v)); }
+function showHist(sid) {
+  return state.data.history.filter(function(h) {
+    if (!validH(h)) return false;
+    var shows = fv(h, F.histShow) || [];
+    return shows.some(function(s){ return s.id === sid; });
+  });
+}
 
+function personHist(pid) {
+  return state.data.history.filter(function(h) {
+    if (!validH(h)) return false;
+    var people = fv(h, F.histPerson) || [];
+    return people.some(function(p){ return p.id === pid; });
+  });
+}
+
+function setNav(v) {
+  document.querySelectorAll('nav button').forEach(function(b, i) {
+    b.classList.toggle('active', ['home','shows','people'][i] === v);
+  });
+}
+
+// ── 홈 ──
 function renderHome() {
-  const shows   = state.data.shows.filter(s=>fv(s,F.showName));
-  const people  = state.data.people.filter(p=>fv(p,F.personName));
-  const history = state.data.history.filter(validH);
+  var shows   = state.data.shows.filter(function(s){ return fv(s, F.showName); });
+  var people  = state.data.people.filter(function(p){ return fv(p, F.personName); });
+  var history = state.data.history.filter(validH);
   document.getElementById('sidebar').innerHTML = '';
   document.getElementById('main').innerHTML =
     '<div class="home-stats">' +
-    '<div class="stat-card"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>' +
-    '<div class="stat-card"><div class="stat-num">'+people.length+'</div><div class="stat-label">참여자</div></div>' +
-    '<div class="stat-card"><div class="stat-num">'+history.length+'</div><div class="stat-label">참여 이력</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+people.length+'</div><div class="stat-label">참여자</div></div>' +
+      '<div class="stat-card"><div class="stat-num">'+history.length+'</div><div class="stat-label">참여 이력</div></div>' +
     '</div>' +
     '<div class="section-label">공연 목록</div>' +
     '<div class="home-list">' +
-    shows.map(function(s,i){
+    shows.map(function(s, i) {
+      var work = first(fv(s, F.showWork));
       return '<div class="home-row" onclick="selectShow(\''+s.id+'\')">' +
         '<span class="home-row-num">'+String(i+1).padStart(2,'0')+'</span>' +
-        '<span class="home-row-title">'+fv(s,F.showName)+'</span>' +
-        '<span class="home-row-sub">'+((fv(s,F.showWork)||[])[0]||{name:''}).name+'</span>' +
+        '<span class="home-row-title">'+fv(s, F.showName)+'</span>' +
+        '<span class="home-row-sub">'+(work ? work.name : '')+'</span>' +
         '</div>';
     }).join('') +
     '</div>';
 }
 
+// ── 공연 ──
 function renderShows() {
-  const shows = state.data.shows.filter(s=>fv(s,F.showName));
+  var shows = state.data.shows.filter(function(s){ return fv(s, F.showName); });
   document.getElementById('sidebar').innerHTML =
     '<div class="sidebar-label">공연 목록</div>' +
-    shows.map(function(s){
+    shows.map(function(s) {
+      var work = first(fv(s, F.showWork));
       return '<button class="list-item '+(state.selected===s.id?'active':'')+'" onclick="selectShow(\''+s.id+'\')">' +
-        fv(s,F.showName) +
-        '<span class="sub">'+((fv(s,F.showWork)||[])[0]||{name:''}).name+'</span>' +
+        fv(s, F.showName) +
+        '<span class="sub">'+(work ? work.name : '')+'</span>' +
         '</button>';
     }).join('');
-  if (state.selected && shows.find(s=>s.id===state.selected)) renderShowDetail(state.selected);
-  else if (shows[0]) selectShow(shows[0].id, false);
-  else document.getElementById('main').innerHTML = '<div class="empty">공연 데이터가 없습니다.</div>';
+  if (state.selected && shows.find(function(s){ return s.id===state.selected; })) {
+    renderShowDetail(state.selected);
+  } else if (shows[0]) {
+    selectShow(shows[0].id, false);
+  }
 }
 
 function selectShow(id, update) {
@@ -210,62 +251,72 @@ function selectShow(id, update) {
 }
 
 function renderShowDetail(id) {
-  const show = state.data.shows.find(s=>s.id===id);
+  var show = state.data.shows.find(function(s){ return s.id===id; });
   if (!show) return;
-  document.querySelectorAll('#sidebar .list-item').forEach(function(el){
+  document.querySelectorAll('#sidebar .list-item').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
   });
-  const hist   = showHist(id);
-  const actors = hist.filter(function(h){ return (fv(h,F.histType)||{}).name === '배우'; });
-  const staff  = hist.filter(function(h){ return (fv(h,F.histType)||{}).name === '스텝'; });
-  const troupe = ((fv(show,F.showTroupe)||[])[0]||{name:''}).name;
-  const venue  = ((fv(show,F.showVenue)||[])[0]||{name:''}).name;
-  const date   = fv(show,F.showDate)||'';
-  const work   = ((fv(show,F.showWork)||[])[0]||{name:''}).name;
-  let html =
+  var hist   = showHist(id);
+  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='배우'; });
+  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='스텝'; });
+  var work   = first(fv(show, F.showWork));
+  var troupe = first(fv(show, F.showTroupe));
+  var venue  = first(fv(show, F.showVenue));
+  var date   = fv(show, F.showDate) || '';
+  var html =
     '<div class="detail-header">' +
-    '<div class="detail-eyebrow">'+work+'</div>' +
-    '<div class="detail-title">'+fv(show,F.showName)+'</div>' +
-    '<div class="detail-meta">' +
-    (troupe?'<span>🏢 '+troupe+'</span>':'') +
-    (venue?'<span>📍 '+venue+'</span>':'') +
-    (date?'<span>📅 '+date+'</span>':'') +
-    '</div></div>';
+      '<div class="detail-eyebrow">'+(work ? work.name : '공연')+'</div>' +
+      '<div class="detail-title">'+fv(show, F.showName)+'</div>' +
+      '<div class="detail-meta">' +
+        (troupe ? '<span>🏢 '+troupe.name+'</span>' : '') +
+        (venue  ? '<span>📍 '+venue.name+'</span>'  : '') +
+        (date   ? '<span>📅 '+date+'</span>'         : '') +
+      '</div>' +
+    '</div>';
   if (actors.length) {
     html += '<div class="section"><div class="section-label">출연진</div><div class="cast-grid">' +
-      actors.map(function(h){
-        var name = ((fv(h,F.histPerson)||[])[0]||{name:''}).name;
-        var role = ((fv(h,F.histRole)||[])[0]||{name:''}).name;
-        var pid  = ((fv(h,F.histPerson)||[])[0]||{id:''}).id;
-        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')"><div class="cast-name">'+name+'</div><div class="cast-role">'+role+'</div></div>';
+      actors.map(function(h) {
+        var person = first(fv(h, F.histPerson));
+        var role   = first(fv(h, F.histRole));
+        var pid    = person ? person.id : '';
+        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')">'+
+          '<div class="cast-name">'+(person ? person.name : '')+'</div>'+
+          '<div class="cast-role">'+(role ? role.name : '')+'</div>'+
+          '</div>';
       }).join('') + '</div></div>';
   }
   if (staff.length) {
     html += '<div class="section"><div class="section-label">스텝</div><div class="cast-grid">' +
-      staff.map(function(h){
-        var name = ((fv(h,F.histPerson)||[])[0]||{name:''}).name;
-        var role = ((fv(h,F.histStaff)||[])[0]||{name:''}).name;
-        var pid  = ((fv(h,F.histPerson)||[])[0]||{id:''}).id;
-        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')"><div class="cast-name">'+name+'</div><div class="cast-role" style="color:var(--tag-staff)">'+role+'</div></div>';
+      staff.map(function(h) {
+        var person = first(fv(h, F.histPerson));
+        var role   = first(fv(h, F.histStaff));
+        var pid    = person ? person.id : '';
+        return '<div class="cast-card" onclick="selectPerson(\''+pid+'\')">'+
+          '<div class="cast-name">'+(person ? person.name : '')+'</div>'+
+          '<div class="cast-role" style="color:var(--tag-staff)">'+(role ? role.name : '')+'</div>'+
+          '</div>';
       }).join('') + '</div></div>';
   }
   if (!actors.length && !staff.length) html += '<div class="empty">참여 이력이 없습니다.</div>';
   document.getElementById('main').innerHTML = html;
 }
 
+// ── 참여자 ──
 function renderPeople() {
-  const people = state.data.people.filter(p=>fv(p,F.personName));
+  var people = state.data.people.filter(function(p){ return fv(p, F.personName); });
   document.getElementById('sidebar').innerHTML =
     '<div class="sidebar-label">참여자 목록</div>' +
-    people.map(function(p){
+    people.map(function(p) {
       return '<button class="list-item '+(state.selected===p.id?'active':'')+'" onclick="selectPerson(\''+p.id+'\')">' +
-        fv(p,F.personName) +
+        fv(p, F.personName) +
         '<span class="sub">'+personHist(p.id).length+'개 이력</span>' +
         '</button>';
     }).join('');
-  if (state.selected && people.find(p=>p.id===state.selected)) renderPersonDetail(state.selected);
-  else if (people[0]) selectPerson(people[0].id, false);
-  else document.getElementById('main').innerHTML = '<div class="empty">참여자 데이터가 없습니다.</div>';
+  if (state.selected && people.find(function(p){ return p.id===state.selected; })) {
+    renderPersonDetail(state.selected);
+  } else if (people[0]) {
+    selectPerson(people[0].id, false);
+  }
 }
 
 function selectPerson(id, update) {
@@ -274,38 +325,47 @@ function selectPerson(id, update) {
 }
 
 function renderPersonDetail(id) {
-  const person = state.data.people.find(p=>p.id===id);
+  var person = state.data.people.find(function(p){ return p.id===id; });
   if (!person) return;
-  document.querySelectorAll('#sidebar .list-item').forEach(function(el){
+  document.querySelectorAll('#sidebar .list-item').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('onclick').indexOf(id) > -1);
   });
-  const hist   = personHist(id);
-  const actors = hist.filter(function(h){ return (fv(h,F.histType)||{}).name === '배우'; });
-  const staff  = hist.filter(function(h){ return (fv(h,F.histType)||{}).name === '스텝'; });
-  let html =
+  var hist   = personHist(id);
+  var actors = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='배우'; });
+  var staff  = hist.filter(function(h){ var t=fv(h,F.histType); return t && t.name==='스텝'; });
+  var html =
     '<div class="detail-header">' +
-    '<div class="detail-eyebrow">참여자</div>' +
-    '<div class="detail-title">'+fv(person,F.personName)+'</div>' +
-    '<div class="detail-meta">' +
-    (actors.length?'<span>🎭 배우 '+actors.length+'회</span>':'') +
-    (staff.length?'<span>🎬 스텝 '+staff.length+'회</span>':'') +
-    '</div></div>';
+      '<div class="detail-eyebrow">참여자</div>' +
+      '<div class="detail-title">'+fv(person, F.personName)+'</div>' +
+      '<div class="detail-meta">' +
+        (actors.length ? '<span>🎭 배우 '+actors.length+'회</span>' : '') +
+        (staff.length  ? '<span>🎬 스텝 '+staff.length+'회</span>'  : '') +
+      '</div>' +
+    '</div>';
   if (actors.length) {
     html += '<div class="section"><div class="section-label">배우로 참여한 공연</div><div class="history-list">' +
-      actors.map(function(h){
-        var sname = ((fv(h,F.histShow)||[])[0]||{name:''}).name;
-        var sid   = ((fv(h,F.histShow)||[])[0]||{id:''}).id;
-        var role  = ((fv(h,F.histRole)||[])[0]||{name:''}).name;
-        return '<div class="history-item" onclick="selectShow(\''+sid+'\')"><span class="hi-name">'+sname+'</span><span class="tag tag-actor">배우</span><span class="hi-role">'+role+'</span></div>';
+      actors.map(function(h) {
+        var show = first(fv(h, F.histShow));
+        var role = first(fv(h, F.histRole));
+        var sid  = show ? show.id : '';
+        return '<div class="history-item" onclick="selectShow(\''+sid+'\')">'+
+          '<span class="hi-name">'+(show ? show.name : '')+'</span>'+
+          '<span class="tag tag-actor">배우</span>'+
+          '<span class="hi-role">'+(role ? role.name : '')+'</span>'+
+          '</div>';
       }).join('') + '</div></div>';
   }
   if (staff.length) {
     html += '<div class="section"><div class="section-label">스텝으로 참여한 공연</div><div class="history-list">' +
-      staff.map(function(h){
-        var sname = ((fv(h,F.histShow)||[])[0]||{name:''}).name;
-        var sid   = ((fv(h,F.histShow)||[])[0]||{id:''}).id;
-        var role  = ((fv(h,F.histStaff)||[])[0]||{name:''}).name;
-        return '<div class="history-item" onclick="selectShow(\''+sid+'\')"><span class="hi-name">'+sname+'</span><span class="tag tag-staff">스텝</span><span class="hi-role">'+role+'</span></div>';
+      staff.map(function(h) {
+        var show = first(fv(h, F.histShow));
+        var role = first(fv(h, F.histStaff));
+        var sid  = show ? show.id : '';
+        return '<div class="history-item" onclick="selectShow(\''+sid+'\')">'+
+          '<span class="hi-name">'+(show ? show.name : '')+'</span>'+
+          '<span class="tag tag-staff">스텝</span>'+
+          '<span class="hi-role">'+(role ? role.name : '')+'</span>'+
+          '</div>';
       }).join('') + '</div></div>';
   }
   if (!hist.length) html += '<div class="empty">참여 이력이 없습니다.</div>';
@@ -319,7 +379,7 @@ function showView(v) {
   if (v==='people') renderPeople();
 }
 
-document.getElementById('connect-btn').addEventListener('click', async function(){
+document.getElementById('connect-btn').addEventListener('click', async function() {
   var val = document.getElementById('token-input').value.trim();
   if (!val) return;
   var btn = document.getElementById('connect-btn');
@@ -337,7 +397,7 @@ document.getElementById('connect-btn').addEventListener('click', async function(
   }
 });
 
-document.getElementById('token-input').addEventListener('keydown', function(e){
+document.getElementById('token-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('connect-btn').click();
 });
 </script>
