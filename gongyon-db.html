@@ -44,6 +44,15 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .cast-role{font-size:0.73rem;color:var(--muted)}
 .cast-img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;margin-bottom:0.6rem;background:var(--bg3)}
 .cast-img-placeholder{width:100%;aspect-ratio:3/4;background:var(--bg3);border-radius:4px;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--muted)}
+.poster-wrap{display:flex;gap:2rem;margin-bottom:2rem;align-items:flex-start}
+.poster-img{width:200px;flex-shrink:0;border-radius:8px;object-fit:cover;aspect-ratio:2/3}
+.poster-placeholder{width:200px;flex-shrink:0;border-radius:8px;background:var(--bg2);border:1px solid var(--line);aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:var(--muted)}
+.poster-info{flex:1}
+.role-group{margin-bottom:1.5rem}
+.role-group-title{font-size:0.75rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:0.6rem;padding-bottom:0.4rem;border-bottom:1px solid var(--line)}
+@media(max-width:600px){.poster-wrap{flex-direction:column}.poster-img,.poster-placeholder{width:100%;max-width:200px}}
+.cast-img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;margin-bottom:0.6rem;background:var(--bg3)}
+.cast-img-placeholder{width:100%;aspect-ratio:3/4;background:var(--bg3);border-radius:4px;margin-bottom:0.6rem;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--muted)}
 .tag{display:inline-block;font-size:0.63rem;letter-spacing:0.1em;padding:0.18rem 0.5rem;border-radius:3px;margin-right:0.3rem}
 .tag-a{background:var(--actor-bg);color:var(--actor)}
 .tag-s{background:var(--staff-bg);color:var(--staff)}
@@ -120,6 +129,7 @@ var TOKEN = '';
 var DB = { shows:[], people:[], history:[], roles:[], staffRoles:[] };
 var MAP = {}; // id -> name
 var STAFF_ORDER = {}; // staffRole id -> 순서
+var POSTER = {}; // show id -> 포스터 url
 var CUR = { view:'home', sel:null };
 
 function $(id){ return document.getElementById(id); }
@@ -163,6 +173,14 @@ async function load() {
 
   MAP = {};
   DB.shows.forEach(function(r){ MAP[r.id] = fld(r,'공연명')||''; });
+  POSTER = {};
+  DB.shows.forEach(function(r){
+    var imgs = fld(r,'포스터');
+    if (imgs && imgs[0]) {
+      POSTER[r.id] = (imgs[0].thumbnails && imgs[0].thumbnails.large)
+        ? imgs[0].thumbnails.large.url : imgs[0].url;
+    }
+  });
   DB.people.forEach(function(r){ MAP[r.id] = fld(r,'이름')||''; });
   DB.roles.forEach(function(r){ MAP[r.id] = fld(r,'배역명')||''; });
   DB.staffRoles.forEach(function(r){ MAP[r.id] = fld(r,'Name')||''; });
@@ -281,15 +299,25 @@ function showShow(sid) {
   var trid   = ids(fld(show,'극단'))[0]||'';
   var vid    = ids(fld(show,'극장'))[0]||'';
   var date   = fld(show,'날짜')||'';
+  var poster = POSTER[sid]||'';
+
+  var posterHtml = poster
+    ? '<img class="poster-img" src="'+poster+'" alt="'+fld(show,'공연명')+'">'
+    : '<div class="poster-placeholder">🎭</div>';
 
   var h =
     '<div class="detail-header">' +
-      '<div class="eyebrow">'+(nm(wid)||'공연')+'</div>' +
-      '<div class="detail-title">'+fld(show,'공연명')+'</div>' +
-      '<div class="detail-meta">' +
-        (nm(trid)?'<span>🏢 '+nm(trid)+'</span>':'') +
-        (nm(vid) ?'<span>📍 '+nm(vid)+'</span>':'') +
-        (date    ?'<span>📅 '+date+'</span>':'') +
+      '<div class="poster-wrap">' +
+        posterHtml +
+        '<div class="poster-info">' +
+          '<div class="eyebrow">'+(nm(wid)||'공연')+'</div>' +
+          '<div class="detail-title">'+fld(show,'공연명')+'</div>' +
+          '<div class="detail-meta">' +
+            (nm(trid)?'<span>🏢 '+nm(trid)+'</span>':'') +
+            (nm(vid) ?'<span>📍 '+nm(vid)+'</span>':'') +
+            (date    ?'<span>📅 '+date+'</span>':'') +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
