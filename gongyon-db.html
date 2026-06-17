@@ -322,10 +322,21 @@ function showShow(sid) {
     '</div>';
 
   if (actors.length) {
-    h += '<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">' +
-      actors.map(function(rec){
+    var roleGroups = {};
+    var roleOrder = [];
+    actors.forEach(function(rec){
+      var rid = ids(fld(rec,'배역'))[0]||'';
+      var roleName = nm(rid)||'기타';
+      if (!roleGroups[roleName]) { roleGroups[roleName] = []; roleOrder.push(roleName); }
+      roleGroups[roleName].push(rec);
+    });
+    h += '<div class="sec"><div class="sec-label">출연진</div>';
+    roleOrder.forEach(function(roleName){
+      var group = roleGroups[roleName];
+      h += '<div class="role-group-title">'+roleName+'</div>';
+      h += '<div class="cast-grid" style="margin-bottom:1.2rem">';
+      group.forEach(function(rec){
         var pid  = ids(fld(rec,'참여자'))[0]||'';
-        var rid  = ids(fld(rec,'배역'))[0]||'';
         var imgs = fld(rec,'사진');
         var imgUrl = '';
         if (imgs && imgs[0]) {
@@ -334,13 +345,15 @@ function showShow(sid) {
         }
         var imgHtml = imgUrl
           ? '<img class="cast-img" src="'+imgUrl+'" alt="'+nm(pid)+'">'
-          : '<div class="cast-img-placeholder">\uD83C\uDFAD</div>';
-        return '<div class="cast-card" onclick="showPerson(\''+pid+'\')">' +
+          : '<div class="cast-img-placeholder">🎭</div>';
+        h += '<div class="cast-card" onclick="showPerson(\''+pid+'\')">' +
           imgHtml +
           '<div class="cast-name">'+nm(pid)+'</div>' +
-          '<div class="cast-role">'+nm(rid)+'</div>' +
           '</div>';
-      }).join('') + '</div></div>';
+      });
+      h += '</div>';
+    });
+    h += '</div>';
   }
   if (staff.length) {
     h += '<div class="sec"><div class="sec-label">스텝</div><div class="cast-grid">' +
