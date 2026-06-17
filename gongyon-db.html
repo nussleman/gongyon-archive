@@ -141,7 +141,7 @@ const F = {
   histShow:   '공연',
   histPerson: '참여자',
   histRole:   '배역',
-  histStaff:  '스텝',
+  histStaff:  '스텝 역할',
   histType:   '역할 타입',
 };
 
@@ -153,6 +153,19 @@ function fv(rec, key) {
 
 function first(arr) {
   return (arr && arr[0]) ? arr[0] : null;
+}
+
+// 링크 레코드에서 이름 추출 (객체 또는 문자열 id 모두 처리)
+function linkName(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val; // id만 있을 때
+  return val.name || '';
+}
+
+function linkId(val) {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  return val.id || '';
 }
 
 async function fetchTable(tableId) {
@@ -179,19 +192,38 @@ function validH(h) {
   return name.replace(/ - /g,'').trim() !== '' && fv(h, F.histType);
 }
 
+function getLinkedIds(val) {
+  if (!val) return [];
+  return val.map(function(v){ return typeof v === 'string' ? v : v.id; });
+}
+
+function getLinkedNames(val) {
+  if (!val) return [];
+  return val.map(function(v){ return typeof v === 'string' ? v : (v.name || ''); });
+}
+
 function showHist(sid) {
+  var show = state.data.shows.find(function(s){ return s.id === sid; });
+  var showName = show ? fv(show, F.showName) : '';
   return state.data.history.filter(function(h) {
     if (!validH(h)) return false;
-    var shows = fv(h, F.histShow) || [];
-    return shows.some(function(s){ return s.id === sid; });
+    // ID 매칭 먼저, 안되면 공연명으로 매칭
+    var ids = getLinkedIds(fv(h, F.histShow) || []);
+    if (ids.indexOf(sid) > -1) return true;
+    var names = getLinkedNames(fv(h, F.histShow) || []);
+    return showName && names.indexOf(showName) > -1;
   });
 }
 
 function personHist(pid) {
+  var person = state.data.people.find(function(p){ return p.id === pid; });
+  var personName = person ? fv(person, F.personName) : '';
   return state.data.history.filter(function(h) {
     if (!validH(h)) return false;
-    var people = fv(h, F.histPerson) || [];
-    return people.some(function(p){ return p.id === pid; });
+    var ids = getLinkedIds(fv(h, F.histPerson) || []);
+    if (ids.indexOf(pid) > -1) return true;
+    var names = getLinkedNames(fv(h, F.histPerson) || []);
+    return personName && names.indexOf(personName) > -1;
   });
 }
 
