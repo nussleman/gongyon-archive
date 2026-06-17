@@ -181,21 +181,46 @@ async function fetchTable(tableId) {
 }
 
 async function loadAll() {
-  const [shows, people, history, roles, staffRoles] = await Promise.all([
+  // 각각 독립적으로 fetch (하나 실패해도 나머지는 진행)
+  const results = await Promise.allSettled([
     fetchTable(TABLES.shows),
     fetchTable(TABLES.people),
     fetchTable(TABLES.history),
     fetchTable(TABLES.roles),
     fetchTable(TABLES.staffRoles),
   ]);
+
+  const shows      = results[0].status === 'fulfilled' ? results[0].value : [];
+  const people     = results[1].status === 'fulfilled' ? results[1].value : [];
+  const history    = results[2].status === 'fulfilled' ? results[2].value : [];
+  const roles      = results[3].status === 'fulfilled' ? results[3].value : [];
+  const staffRoles = results[4].status === 'fulfilled' ? results[4].value : [];
+
   state.data = { shows, people, history, roles, staffRoles };
 
   // ID -> name 조회용 맵 생성
   state.map = {};
-  shows.forEach(function(r){ state.map[r.id] = fv(r, F.showName) || ''; });
-  people.forEach(function(r){ state.map[r.id] = fv(r, F.personName) || ''; });
-  roles.forEach(function(r){ state.map[r.id] = fv(r, '배역명') || ''; });
-  staffRoles.forEach(function(r){ state.map[r.id] = fv(r, 'Name') || ''; });
+  shows.forEach(function(r){
+    if (r && r.id) state.map[r.id] = fv(r, F.showName) || '';
+  });
+  people.forEach(function(r){
+    if (r && r.id) state.map[r.id] = fv(r, F.personName) || '';
+  });
+  roles.forEach(function(r){
+    if (r && r.id) {
+      var name = fv(r, '배역명') || fv(r, 'Name') || fv(r, '이름') || '';
+      state.map[r.id] = name;
+    }
+  });
+  staffRoles.forEach(function(r){
+    if (r && r.id) {
+      var name = fv(r, 'Name') || fv(r, '이름') || fv(r, '스텝 역할명') || '';
+      state.map[r.id] = name;
+    }
+  });
+
+  console.log('map size:', Object.keys(state.map).length);
+  console.log('shows:', shows.length, 'people:', people.length, 'history:', history.length, 'roles:', roles.length, 'staffRoles:', staffRoles.length);
 }
 
 function idToName(id) {
