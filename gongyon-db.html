@@ -170,7 +170,8 @@ function actorCard(rec){
   var pid=ids(fld(rec,'참여자'))[0]||'';
   var u=iurl(fld(rec,'사진'));
   var imgH=u?'<img class="cast-img" src="'+u+'" alt="'+nm(pid)+'">':'<div class="cast-img-ph">🎭</div>';
-  return '<div class="cast-card" onclick="showPerson(\''+pid+'\')">'+imgH+'<div class="cast-name">'+nm(pid)+'</div></div>';
+  var rid=ids(fld(rec,'배역'))[0]||'';
+  return '<div class="cast-card" onclick="showPerson(\''+pid+'\')">'+imgH+'<div class="cast-name">'+nm(pid)+'</div>'+(nm(rid)?'<div class="cast-role">'+nm(rid)+'</div>':'')+'</div>';
 }
 
 function showCard(sid){
