@@ -116,9 +116,16 @@ function nm(id){return MAP[id]||'';}
 function iurl(imgs){if(!imgs||!imgs[0])return '';return(imgs[0].thumbnails&&imgs[0].thumbnails.large)?imgs[0].thumbnails.large.url:imgs[0].url;}
 
 async function api(t){
-  var r=await fetch('https://api.airtable.com/v0/'+BASE+'/'+t+'?pageSize=100',{headers:{Authorization:'Bearer '+TOKEN}});
-  if(!r.ok)throw new Error(r.status);
-  return(await r.json()).records||[];
+  var all=[],offset='';
+  do {
+    var url='https://api.airtable.com/v0/'+BASE+'/'+t+'?pageSize=100'+(offset?'&offset='+encodeURIComponent(offset):'');
+    var r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
+    if(!r.ok)throw new Error(r.status);
+    var data=await r.json();
+    all=all.concat(data.records||[]);
+    offset=data.offset||'';
+  } while(offset);
+  return all;
 }
 
 async function load(){
