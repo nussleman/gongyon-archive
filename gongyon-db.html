@@ -153,8 +153,7 @@ function sortShows(arr){
 }
 
 function isValidH(h){
-  var n=fld(h,'참여 이력명')||'';
-  return n.replace(/ - /g,'').trim()!==''&&fld(h,'역할 타입');
+  return ids(fld(h,'참여자')).length>0;
 }
 function histByShow(sid){return DB.history.filter(function(h){return isValidH(h)&&ids(fld(h,'공연')).indexOf(sid)>-1;});}
 function histByPerson(pid){return DB.history.filter(function(h){return isValidH(h)&&ids(fld(h,'참여자')).indexOf(pid)>-1;});}
