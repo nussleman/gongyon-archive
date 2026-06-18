@@ -226,13 +226,13 @@ function renderShowSidebar(shows, query){
     var sub=nm(trid)||'';
     return '<button class="list-item" onclick="showShow(\''+s.id+'\')">'+fld(s,'공연명')+(sub?'<span class="sub">'+sub+'</span>':'')+'</button>';
   }).join('');
-  .innerHTML=
+  $('sb').innerHTML=
     '<div class="sidebar-label">공연 목록</div>'+
     '<div class="sb-search"><span class="sb-search-icon">🔍</span>'+
     '<input id="show-search" type="text" placeholder="공연명, 극단 검색..." value="'+(q||'')+'" oninput="renderShowSidebar(_allShows,this.value)"></div>'+
     (items||'<div style="padding:0.8rem 1.2rem;font-size:0.8rem;color:var(--muted)">검색 결과 없음</div>');
   if(q&&filtered[0])showShow(filtered[0].id);
-  var inp=;if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('show-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allShows=[];
 function goShows(){
