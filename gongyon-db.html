@@ -109,7 +109,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 <script>
 var BASE='appQtwYrSzJvmt9NA',TOKEN='patGrndUzESpEA1Dw.741c774c92d507034565c813ea223d26291c105e0a35b6282b5a2c501226e05d';
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[]};
-var MAP={},STAFF_ORDER={},POSTER={};
+var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={};
 
 function $(i){return document.getElementById(i);}
 function sb(h){$('sb').innerHTML=h;}
@@ -153,6 +153,14 @@ async function load(){
   DB.shows.forEach(function(r){var u=iurl(fld(r,'포스터'));if(u)POSTER[r.id]=u;});
   STAFF_ORDER={};
   DB.staffRoles.forEach(function(r){var o=fld(r,'순서');if(o!=null)STAFF_ORDER[r.id]=o;});
+  ROLE_ORDER={};
+  var roleOrderCandidates=['순서','배역 순서','번호','배역번호','순번','Order','order'];
+  var roleOrderField=roleOrderCandidates.find(function(key){
+    return DB.roles.some(function(r){return fld(r,key)!=null;});
+  });
+  if(roleOrderField){
+    DB.roles.forEach(function(r){var o=fld(r,roleOrderField);if(o!=null)ROLE_ORDER[r.id]=o;});
+  }
 }
 
 function sortShows(arr){
@@ -300,8 +308,16 @@ function showShow(sid){
     (date?'<span>📅 '+date+'</span>':'')+
     '</div></div></div></div>';
   if(actors.length){
+    var sortedActors=actors.slice().sort(function(a,b){
+      var ra=ids(fld(a,'배역'))[0]||'',rb=ids(fld(b,'배역'))[0]||'';
+      var oa=ROLE_ORDER[ra],ob=ROLE_ORDER[rb];
+      if(oa==null&&ob==null)return 0;
+      if(oa==null)return 1;
+      if(ob==null)return -1;
+      return oa-ob;
+    });
     h+='<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">';
-    actors.forEach(function(rec){h+=actorCard(rec);});
+    sortedActors.forEach(function(rec){h+=actorCard(rec);});
     h+='</div></div>';
   }
   if(staff.length){
