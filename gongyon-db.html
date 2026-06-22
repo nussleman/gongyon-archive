@@ -482,7 +482,7 @@ function showPerson(pid){
         ?'<div style="display:flex;gap:4px"><div class="cast-card-tag cast-card-tag-actor">배우</div><div class="cast-card-tag cast-card-tag-staff">스탭</div></div>'
         :e.isActor?'<div class="cast-card-tag cast-card-tag-actor">배우</div>'
         :'<div class="cast-card-tag cast-card-tag-staff">스탭</div>';
-      gridH+='<div class="cast-card" onclick="showShow(''+e.sid+'')">'+imgH
+      gridH+='<div class="cast-card" onclick="showShow(\''+e.sid+'\')">'+imgH
         +'<div class="cast-name">'+nm(e.sid)+'</div>'
         +(roleLabel?'<div class="cast-role">'+roleLabel+'</div>':'')
         +(dateLabel?'<div class="cast-role" style="opacity:.6">'+dateLabel+'</div>':'')
