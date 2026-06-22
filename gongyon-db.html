@@ -78,11 +78,9 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .person-stat-num{font-family:'Noto Serif KR',serif;font-size:1.6rem;font-weight:300;color:var(--accent);line-height:1;margin-bottom:0.25rem}
 .person-stat-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.06em}
 
-/* 연도별 그리드 타임라인 */
-.year-group{margin-bottom:2rem}
-.year-heading{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem}
-.year-label{font-size:0.7rem;color:var(--accent);letter-spacing:0.12em;font-family:'Noto Serif KR',serif;flex-shrink:0}
-.year-heading::after{content:'';flex:1;height:1px;background:var(--line)}
+/* 연도 구분 카드 — 그리드 안에서 한 칸 차지 */
+.year-divider-card{display:flex;align-items:flex-end;justify-content:center;padding-bottom:0.5rem;border-bottom:1px solid var(--line)}
+.year-divider-label{font-size:0.75rem;color:var(--accent);letter-spacing:0.12em;font-family:'Noto Serif KR',serif}
 
 /* 카드에 배우/스텝 태그 */
 .cast-card-tag{font-size:0.6rem;padding:0.12rem 0.45rem;border-radius:2px;display:inline-block;margin-top:0.25rem}
@@ -426,42 +424,33 @@ function showPerson(pid){
     '<div class="person-stat"><div class="person-stat-num">'+troupeIds.length+'</div><div class="person-stat-label">참여 극단</div></div>'+
     '</div>';
 
-  // ── 2. 연도별 카드 그리드 ──
+  // ── 2. 연도별 카드 그리드 (하나의 연속 그리드, 연도 변경 시 레이블만 삽입) ──
   if(hist.length){
-    var yearMap={};
+    h+='<div class="sec"><div class="sec-label">연도별 활동</div><div class="cast-grid">';
+    var lastYear='';
     hist.forEach(function(rec){
       var sid=ids(fld(rec,'공연'))[0]||'';
       var d=showDate(sid);
       var y=yearOf(d)||'연도 미상';
-      if(!yearMap[y])yearMap[y]=[];
-      yearMap[y].push(rec);
+      var isActor=tname(rec)==='배우';
+      var rid=isActor?(ids(fld(rec,'배역'))[0]||''):(ids(fld(rec,'스텝'))[0]||'');
+      var roleLabel=nm(rid)||'';
+      var dateLabel=ym(d);
+      var u=POSTER[sid]||'';
+      var imgH=u?'<img class="cast-img" src="'+u+'">':'<div class="cast-img-ph">🎭</div>';
+      if(y!==lastYear){
+        h+='<div class="year-divider-card"><span class="year-divider-label">'+y+'</span></div>';
+        lastYear=y;
+      }
+      h+='<div class="cast-card" onclick="showShow(\''+sid+'\')">'+
+        imgH+
+        '<div class="cast-name">'+nm(sid)+'</div>'+
+        (roleLabel?'<div class="cast-role">'+roleLabel+'</div>':'')+
+        (dateLabel?'<div class="cast-role" style="opacity:.6">'+dateLabel+'</div>':'')+
+        '<div class="cast-card-tag '+(isActor?'cast-card-tag-actor':'cast-card-tag-staff')+'">'+(isActor?'배우':'스텝')+'</div>'+
+        '</div>';
     });
-    var years=Object.keys(yearMap).sort(function(a,b){return b.localeCompare(a);});
-
-    h+='<div class="sec"><div class="sec-label">연도별 활동</div>';
-    years.forEach(function(y){
-      h+='<div class="year-group">'+
-        '<div class="year-heading"><span class="year-label">'+y+'</span></div>'+
-        '<div class="cast-grid">';
-      yearMap[y].forEach(function(rec){
-        var sid=ids(fld(rec,'공연'))[0]||'';
-        var isActor=tname(rec)==='배우';
-        var rid=isActor?(ids(fld(rec,'배역'))[0]||''):(ids(fld(rec,'스텝'))[0]||'');
-        var roleLabel=nm(rid)||'';
-        var dateLabel=ym(showDate(sid));
-        var u=POSTER[sid]||'';
-        var imgH=u?'<img class="cast-img" src="'+u+'">':'<div class="cast-img-ph">🎭</div>';
-        h+='<div class="cast-card" onclick="showShow(\''+sid+'\')">'+
-          imgH+
-          '<div class="cast-name">'+nm(sid)+'</div>'+
-          (roleLabel?'<div class="cast-role">'+roleLabel+'</div>':'')+
-          (dateLabel?'<div class="cast-role" style="opacity:.6">'+dateLabel+'</div>':'')+
-          '<div class="cast-card-tag '+(isActor?'cast-card-tag-actor':'cast-card-tag-staff')+'">'+(isActor?'배우':'스텝')+'</div>'+
-          '</div>';
-      });
-      h+='</div></div>';
-    });
-    h+='</div>';
+    h+='</div></div>';
   }
 
   // ── 3. 함께한 배우 ──
