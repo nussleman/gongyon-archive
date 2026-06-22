@@ -465,12 +465,23 @@ function showPerson(pid){
         gridH+='<div class="year-divider-card"><span class="year-divider-label">'+y+'</span></div>';
         lastYear=y;
       }
-      var roleLabel=e.roles.length?e.roles.join(', '):(e.staffRoles.length?e.staffRoles.join(', '):'');
+      // 필터에 따라 표시할 역할명 결정
+      var roleLabel='';
+      if(filter==='staff'){
+        roleLabel=e.staffRoles.join(', ');
+      } else if(filter==='actor'){
+        roleLabel=e.roles.join(', ');
+      } else {
+        var parts=[];
+        if(e.roles.length)parts.push(e.roles.join(', '));
+        if(e.staffRoles.length)parts.push(e.staffRoles.join(', '));
+        roleLabel=parts.join(' / ');
+      }
       var tagH=e.isActor&&e.isStaff
         ?'<div style="display:flex;gap:4px"><div class="cast-card-tag cast-card-tag-actor">\ubc30\uc6b0</div><div class="cast-card-tag cast-card-tag-staff">\uc2a4\ud0ed</div></div>'
         :e.isActor?'<div class="cast-card-tag cast-card-tag-actor">\ubc30\uc6b0</div>'
         :'<div class="cast-card-tag cast-card-tag-staff">\uc2a4\ud0ed</div>';
-      gridH+='<div class="cast-card" onclick="showShow(\''+e.sid+'\')">'+imgH
+      gridH+='<div class="cast-card" onclick="showShow(''+e.sid+'')">'+imgH
         +'<div class="cast-name">'+nm(e.sid)+'</div>'
         +(roleLabel?'<div class="cast-role">'+roleLabel+'</div>':'')
         +(dateLabel?'<div class="cast-role" style="opacity:.6">'+dateLabel+'</div>':'')
