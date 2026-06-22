@@ -95,12 +95,14 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 
 /* 연도별 활동 차트 — 픽셀 기반, 너비 제한 */
 .year-chart-block{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.85rem 1rem;max-width:360px}
-.year-chart-title{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:0.65rem}
-.mini-chart{display:flex;align-items:flex-end;gap:5px;height:44px}
-.mini-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:18px;max-width:36px}
-.mini-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:0.65;transition:opacity .15s;cursor:default}
+.year-chart-title{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:0.7rem}
+/* 차트 전체: 숫자 + 막대 + 연도 라벨을 세로로 쌓음 */
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:70px}
+.mini-bar-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;flex:1;min-width:18px;max-width:36px;height:100%}
+.mini-bar-cnt{font-size:0.52rem;color:var(--accent);line-height:1;opacity:0.85}
+.mini-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:0.6;transition:opacity .15s;cursor:default;flex-shrink:0}
 .mini-bar:hover{opacity:1}
-.mini-bar-label{font-size:0.55rem;color:var(--muted)}
+.mini-bar-label{font-size:0.52rem;color:var(--muted);flex-shrink:0}
 
 /* ══════════════════════════════
    모바일 반응형
@@ -654,8 +656,9 @@ function showPerson(pid,push){
       +'<div class="mini-chart">';
     allYears.forEach(function(y){
       var cnt=yearCntMap[y];
-      var barPx=Math.max(3,Math.round((cnt/maxYearCnt)*CHART_H));
+      var barPx=Math.max(4,Math.round((cnt/maxYearCnt)*CHART_H));
       chartH+='<div class="mini-bar-wrap">'
+        +'<div class="mini-bar-cnt">'+cnt+'</div>'
         +'<div class="mini-bar" style="height:'+barPx+'px" title="'+y+': '+cnt+'편"></div>'
         +'<div class="mini-bar-label">'+y.slice(2)+'</div>'
         +'</div>';
