@@ -72,13 +72,37 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .item-card-sub{font-size:0.75rem;color:var(--muted)}
 .empty{color:var(--muted);font-size:0.83rem;padding:2rem 0}
 
-/* ── 배우 페이지 추가 스타일 ── */
-.person-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.6rem;margin-bottom:2rem}
-.person-stat{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.9rem 1rem}
-.person-stat-num{font-family:'Noto Serif KR',serif;font-size:1.6rem;font-weight:300;color:var(--accent);line-height:1;margin-bottom:0.25rem}
-.person-stat-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.06em}
+/* ── 참여자 페이지: 프로필 헤더 (A안) ── */
+/* 프로필 사진은 작게, 오른쪽에 이름+통계+극단 통합 */
+.person-header{display:flex;gap:1.6rem;margin-bottom:1.6rem;align-items:flex-start}
+.person-photo-col{flex-shrink:0}
+.person-photo-col .poster-img,
+.person-photo-col .poster-placeholder{width:120px;aspect-ratio:2/3}
+.person-info-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:0.9rem}
+/* 이름+기간 */
+.person-name-block{}
+/* 인라인 통계 바 */
+.person-stats-inline{display:flex;gap:0.5rem;flex-wrap:wrap}
+.psi-item{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:0.55rem 0.8rem;display:flex;flex-direction:column;gap:0.15rem;min-width:64px}
+.psi-num{font-family:'Noto Serif KR',serif;font-size:1.2rem;font-weight:300;color:var(--accent);line-height:1}
+.psi-label{font-size:0.6rem;color:var(--muted);letter-spacing:0.06em;white-space:nowrap}
+/* 함께한 극단 인라인 */
+.person-troupes-inline{display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center}
+.person-troupes-label{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-right:0.2rem;flex-shrink:0}
+.troupe-chip{display:inline-flex;align-items:center;gap:0.4rem;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:0.22rem 0.75rem;font-size:0.75rem;cursor:pointer;transition:background .15s,border-color .15s}
+.troupe-chip:hover{background:var(--bg3);border-color:rgba(255,255,255,0.18)}
+.troupe-chip-cnt{font-size:0.65rem;color:var(--muted)}
 
-/* 연도 구분 카드 — 그리드 안에서 한 칸 차지 */
+/* 연도별 활동 차트 — 픽셀 기반으로 수정 */
+.year-chart-block{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.85rem 1rem}
+.year-chart-title{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:0.65rem}
+.mini-chart{display:flex;align-items:flex-end;gap:5px;height:44px}
+.mini-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.mini-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:0.65;transition:opacity .15s;cursor:default}
+.mini-bar:hover{opacity:1}
+.mini-bar-label{font-size:0.55rem;color:var(--muted)}
+
+/* 연도 구분 카드 */
 .year-divider-card{display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;background:transparent;border:none}
 .year-divider-label{font-size:1.4rem;color:var(--accent);letter-spacing:0.08em;font-family:'Noto Serif KR',serif;font-weight:300;text-align:center}
 
@@ -99,24 +123,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .pf-btn{background:none;border:1px solid var(--line);border-radius:4px;padding:0.25rem 0.7rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.72rem;cursor:pointer;transition:all .15s}
 .pf-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
 .pf-active{background:var(--bg3) !important;color:var(--accent) !important;border-color:var(--accent) !important}
-.year-divider-card{display:flex;align-items:center;justify-content:center;aspect-ratio:3/4;background:transparent;border:none}
-.year-divider-label{font-size:1.4rem;color:var(--accent);letter-spacing:0.08em;font-family:'Noto Serif KR',serif;font-weight:300;text-align:center}
-.cast-card-tag{font-size:0.6rem;padding:0.12rem 0.45rem;border-radius:2px;display:inline-block;margin-top:0.25rem}
-.cast-card-tag-actor{background:var(--actor-bg);color:var(--actor)}
-.cast-card-tag-staff{background:var(--staff-bg);color:var(--staff)}
 
-/* 인사이트 섹션 */
-.insight-row{display:flex;gap:0.8rem;margin-bottom:2rem;flex-wrap:wrap}
-.insight-block{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.9rem 1.1rem;flex:1;min-width:160px}
-.insight-block-label{font-size:0.68rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:0.4rem}
-.insight-block-value{font-size:0.9rem;font-weight:400;color:var(--text)}
-.insight-block-value span{color:var(--accent)}
-/* 미니 바 차트 */
-.mini-chart{display:flex;align-items:flex-end;gap:4px;height:40px;margin-top:0.5rem}
-.mini-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
-.mini-bar{width:100%;background:var(--accent);border-radius:2px 2px 0 0;opacity:0.7;min-height:2px;transition:opacity .15s}
-.mini-bar:hover{opacity:1}
-.mini-bar-label{font-size:0.55rem;color:var(--muted);writing-mode:horizontal-tb}
 /* 자주 함께한 스텝 */
 .costaff-list{display:flex;flex-direction:column;gap:0.4rem}
 .costaff-row{display:flex;align-items:center;gap:0.8rem;padding:0.5rem 0.8rem;background:var(--bg2);border:1px solid var(--line);border-radius:5px;cursor:pointer;transition:background .15s}
@@ -126,7 +133,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .costaff-name{font-size:0.82rem;flex:1}
 .costaff-role{font-size:0.7rem;color:var(--muted)}
 .costaff-cnt{font-size:0.7rem;color:var(--muted);flex-shrink:0}
-/* 극단 리스트 */
+/* 극단 리스트 (detail view용) */
 .troupe-list{display:flex;flex-direction:column;gap:0.35rem}
 .troupe-row{display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:var(--bg2);border:1px solid var(--line);border-radius:5px;cursor:pointer;transition:background .15s}
 .troupe-row:hover{background:var(--bg3)}
@@ -485,59 +492,73 @@ function showPerson(pid,push){
   var maxYearCnt=Math.max.apply(null,Object.values(yearCntMap).concat([1]));
   var firstYear=allYears[0]||'';
   var lastActiveYear=allYears[allYears.length-1]||'';
-  var spanLabel=firstYear&&lastActiveYear?(firstYear===lastActiveYear?firstYear+'년':firstYear+' – '+lastActiveYear):'';
+  var spanLabel=firstYear&&lastActiveYear?(firstYear===lastActiveYear?firstYear+'년 활동':firstYear+' – '+lastActiveYear+' 활동'):'';
 
-  // ── 헤더 ──
+  // ── 프로필 사진 ──
   var photo=PERSON_PHOTO[pid]||'';
-  var photoH=photo?'<img class="poster-img" src="'+photo+'" alt="'+fld(person,'이름')+'">':'<div class="poster-placeholder">🎭</div>';
-  var h='<div class="detail-header"><div class="poster-wrap">'+photoH+
-    '<div class="poster-info">'+
-    '<div class="eyebrow">참여자</div>'+
-    '<div class="detail-title">'+fld(person,'이름')+'</div>'+
-    (spanLabel?'<div class="detail-meta"><span>'+spanLabel+' 활동</span></div>':'')+
-    '</div></div></div>';
+  var photoH=photo
+    ?'<img class="poster-img" src="'+photo+'" alt="'+fld(person,'이름')+'">'
+    :'<div class="poster-placeholder">🎭</div>';
 
-  // ── 1. 통계 카드 ──
-  h+='<div class="person-stats">'+
-    '<div class="person-stat"><div class="person-stat-num">'+showIds.length+'</div><div class="person-stat-label">총 공연</div></div>'+
-    '<div class="person-stat"><div class="person-stat-num">'+actors.length+'</div><div class="person-stat-label">배우 참여</div></div>'+
-    '<div class="person-stat"><div class="person-stat-num">'+staff.length+'</div><div class="person-stat-label">스텝 참여</div></div>'+
-    '<div class="person-stat"><div class="person-stat-num">'+roleIds.length+'</div><div class="person-stat-label">맡은 배역</div></div>'+
-    '<div class="person-stat"><div class="person-stat-num">'+troupeIds.length+'</div><div class="person-stat-label">참여 극단</div></div>'+
-    '</div>';
+  // ── 통계 인라인 바 HTML ──
+  var statsH='<div class="person-stats-inline">'
+    +'<div class="psi-item"><div class="psi-num">'+showIds.length+'</div><div class="psi-label">총 공연</div></div>'
+    +'<div class="psi-item"><div class="psi-num">'+actors.length+'</div><div class="psi-label">배우 참여</div></div>'
+    +'<div class="psi-item"><div class="psi-num">'+staff.length+'</div><div class="psi-label">스텝 참여</div></div>'
+    +'<div class="psi-item"><div class="psi-num">'+roleIds.length+'</div><div class="psi-label">맡은 배역</div></div>'
+    +'<div class="psi-item"><div class="psi-num">'+troupeIds.length+'</div><div class="psi-label">참여 극단</div></div>'
+    +'</div>';
 
-  // ── 1-2. 인사이트 row ──
-  var insightH='<div class="insight-row">';
-  if(allYears.length>1){
-    insightH+='<div class="insight-block" style="flex:2;min-width:200px">'+
-      '<div class="insight-block-label">연도별 공연 수</div>'+
-      '<div class="mini-chart">';
+  // ── 연도별 차트 HTML (픽셀 기반으로 수정) ──
+  var chartH='';
+  if(allYears.length>=1){
+    var CHART_H=44; // px
+    chartH='<div class="year-chart-block">'
+      +'<div class="year-chart-title">연도별 공연 수</div>'
+      +'<div class="mini-chart">';
     allYears.forEach(function(y){
       var cnt=yearCntMap[y];
-      var pct=Math.round((cnt/maxYearCnt)*100);
-      insightH+='<div class="mini-bar-wrap">'+
-        '<div class="mini-bar" style="height:'+pct+'%" title="'+y+': '+cnt+'편"></div>'+
-        '<div class="mini-bar-label">'+y.slice(2)+'</div>'+
-        '</div>';
+      var barPx=Math.max(3,Math.round((cnt/maxYearCnt)*CHART_H));
+      chartH+='<div class="mini-bar-wrap">'
+        +'<div class="mini-bar" style="height:'+barPx+'px" title="'+y+': '+cnt+'편"></div>'
+        +'<div class="mini-bar-label">'+y.slice(2)+'</div>'
+        +'</div>';
     });
-    insightH+='</div></div>';
+    chartH+='</div></div>';
   }
-  if(troupeRanked.length){
-    insightH+='<div class="insight-block" style="flex:1;min-width:160px">'+
-      '<div class="insight-block-label">주로 함께한 극단</div>'+
-      '<div class="troupe-list">';
-    troupeRanked.forEach(function(tid){
-      insightH+='<div class="troupe-row" onclick="showTroupe(\''+tid+'\')">'+
-        '<span class="troupe-row-name">'+nm(tid)+'</span>'+
-        '<span class="troupe-row-cnt">'+troupeCntMap[tid]+'회</span>'+
-        '</div>';
-    });
-    insightH+='</div></div>';
-  }
-  insightH+='</div>';
-  h+=insightH;
 
-  // ── 2. 공연 단위 중복 제거 ──
+  // ── 극단 칩 HTML ──
+  var troupeChipsH='';
+  if(troupeRanked.length){
+    troupeChipsH='<div class="person-troupes-inline">'
+      +'<span class="person-troupes-label">주로 함께한 극단</span>';
+    troupeRanked.forEach(function(tid){
+      troupeChipsH+='<span class="troupe-chip" onclick="showTroupe(\''+tid+'\')">'
+        +nm(tid)
+        +'<span class="troupe-chip-cnt">'+troupeCntMap[tid]+'회</span>'
+        +'</span>';
+    });
+    troupeChipsH+='</div>';
+  }
+
+  // ── 헤더 (A안: 사진 왼쪽, 오른쪽에 이름+통계+차트+극단) ──
+  var h='<div class="detail-header">'
+    +'<div class="person-header">'
+    +'<div class="person-photo-col">'+photoH+'</div>'
+    +'<div class="person-info-col">'
+    +'<div class="person-name-block">'
+    +'<div class="eyebrow">참여자</div>'
+    +'<div class="detail-title">'+fld(person,'이름')+'</div>'
+    +(spanLabel?'<div class="detail-meta"><span>'+spanLabel+'</span></div>':'')+
+    '</div>'
+    +statsH
+    +chartH
+    +troupeChipsH
+    +'</div>'  // person-info-col
+    +'</div>'  // person-header
+    +'</div>'; // detail-header
+
+  // ── 공연 단위 중복 제거 ──
   var showMap={};
   hist.forEach(function(rec){
     var sid=ids(fld(rec,'공연'))[0]||'';
@@ -613,7 +634,7 @@ function showPerson(pid,push){
       +'<div class="cast-grid" id="person-grid"></div></div>';
   }
 
-  // ── 3. 함께한 배우 ──
+  // ── 함께한 배우 ──
   if(coActors.length){
     h+='<div class="sec"><div class="sec-label">함께한 배우</div><div class="coactor-grid">';
     coActors.forEach(function(cpid){
@@ -629,7 +650,7 @@ function showPerson(pid,push){
     h+='</div></div>';
   }
 
-  // ── 4. 자주 함께한 스텝 (카드 그리드) ──
+  // ── 자주 함께한 스텝 ──
   if(coStaff.length){
     h+='<div class="sec"><div class="sec-label">자주 함께한 스텝</div><div class="coactor-grid">';
     coStaff.forEach(function(cpid){
