@@ -233,7 +233,8 @@ function actorCard(rec){
 }
 
 // ── 홈 ──
-function goHome(){
+function goHome(push){
+  if(push!==false)history.pushState({view:'home'},'','#home');
   setNav('home');sb('');_sbContext='';
   var shows=DB.shows.filter(function(s){return fld(s,'공연명');});
   var people=DB.people.filter(function(p){return fld(p,'이름');});
@@ -282,13 +283,15 @@ function renderShowSidebar(shows,query){
   var inp=$('show-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _sbContext='',_allShows=[];
-function goShows(){
+function goShows(push){
+  if(push!==false)history.pushState({view:'shows'},'','#shows');
   setNav('shows');_sbContext='shows';
   _allShows=sortShows(DB.shows.filter(function(s){return fld(s,'공연명');}));
   renderShowSidebar(_allShows,'');
   if(_allShows[0])showShow(_allShows[0].id);
 }
-function showShow(sid){
+function showShow(sid,push){
+  if(push!==false)history.pushState({view:'show',id:sid},'','#show-'+sid);
   setNav('shows');
   document.querySelectorAll('#sb .list-item').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(sid)>-1);
@@ -362,14 +365,16 @@ function renderPeopleSidebar(people,query){
   var inp=$('people-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allPeople=[];
-function goPeople(){
+function goPeople(push){
+  if(push!==false)history.pushState({view:'people'},'','#people');
   setNav('people');_sbContext='people';
   _allPeople=DB.people.filter(function(p){return fld(p,'이름');});
   renderPeopleSidebar(_allPeople,'');
   if(_allPeople[0])showPerson(_allPeople[0].id);
 }
 
-function showPerson(pid){
+function showPerson(pid,push){
+  if(push!==false)history.pushState({view:'person',id:pid},'','#person-'+pid);
   setNav('people');
   document.querySelectorAll('#sb .list-item').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(pid)>-1);
@@ -555,13 +560,15 @@ function renderWorksSidebar(works,query){
   var inp=$('works-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allWorks=[];
-function goWorks(){
+function goWorks(push){
+  if(push!==false)history.pushState({view:'works'},'','#works');
   setNav('works');_sbContext='works';
   _allWorks=DB.works.filter(function(w){return fld(w,'작품명');});
   renderWorksSidebar(_allWorks,'');
   if(_allWorks[0])showWork(_allWorks[0].id);
 }
-function showWork(wid){
+function showWork(wid,push){
+  if(push!==false)history.pushState({view:'work',id:wid},'','#work-'+wid);
   setNav('works');
   document.querySelectorAll('#sb .list-item').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(wid)>-1);
@@ -637,14 +644,16 @@ function renderVenuesSidebar(venues,query){
   var inp=$('venues-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allVenues=[];
-function goVenues(){
+function goVenues(push){
+  if(push!==false)history.pushState({view:'venues'},'','#venues');
   setNav('venues');_sbContext='venues';
   _allVenues=DB.venues.filter(function(v){return fld(v,'극장명');});
   if(!_allVenues.length){sb('<div class="sidebar-label">극장 목록</div>');mn('<div class="empty">극장 데이터가 없습니다.</div>');return;}
   renderVenuesSidebar(_allVenues,'');
   if(_allVenues[0])showVenue(_allVenues[0].id);
 }
-function showVenue(vid){
+function showVenue(vid,push){
+  if(push!==false)history.pushState({view:'venue',id:vid},'','#venue-'+vid);
   setNav('venues');
   document.querySelectorAll('#sb .list-item').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(vid)>-1);
@@ -689,14 +698,16 @@ function renderTroupesSidebar(troupes,query){
   var inp=$('troupes-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allTroupes=[];
-function goTroupes(){
+function goTroupes(push){
+  if(push!==false)history.pushState({view:'troupes'},'','#troupes');
   setNav('troupes');_sbContext='troupes';
   _allTroupes=DB.troupes.filter(function(t){return fld(t,'극단명');});
   if(!_allTroupes.length){sb('<div class="sidebar-label">극단 목록</div>');mn('<div class="empty">극단 데이터가 없습니다.</div>');return;}
   renderTroupesSidebar(_allTroupes,'');
   if(_allTroupes[0])showTroupe(_allTroupes[0].id);
 }
-function showTroupe(tid){
+function showTroupe(tid,push){
+  if(push!==false)history.pushState({view:'troupe',id:tid},'','#troupe-'+tid);
   setNav('troupes');
   document.querySelectorAll('#sb .list-item').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').indexOf(tid)>-1);
@@ -719,8 +730,27 @@ function showTroupe(tid){
   mn(h);
 }
 
+function routeFromHash(hash){
+  var h=hash||location.hash;
+  if(!h||h==='#home'){goHome(false);return;}
+  if(h==='#shows'){goShows(false);return;}
+  if(h==='#people'){goPeople(false);return;}
+  if(h==='#works'){goWorks(false);return;}
+  if(h==='#venues'){goVenues(false);return;}
+  if(h==='#troupes'){goTroupes(false);return;}
+  var m;
+  if(m=h.match(/^#show-(.+)$/)){showShow(m[1],false);return;}
+  if(m=h.match(/^#person-(.+)$/)){showPerson(m[1],false);return;}
+  if(m=h.match(/^#work-(.+)$/)){showWork(m[1],false);return;}
+  if(m=h.match(/^#venue-(.+)$/)){showVenue(m[1],false);return;}
+  if(m=h.match(/^#troupe-(.+)$/)){showTroupe(m[1],false);return;}
+  goHome(false);
+}
+window.addEventListener('popstate',function(e){
+  routeFromHash(location.hash);
+});
 (async function(){
-  try{await load();goHome();}
+  try{await load();routeFromHash(location.hash);}
   catch(e){document.getElementById('mn').innerHTML='<div style="color:#e06c6c;padding:2rem">연결 실패: '+e.message+'</div>';}
 })();
 </script>
