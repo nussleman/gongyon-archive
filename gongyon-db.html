@@ -636,7 +636,7 @@ function showPerson(pid,push){
       var cphoto=PERSON_PHOTO[cpid]||'';
       var cphotoH=cphoto?'<img class="coactor-photo" src="'+cphoto+'">':'<div class="coactor-photo-ph">🎭</div>';
       var roles=Object.keys(coStaffMap[cpid].roles).join(', ');
-      h+='<div class="coactor-card" onclick="showPerson(''+cpid+'')">'+
+      h+='<div class="coactor-card" onclick="showPerson(\''+cpid+'\')">'+
         cphotoH+
         '<div class="coactor-info">'+
         '<div class="coactor-name">'+nm(cpid)+'</div>'+
