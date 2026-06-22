@@ -87,6 +87,41 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 .api-input::placeholder{color:var(--muted)}
 .btn{background:var(--accent);color:#0e0e10;border:none;border-radius:4px;padding:0.5rem 1rem;font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;font-weight:500;cursor:pointer;white-space:nowrap}
 .err{font-size:0.75rem;color:#e06c6c;margin-top:0.6rem;display:none}
+
+/* ── 배우 페이지 추가 스타일 ── */
+.person-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.6rem;margin-bottom:2rem}
+.person-stat{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.9rem 1rem}
+.person-stat-num{font-family:'Noto Serif KR',serif;font-size:1.6rem;font-weight:300;color:var(--accent);line-height:1;margin-bottom:0.25rem}
+.person-stat-label{font-size:0.68rem;color:var(--muted);letter-spacing:0.06em}
+
+/* 타임라인 */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-year-block{display:flex;gap:0}
+.tl-year-col{width:3.2rem;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding-top:0.15rem}
+.tl-year-label{font-size:0.7rem;color:var(--accent);letter-spacing:0.06em;font-family:'Noto Serif KR',serif;writing-mode:horizontal-tb;white-space:nowrap}
+.tl-line{flex:1;width:1px;background:var(--line);margin-top:0.4rem}
+.tl-shows{flex:1;padding:0 0 1.6rem 0.8rem;display:flex;flex-direction:column;gap:0.4rem}
+.tl-show-row{display:flex;align-items:center;gap:0.7rem;padding:0.55rem 0.8rem;background:var(--bg2);border:1px solid var(--line);border-radius:5px;cursor:pointer;transition:background .15s}
+.tl-show-row:hover{background:var(--bg3)}
+.tl-show-poster{width:28px;height:40px;object-fit:cover;border-radius:2px;flex-shrink:0;background:var(--bg3)}
+.tl-show-poster-ph{width:28px;height:40px;border-radius:2px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:var(--muted)}
+.tl-show-info{flex:1;min-width:0}
+.tl-show-name{font-size:0.85rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-show-role{font-size:0.7rem;color:var(--muted);margin-top:0.1rem}
+.tl-show-date{font-size:0.68rem;color:var(--muted);flex-shrink:0}
+.tl-tag{font-size:0.6rem;padding:0.1rem 0.4rem;border-radius:2px;flex-shrink:0}
+.tl-tag-actor{background:var(--actor-bg);color:var(--actor)}
+.tl-tag-staff{background:var(--staff-bg);color:var(--staff)}
+
+/* 함께한 배우 */
+.coactor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.5rem}
+.coactor-card{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.7rem 0.9rem;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:0.7rem}
+.coactor-card:hover{background:var(--bg3)}
+.coactor-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.coactor-photo-ph{width:36px;height:36px;border-radius:50%;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--muted)}
+.coactor-info{min-width:0}
+.coactor-name{font-size:0.82rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.coactor-cnt{font-size:0.68rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -109,7 +144,7 @@ main{padding:2rem 2.5rem;overflow-y:auto}
 <script>
 var BASE='appQtwYrSzJvmt9NA',TOKEN='patGrndUzESpEA1Dw.741c774c92d507034565c813ea223d26291c105e0a35b6282b5a2c501226e05d';
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[]};
-var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={};
+var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={},PERSON_PHOTO={};
 
 function $(i){return document.getElementById(i);}
 function sb(h){$('sb').innerHTML=h;}
@@ -151,6 +186,8 @@ async function load(){
   DB.venues.forEach(function(r){MAP[r.id]=fld(r,'극장명')||'';});
   POSTER={};
   DB.shows.forEach(function(r){var u=iurl(fld(r,'포스터'));if(u)POSTER[r.id]=u;});
+  PERSON_PHOTO={};
+  DB.people.forEach(function(r){var u=iurl(fld(r,'사진'));if(u)PERSON_PHOTO[r.id]=u;});
   STAFF_ORDER={};
   DB.staffRoles.forEach(function(r){var o=fld(r,'순서');if(o!=null)STAFF_ORDER[r.id]=o;});
   ROLE_ORDER={};
@@ -192,6 +229,11 @@ function ym(dateStr){
   if(!dateStr)return '';
   var m=dateStr.match(/^(\d{4})-(\d{2})/);
   return m?(m[1]+'.'+m[2]):dateStr;
+}
+function yearOf(dateStr){
+  if(!dateStr)return '';
+  var m=dateStr.match(/^(\d{4})/);
+  return m?m[1]:'';
 }
 
 function isValidH(h){
@@ -377,43 +419,121 @@ function showPerson(pid){
   if(_sbContext!=='people')goPeople();
   var person=DB.people.find(function(p){return p.id===pid;});
   if(!person)return;
-  var hist=histByPerson(pid);
-  var actors=sortHistByShowDate(hist.filter(function(h){return tname(h)==='배우';}));
-  var staff=sortHistByShowDate(hist.filter(function(h){return tname(h)==='스텝';}));
-  var photo=iurl(fld(person,'사진'));
+  var hist=sortHistByShowDate(histByPerson(pid));
+  var actors=hist.filter(function(h){return tname(h)==='배우';});
+  var staff=hist.filter(function(h){return tname(h)==='스텝';});
+
+  // ── 통계 계산 ──
+  var showIds=[];
+  hist.forEach(function(h){
+    var sid=ids(fld(h,'공연'))[0]||'';
+    if(sid&&showIds.indexOf(sid)===-1)showIds.push(sid);
+  });
+  var troupeIds=[];
+  showIds.forEach(function(sid){
+    var s=DB.shows.find(function(x){return x.id===sid;});
+    if(!s)return;
+    var tid=ids(fld(s,'극단'))[0]||'';
+    if(tid&&troupeIds.indexOf(tid)===-1)troupeIds.push(tid);
+  });
+  var roleIds=[];
+  actors.forEach(function(h){
+    var rid=ids(fld(h,'배역'))[0]||'';
+    if(rid&&roleIds.indexOf(rid)===-1)roleIds.push(rid);
+  });
+
+  // ── 함께한 배우 계산 ──
+  var coMap={};
+  showIds.forEach(function(sid){
+    var coHists=DB.history.filter(function(h){
+      return isValidH(h)&&ids(fld(h,'공연')).indexOf(sid)>-1&&tname(h)==='배우';
+    });
+    coHists.forEach(function(h){
+      var cpid=ids(fld(h,'참여자'))[0]||'';
+      if(!cpid||cpid===pid)return;
+      coMap[cpid]=(coMap[cpid]||0)+1;
+    });
+  });
+  var coActors=Object.keys(coMap).sort(function(a,b){return coMap[b]-coMap[a];}).slice(0,8);
+
+  // ── 헤더 ──
+  var photo=PERSON_PHOTO[pid]||'';
   var photoH=photo?'<img class="poster-img" src="'+photo+'" alt="'+fld(person,'이름')+'">':'<div class="poster-placeholder">🎭</div>';
   var h='<div class="detail-header"><div class="poster-wrap">'+photoH+
     '<div class="poster-info">'+
     '<div class="eyebrow">참여자</div>'+
     '<div class="detail-title">'+fld(person,'이름')+'</div>'+
-    '<div class="detail-meta">'+
-    (actors.length?'<span>🎭 배우 '+actors.length+'회</span>':'')+
-    (staff.length?'<span>🎬 스텝 '+staff.length+'회</span>':'')+
-    '</div></div></div></div>';
-  if(actors.length){
-    h+='<div class="sec"><div class="sec-label">배우로 참여한 공연</div><div class="cast-grid">';
-    actors.forEach(function(rec){
-      var sid=ids(fld(rec,'공연'))[0]||'';
-      var rid=ids(fld(rec,'배역'))[0]||'';
-      var u=POSTER[sid]||'';
-      var imgH=u?'<img class="cast-img" src="'+u+'">':'<div class="cast-img-ph">🎭</div>';
-      var dateLabel=ym(showDate(sid));
-      h+='<div class="cast-card" onclick="showShow(\''+sid+'\')">'+imgH+'<div class="cast-name">'+nm(sid)+'</div><div class="cast-role">'+nm(rid)+'</div>'+(dateLabel?'<div class="cast-role" style="opacity:.7">'+dateLabel+'</div>':'')+'</div>';
+    '</div></div></div>';
+
+  // ── 1. 통계 카드 ──
+  h+='<div class="person-stats">'+
+    '<div class="person-stat"><div class="person-stat-num">'+showIds.length+'</div><div class="person-stat-label">총 공연</div></div>'+
+    '<div class="person-stat"><div class="person-stat-num">'+actors.length+'</div><div class="person-stat-label">배우 참여</div></div>'+
+    '<div class="person-stat"><div class="person-stat-num">'+staff.length+'</div><div class="person-stat-label">스텝 참여</div></div>'+
+    '<div class="person-stat"><div class="person-stat-num">'+roleIds.length+'</div><div class="person-stat-label">맡은 배역</div></div>'+
+    '<div class="person-stat"><div class="person-stat-num">'+troupeIds.length+'</div><div class="person-stat-label">참여 극단</div></div>'+
+    '</div>';
+
+  // ── 2. 연도별 타임라인 ──
+  if(hist.length){
+    // 연도별로 그룹핑
+    var yearMap={};
+    hist.forEach(function(h){
+      var sid=ids(fld(h,'공연'))[0]||'';
+      var d=showDate(sid);
+      var y=yearOf(d)||'연도 미상';
+      if(!yearMap[y])yearMap[y]=[];
+      yearMap[y].push(h);
+    });
+    var years=Object.keys(yearMap).sort(function(a,b){return b.localeCompare(a);});
+
+    h+='<div class="sec"><div class="sec-label">연도별 활동</div><div class="timeline">';
+    years.forEach(function(y){
+      var yhists=yearMap[y];
+      h+='<div class="tl-year-block">'+
+        '<div class="tl-year-col"><div class="tl-year-label">'+y+'</div><div class="tl-line"></div></div>'+
+        '<div class="tl-shows">';
+      yhists.forEach(function(rec){
+        var sid=ids(fld(rec,'공연'))[0]||'';
+        var isActor=tname(rec)==='배우';
+        var rid=isActor?(ids(fld(rec,'배역'))[0]||''):(ids(fld(rec,'스텝'))[0]||'');
+        var roleLabel=nm(rid)||'';
+        var dateLabel=ym(showDate(sid));
+        var u=POSTER[sid]||'';
+        var posterH=u?'<img class="tl-show-poster" src="'+u+'">':'<div class="tl-show-poster-ph">🎭</div>';
+        h+='<div class="tl-show-row" onclick="showShow(\''+sid+'\')">'+
+          posterH+
+          '<div class="tl-show-info">'+
+          '<div class="tl-show-name">'+nm(sid)+'</div>'+
+          (roleLabel?'<div class="tl-show-role">'+roleLabel+'</div>':'')+
+          '</div>'+
+          (dateLabel?'<div class="tl-show-date">'+dateLabel+'</div>':'')+
+          '<div class="tl-tag '+(isActor?'tl-tag-actor':'tl-tag-staff')+'">'+(isActor?'배우':'스텝')+'</div>'+
+          '</div>';
+      });
+      h+='</div></div>';
     });
     h+='</div></div>';
   }
-  if(staff.length){
-    h+='<div class="sec"><div class="sec-label">스텝으로 참여한 공연</div><div class="cast-grid">';
-    staff.forEach(function(rec){
-      var sid=ids(fld(rec,'공연'))[0]||'';
-      var rid=ids(fld(rec,'스텝'))[0]||'';
-      var u=POSTER[sid]||'';
-      var imgH=u?'<img class="cast-img" src="'+u+'">':'<div class="cast-img-ph">🎭</div>';
-      var dateLabel=ym(showDate(sid));
-      h+='<div class="cast-card" onclick="showShow(\''+sid+'\')">'+imgH+'<div class="cast-name">'+nm(sid)+'</div><div class="cast-role" style="color:var(--staff)">'+nm(rid)+'</div>'+(dateLabel?'<div class="cast-role" style="opacity:.7">'+dateLabel+'</div>':'')+'</div>';
+
+  // ── 3. 함께한 배우 ──
+  if(coActors.length){
+    h+='<div class="sec"><div class="sec-label">함께한 배우</div><div class="coactor-grid">';
+    coActors.forEach(function(cpid){
+      var cp=DB.people.find(function(p){return p.id===cpid;});
+      if(!cp)return;
+      var cphoto=PERSON_PHOTO[cpid]||'';
+      var cphotoH=cphoto?'<img class="coactor-photo" src="'+cphoto+'">':'<div class="coactor-photo-ph">🎭</div>';
+      h+='<div class="coactor-card" onclick="showPerson(\''+cpid+'\')">'+
+        cphotoH+
+        '<div class="coactor-info">'+
+        '<div class="coactor-name">'+nm(cpid)+'</div>'+
+        '<div class="coactor-cnt">'+coMap[cpid]+'회 함께</div>'+
+        '</div></div>';
     });
     h+='</div></div>';
   }
+
   if(!hist.length)h+='<div class="empty">참여 이력이 없습니다.</div>';
   mn(h);
 }
