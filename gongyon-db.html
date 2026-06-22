@@ -129,7 +129,9 @@ main{padding:2rem 2.5rem;overflow-y:auto}
     display:block;
     position:fixed;top:0;left:0;right:0;bottom:56px;
     background:var(--bg);z-index:50;
-    overflow-y:auto;padding-top:1rem;
+    overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding-top:1rem;
     max-height:none;
     transition:transform .22s ease;
   }
@@ -446,7 +448,7 @@ function renderShowSidebar(shows,query){
     '<input id="show-search" type="text" placeholder="공연명, 극단 검색..." value="'+(q||'')+'" oninput="renderShowList(_allShows,this.value)"></div>'+
     '<div id="show-list"></div>';
   renderShowList(shows,query);
-  var inp=$('show-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('show-search');if(inp&&!isMobile()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _sbContext='',_allShows=[];
 function goShows(push){
@@ -529,7 +531,7 @@ function renderPeopleSidebar(people,query){
     '<input id="people-search" type="text" placeholder="이름 검색..." value="'+(q||'')+'" oninput="renderPeopleList(_allPeople,this.value)"></div>'+
     '<div id="people-list"></div>';
   renderPeopleList(people,query);
-  var inp=$('people-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('people-search');if(inp&&!isMobile()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allPeople=[];
 function goPeople(push){
@@ -828,7 +830,7 @@ function renderWorksSidebar(works,query){
     '<input id="works-search" type="text" placeholder="작품명 검색..." value="'+(q||'')+'" oninput="renderWorksList(_allWorks,this.value)"></div>'+
     '<div id="works-list"></div>';
   renderWorksList(works,query);
-  var inp=$('works-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('works-search');if(inp&&!isMobile()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allWorks=[];
 function goWorks(push){
@@ -915,7 +917,7 @@ function renderVenuesSidebar(venues,query){
     '<input id="venues-search" type="text" placeholder="극장명 검색..." value="'+(q||'')+'" oninput="renderVenuesList(_allVenues,this.value)"></div>'+
     '<div id="venues-list"></div>';
   renderVenuesList(venues,query);
-  var inp=$('venues-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('venues-search');if(inp&&!isMobile()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allVenues=[];
 function goVenues(push){
@@ -972,7 +974,7 @@ function renderTroupesSidebar(troupes,query){
     '<input id="troupes-search" type="text" placeholder="극단명 검색..." value="'+(q||'')+'" oninput="renderTroupesList(_allTroupes,this.value)"></div>'+
     '<div id="troupes-list"></div>';
   renderTroupesList(troupes,query);
-  var inp=$('troupes-search');if(inp){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
+  var inp=$('troupes-search');if(inp&&!isMobile()){inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);}
 }
 var _allTroupes=[];
 function goTroupes(push){
