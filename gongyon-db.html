@@ -501,12 +501,11 @@ function showPerson(pid){
       +'<span style="font-size:0.68rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase">연도별 활동</span>'
       +'<div style="flex:1;height:1px;background:var(--line)"></div>'
       +'<div style="display:flex;gap:0.4rem">'
-      +'<button id="pf-all" class="pf-btn pf-active" onclick="_renderPersonGrid('all')">전체</button>'
-      +'<button id="pf-actor" class="pf-btn" onclick="_renderPersonGrid('actor')">배우만</button>'
-      +'<button id="pf-staff" class="pf-btn" onclick="_renderPersonGrid('staff')">스탭만</button>'
+      +'<button id="pf-all" class="pf-btn pf-active" onclick="_renderPersonGrid(\'all\')">전체</button>'
+      +'<button id="pf-actor" class="pf-btn" onclick="_renderPersonGrid(\'actor\')">배우만</button>'
+      +'<button id="pf-staff" class="pf-btn" onclick="_renderPersonGrid(\'staff\')">스탭만</button>'
       +'</div></div>'
       +'<div class="cast-grid" id="person-grid"></div></div>';
-  }
   }
 
   // ── 3. 함께한 배우 ──
