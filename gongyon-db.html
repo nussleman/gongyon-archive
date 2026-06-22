@@ -629,36 +629,19 @@ function showPerson(pid,push){
     h+='</div></div>';
   }
 
-  // ── 4. 자주 함께한 스텝 ──
+  // ── 4. 자주 함께한 스텝 (카드 그리드) ──
   if(coStaff.length){
-    h+='<div class="sec"><div class="sec-label">자주 함께한 스텝</div><div class="costaff-list">';
+    h+='<div class="sec"><div class="sec-label">자주 함께한 스텝</div><div class="coactor-grid">';
     coStaff.forEach(function(cpid){
       var cphoto=PERSON_PHOTO[cpid]||'';
-      var cphotoH=cphoto?'<img class="costaff-photo" src="'+cphoto+'">':'<div class="costaff-photo-ph">🎭</div>';
+      var cphotoH=cphoto?'<img class="coactor-photo" src="'+cphoto+'">':'<div class="coactor-photo-ph">🎭</div>';
       var roles=Object.keys(coStaffMap[cpid].roles).join(', ');
-      h+='<div class="costaff-row" onclick="showPerson(\''+cpid+'\')">'+
+      h+='<div class="coactor-card" onclick="showPerson(''+cpid+'')">'+
         cphotoH+
-        '<div class="costaff-name">'+nm(cpid)+'</div>'+
-        (roles?'<div class="costaff-role">'+roles+'</div>':'')+
-        '<div class="costaff-cnt">'+coStaffMap[cpid].cnt+'회</div>'+
-        '</div>';
-    });
-    h+='</div></div>';
-  }
-
-  // ── 4. 자주 함께한 스텝 ──
-  if(coStaff.length){
-    h+='<div class="sec"><div class="sec-label">자주 함께한 스텝</div><div class="costaff-list">';
-    coStaff.forEach(function(cpid){
-      var cphoto=PERSON_PHOTO[cpid]||'';
-      var cphotoH=cphoto?'<img class="costaff-photo" src="'+cphoto+'">':'<div class="costaff-photo-ph">🎭</div>';
-      var roles=Object.keys(coStaffMap[cpid].roles).join(', ');
-      h+='<div class="costaff-row" onclick="showPerson(\''+cpid+'\')">'+
-        cphotoH+
-        '<div class="costaff-name">'+nm(cpid)+'</div>'+
-        (roles?'<div class="costaff-role">'+roles+'</div>':'')+
-        '<div class="costaff-cnt">'+coStaffMap[cpid].cnt+'회</div>'+
-        '</div>';
+        '<div class="coactor-info">'+
+        '<div class="coactor-name">'+nm(cpid)+'</div>'+
+        '<div class="coactor-cnt">'+(roles?roles+' · ':'')+coStaffMap[cpid].cnt+'회</div>'+
+        '</div></div>';
     });
     h+='</div></div>';
   }
