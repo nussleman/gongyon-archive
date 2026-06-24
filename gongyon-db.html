@@ -1032,9 +1032,24 @@ function renderPeopleIndex(){
     filtered.forEach(function(p){
       var hist=histByPerson(p.id);
       var actCnt=hist.filter(function(h){return tname(h)==='배우';}).length;
-      var stCnt=hist.filter(function(h){return tname(h)==='스텝';}).length;
+      var staffRoleCntMap={};
+      hist.filter(function(h){return tname(h)==='스텝';}).forEach(function(h){
+        var srid=ids(fld(h,'스텝'))[0]||'';
+        if(srid&&nm(srid))staffRoleCntMap[nm(srid)]=(staffRoleCntMap[nm(srid)]||0)+1;
+      });
+      var staffRoleNames=Object.keys(staffRoleCntMap).sort(function(a,b){
+        var oa=Object.keys(MAP).find(function(k){return MAP[k]===a;})||'';
+        var ob=Object.keys(MAP).find(function(k){return MAP[k]===b;})||'';
+        return (STAFF_ORDER[oa]||999)-(STAFF_ORDER[ob]||999);
+      });
       var photo=PERSON_PHOTO[p.id]||'';
-      listH+='<div class="result-card" onclick="showPerson(\''+p.id+'\')">'+( photo?'<img src="'+photo+'" alt="'+fld(p,'이름')+'" style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block">':'<div class="result-card-ph">👤</div>')+'<div class="result-card-body"><div class="result-card-title">'+fld(p,'이름')+'</div><div class="result-card-tags">'+(actCnt?'<span class="result-card-tag" style="color:var(--actor);background:var(--actor-bg)">배우 '+actCnt+'</span>':'')+(stCnt?'<span class="result-card-tag" style="color:var(--staff);background:var(--staff-bg)">스텝 '+stCnt+'</span>':'')+'</div></div></div>';
+      var tagsH='<div class="result-card-tags">'
+        +(actCnt?'<span class="result-card-tag" style="color:var(--actor);background:var(--actor-bg)">배우 '+actCnt+'</span>':'');
+      staffRoleNames.forEach(function(rname){
+        tagsH+='<span class="result-card-tag" style="color:var(--staff);background:var(--staff-bg)">'+rname+' '+staffRoleCntMap[rname]+'</span>';
+      });
+      tagsH+='</div>';
+      listH+='<div class="result-card" onclick="showPerson(\''+p.id+'\')">'+( photo?'<img src="'+photo+'" alt="'+fld(p,'이름')+'" style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block">':'<div class="result-card-ph">👤</div>')+'<div class="result-card-body"><div class="result-card-title">'+fld(p,'이름')+'</div>'+tagsH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -1042,9 +1057,21 @@ function renderPeopleIndex(){
     filtered.forEach(function(p){
       var hist=histByPerson(p.id);
       var actCnt=hist.filter(function(h){return tname(h)==='배우';}).length;
-      var stCnt=hist.filter(function(h){return tname(h)==='스텝';}).length;
+      var staffRoleCntMap2={};
+      hist.filter(function(h){return tname(h)==='스텝';}).forEach(function(h){
+        var srid=ids(fld(h,'스텝'))[0]||'';
+        if(srid&&nm(srid))staffRoleCntMap2[nm(srid)]=(staffRoleCntMap2[nm(srid)]||0)+1;
+      });
+      var staffRoleNames2=Object.keys(staffRoleCntMap2).sort(function(a,b){
+        var oa=Object.keys(MAP).find(function(k){return MAP[k]===a;})||'';
+        var ob=Object.keys(MAP).find(function(k){return MAP[k]===b;})||'';
+        return (STAFF_ORDER[oa]||999)-(STAFF_ORDER[ob]||999);
+      });
       var photo=PERSON_PHOTO[p.id]||'';
-      listH+='<div class="result-row" onclick="showPerson(\''+p.id+'\')"><div class="rr-poster" style="border-radius:50%">'+(photo?'<img src="'+photo+'" style="border-radius:50%">':'👤')+'</div><div class="rr-main"><div class="rr-title">'+fld(p,'이름')+'</div><div class="rr-meta">'+(actCnt?'<span class="rr-tag" style="color:var(--actor)">배우 '+actCnt+'</span>':'')+(stCnt?'<span class="rr-tag" style="color:var(--staff)">스텝 '+stCnt+'</span>':'')+'<span class="rr-tag">총 '+hist.length+'회</span></div></div></div>';
+      var metaH=(actCnt?'<span class="rr-tag" style="color:var(--actor)">배우 '+actCnt+'</span>':'');
+      staffRoleNames2.forEach(function(rname){metaH+='<span class="rr-tag" style="color:var(--staff)">'+rname+' '+staffRoleCntMap2[rname]+'</span>';});
+      metaH+='<span class="rr-tag">총 '+hist.length+'회</span>';
+      listH+='<div class="result-row" onclick="showPerson(\''+p.id+'\')"><div class="rr-poster" style="border-radius:50%">'+(photo?'<img src="'+photo+'" style="border-radius:50%">':'👤')+'</div><div class="rr-main"><div class="rr-title">'+fld(p,'이름')+'</div><div class="rr-meta">'+metaH+'</div></div></div>';
     });
     listH+='</div>';
   }
