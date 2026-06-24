@@ -49,23 +49,56 @@ nav button:hover{color:var(--text);background:rgba(255,255,255,0.03)}
 nav button.active{color:var(--text);border-left-color:var(--accent);background:rgba(200,169,110,0.06)}
 
 /* 검색창을 nav 하단에 */
-.left-nav .global-search{padding:0.8rem 1rem 0;margin-top:0;display:block;position:relative}
-.left-nav .global-search input{
-  font-size:0.78rem;padding:0.45rem 0.7rem 0.45rem 2rem;
-  width:100%;background:var(--bg3);border:1px solid var(--line);
-  border-radius:6px;color:var(--text);font-family:'Noto Sans KR',sans-serif;
-  outline:none;transition:border-color .2s;
+.left-nav .global-search{
+  padding:0.7rem 1rem 0.8rem;
+  margin-top:0;
+  display:block;
+  position:relative;
 }
-.left-nav .global-search input:focus{border-color:rgba(200,169,110,0.5);}
+.left-nav .global-search input{
+  font-size:0.78rem;
+  padding:0.42rem 1.8rem 0.42rem 2rem;
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--line);
+  border-radius:6px;
+  color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  outline:none;
+  transition:border-color .2s;
+}
+.left-nav .global-search input:focus{border-color:rgba(200,169,110,0.4);}
 .left-nav .global-search input::placeholder{color:var(--muted)}
+.left-nav .global-search .gs-icon{
+  position:absolute;
+  left:1.55rem;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+  font-size:0.72rem;
+  pointer-events:none;
+  line-height:1;
+}
+.left-nav .global-search .gs-clear{
+  position:absolute;
+  right:1.4rem;
+  top:50%;
+  transform:translateY(-50%);
+}
 .left-nav .gs-dropdown{
-  position:fixed;left:200px;bottom:3rem;
-  width:320px;
-  background:var(--bg2);border:1px solid var(--line);border-radius:8px;
-  overflow:hidden;z-index:200;
+  position:fixed;
+  left:204px;
+  top:4rem;
+  width:300px;
+  background:var(--bg2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  z-index:200;
   box-shadow:0 8px 32px rgba(0,0,0,0.5);
   display:none;
-  max-height:480px;overflow-y:auto;
+  max-height:480px;
+  overflow-y:auto;
 }
 .left-nav .gs-dropdown.open{display:block}
 
@@ -677,6 +710,8 @@ function renderShowIndex(){
 
 /* ══ 작품 인덱스 ══ */
 var _allWorks=[];
+var _workIndexView='grid';
+var _workFilter={years:[],minCast:0};
 
 function goWorks(push){
   if(push!==false)history.pushState({view:'works'},'','#works');
