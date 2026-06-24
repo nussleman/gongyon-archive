@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   display:flex;flex-direction:column;
   padding:1.6rem 0 1rem;
   z-index:100;
-  overflow-y:auto;
+  overflow:visible;
 }
 .site-title{
   font-family:'Noto Serif KR',serif;font-weight:300;
@@ -94,11 +94,12 @@ nav button.active{color:var(--text);border-left-color:var(--accent);background:r
   border:1px solid var(--line);
   border-radius:8px;
   overflow:hidden;
-  z-index:200;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
   display:none;
   max-height:480px;
   overflow-y:auto;
+  pointer-events:auto;
 }
 .left-nav .gs-dropdown.open{display:block}
 
@@ -483,7 +484,7 @@ function gsRender(q){
   var lastType='';var html='';
   results.forEach(function(item,i){
     if(item.type!==lastType){if(lastType)html+='<div class="gs-divider"></div>';html+='<div class="gs-group-label">'+typeLabel[item.type]+'</div>';lastType=item.type;}
-    html+='<div class="gs-item" data-idx="'+i+'" onclick="gsSelect('+i+')">'+'<span class="gs-item-icon">'+item.icon+'</span>'+'<div class="gs-item-main">'+'<div class="gs-item-name">'+item.name+'</div>'+(item.sub?'<div class="gs-item-sub">'+item.sub+'</div>':'')+'</div></div>';
+    html+='<div class="gs-item" data-idx="'+i+'" onmousedown="gsSelect('+i+')">'+'<span class="gs-item-icon">'+item.icon+'</span>'+'<div class="gs-item-main">'+'<div class="gs-item-name">'+item.name+'</div>'+(item.sub?'<div class="gs-item-sub">'+item.sub+'</div>':'')+'</div></div>';
   });
   d.innerHTML=html;d.classList.add('open');
 }
