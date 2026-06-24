@@ -16,7 +16,7 @@
 body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-weight:300;min-height:100vh}
 
 /* ── 레이아웃: 좌측 고정 nav + 우측 콘텐츠 ── */
-.page-wrap{display:grid;grid-template-columns:200px 1fr;min-height:100vh}
+.page-wrap{display:flex;min-height:100vh}
 
 /* 좌측 고정 nav */
 .left-nav{
@@ -53,7 +53,7 @@ nav button.active{color:var(--text);border-left-color:var(--accent);background:r
 .left-nav .global-search input{font-size:0.78rem;padding:0.45rem 0.7rem 0.45rem 2rem}
 
 /* 우측 콘텐츠 영역 */
-.content-area{margin-left:200px;min-height:100vh;display:flex;flex-direction:column}
+.content-area{margin-left:200px;min-height:100vh;display:block;width:calc(100% - 200px);box-sizing:border-box}
 
 /* 헤더(기존 aside 역할 제거, 상단 바 제거) */
 header{display:none}
@@ -83,11 +83,10 @@ nav button{background:none;border:none;border-bottom:2px solid transparent;color
 nav button.active,nav button:hover{color:var(--text);border-bottom-color:var(--accent)}
 
 /* ── 레이아웃 ── */
-.app{display:block;min-height:100vh}
-.app.index-mode aside{display:none !important}
+.app{display:none}
 aside{display:none !important}
-.sidebar-inner{padding:1rem 0}
-.sidebar-label{font-size:0.65rem;letter-spacing:0.22em;color:var(--muted);padding:0 1.2rem 0.6rem;text-transform:uppercase}
+.sidebar-inner{display:none}
+.sidebar-label{display:none}
 
 /* 사이드바 필터 바 */
 .sb-filter-bar{display:flex;gap:0.35rem;padding:0 1rem 0.7rem;flex-wrap:wrap}
@@ -103,7 +102,7 @@ aside{display:none !important}
 
 .sb-year-divider{padding:0.5rem 1.2rem 0.15rem;font-size:0.62rem;color:var(--accent);letter-spacing:0.18em;opacity:0.7;font-family:'Noto Serif KR',serif}
 
-main{padding:2rem;overflow-y:auto;min-height:100vh;box-sizing:border-box;max-width:none;width:100%}
+main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:block}
 
 /* ── 홈 ── */
 .home-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.7rem;margin-bottom:2.2rem}
@@ -328,11 +327,9 @@ main{padding:2rem;overflow-y:auto;min-height:100vh;box-sizing:border-box;max-wid
   </nav>
 
   <div class="content-area">
-    <div class="app" id="app-grid">
-      <aside id="sb"></aside>
-      <main id="mn"></main>
-    </div>
+    <main id="mn"></main>
   </div>
+  <div id="sb" style="display:none"></div>
 </div>
 
 <nav class="mobile-tab-bar" id="mob-nav">
