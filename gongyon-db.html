@@ -281,6 +281,9 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .troupe-chip{display:inline-flex;align-items:center;gap:0.4rem;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:0.22rem 0.75rem;font-size:0.75rem;cursor:pointer;transition:background .15s,border-color .15s}
 .troupe-chip:hover{background:var(--bg3);border-color:rgba(255,255,255,0.18)}
 .troupe-chip-cnt{font-size:0.65rem;color:var(--muted)}
+.person-links-inline{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem}
+.person-link-chip{display:inline-flex;align-items:center;gap:0.35rem;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:0.25rem 0.85rem;font-size:0.75rem;color:var(--text);text-decoration:none;transition:background .15s,border-color .15s}
+.person-link-chip:hover{background:var(--bg3);border-color:rgba(255,255,255,0.18)}
 .year-chart-block{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.85rem 1rem;max-width:360px}
 .year-chart-title{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:0.7rem}
 .mini-chart{display:flex;align-items:flex-end;gap:4px;height:70px}
@@ -443,7 +446,7 @@ async function load(){
   var raw=await Promise.all([
     rest('shows','select=id,title,show_date,troupe_id,venue_id,poster_urls'),
     rest('show_works','select=show_id,work_id,sort_order'),
-    rest('people','select=id,name,photo_urls'),
+    rest('people','select=id,name,photo_urls,social_links'),
     rest('participation_history','select=id,person_id,show_id'),
     rest('participation_roles','select=participation_id,role_id'),
     rest('participation_staff_roles','select=participation_id,staff_role_id'),
@@ -472,7 +475,7 @@ async function load(){
   DB.staffRoles=staffRoles.map(function(s){return{id:s.id,fields:{'Name':s.name,'순서':s.order_num}};});
   DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name}};});
   DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count}};});
-  DB.people=people.map(function(p){return{id:p.id,fields:{'이름':p.name,'사진':photoField(p.photo_urls)}};});
+  DB.people=people.map(function(p){return{id:p.id,fields:{'이름':p.name,'사진':photoField(p.photo_urls),'홍보링크':p.social_links||[]}};});
   DB.shows=shows.map(function(s){return{id:s.id,fields:{
     '공연명':s.title,'공연 날짜':s.show_date,
     '극단':s.troupe_id?[s.troupe_id]:[],'극장':s.venue_id?[s.venue_id]:[],
@@ -1279,10 +1282,18 @@ function showPerson(pid,push){
   }
   var troupeChipsH='';
   if(troupeRanked.length){troupeChipsH='<div class="person-troupes-inline"><span class="person-troupes-label">주로 함께한 단체</span>';troupeRanked.forEach(function(tid){troupeChipsH+='<span class="troupe-chip" data-action="troupe" data-id="'+tid+'">'+nm(tid)+'<span class="troupe-chip-cnt">'+troupeCntMap[tid]+'회</span></span>';});troupeChipsH+='</div>';}
+  var linksH='';
+  var personLinks=fld(person,'홍보링크')||[];
+  var validLinks=personLinks.filter(function(l){return l&&l.url;});
+  if(validLinks.length){
+    linksH='<div class="person-links-inline">';
+    validLinks.forEach(function(l){linksH+='<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+(l.label||'링크')+'</a>';});
+    linksH+='</div>';
+  }
   var h='<div class="detail-header"><div class="person-header">'
     +'<div class="person-photo-col">'+photoH+'</div>'
     +'<div class="person-info-col">'
-    +'<div class="person-name-block"><div class="eyebrow">참여자</div><div class="detail-title">'+fld(person,'이름')+'</div>'+(spanLabel?'<div class="detail-meta"><span>'+spanLabel+'</span></div>':'')+'</div>'
+    +'<div class="person-name-block"><div class="eyebrow">사람</div><div class="detail-title">'+fld(person,'이름')+'</div>'+(spanLabel?'<div class="detail-meta"><span>'+spanLabel+'</span></div>':'')+linksH+'</div>'
     +statsH+chartH+troupeChipsH
     +'</div></div></div>';
   var showMap={};
@@ -1364,7 +1375,7 @@ function showTroupe(tid,push){
   var topMembers=Object.keys(memberMap).sort(function(a,b){return memberMap[b].cnt-memberMap[a].cnt;}).slice(0,12);
   var memberCnt=Object.keys(memberMap).length;
 
-  var h='<div class="detail-header"><div class="eyebrow">극단</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div></div>';
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div></div>';
 
   if(topMembers.length){
     h+='<div class="sec"><div class="sec-label">많이 참여한 사람</div><div class="coactor-grid">';
