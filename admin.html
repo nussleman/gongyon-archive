@@ -256,15 +256,15 @@
             </div>
           </div>
           <div style="margin-top:12px;">
-            <label>연결 작품 (여러 개 가능, 타이핑해서 검색)
-              <button type="button" class="btn secondary" style="margin-top:0; margin-left:6px; padding:2px 10px; font-size:12px;"
-                onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ const cb=document.querySelector('#show-works-list input[value=\''+id+'\']'); if(cb){cb.checked=true; document.getElementById('combo-input-show-works')._renderChips();} })">+ 새 작품</button>
-            </label>
-            <div class="combo-chips" id="show-works-chips"></div>
-            <input type="text" class="combo-input" id="combo-input-show-works" list="dl-show-works" placeholder="작품 검색 후 선택하면 추가돼요" autocomplete="off">
-            <datalist id="dl-show-works"></datalist>
-            <div class="checkbox-list" id="show-works-list" style="display:none"></div>
+            <label>연결 작품</label>
+            <div style="display:flex; gap:6px;" class="combo-field">
+              <input type="text" class="combo-input" id="combo-input-show-work" list="dl-show-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+              <datalist id="dl-show-work"></datalist>
+              <input type="hidden" name="work_id" data-combo="show-work">
+              <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('show-work', id); })">+</button>
+            </div>
           </div>
+          <p class="sub" style="margin-top:4px;">공연은 작품 1개하고만 연결돼요.</p>
           <div class="photo-widget">
             <label>포스터</label>
             <div class="photo-thumbs" id="photos-show"></div>
@@ -312,7 +312,9 @@
             </div>
           </div>
           <div style="margin-top:12px;">
-            <label>배역 (공연 선택 시 자동으로 채워져요)</label>
+            <label>배역 (공연 선택 시 자동으로 채워져요)
+              <button type="button" class="btn secondary" style="margin-top:0; margin-left:6px; padding:2px 10px; font-size:12px;" onclick="quickAddRole()">+ 새 배역</button>
+            </label>
             <div class="checkbox-list" id="participation-roles-list"><span class="empty">공연을 먼저 선택하세요</span></div>
           </div>
           <div style="margin-top:12px;">
@@ -731,8 +733,9 @@ function fillCombo(comboId, rows, valueKey, labelKey) {
     byId.set(r[valueKey], label);
   });
   comboData[comboId] = { byLabel, byId };
-  const dl = document.getElementById('dl-' + comboId);
-  if (dl) dl.innerHTML = [...byLabel.keys()].map(l => `<option value="${l.replace(/"/g,'&quot;')}">`).join('');
+  let dl = document.getElementById('dl-' + comboId);
+  if (!dl) { dl = document.createElement('datalist'); dl.id = 'dl-' + comboId; document.body.appendChild(dl); }
+  dl.innerHTML = [...byLabel.keys()].map(l => `<option value="${l.replace(/"/g,'&quot;')}">`).join('');
 }
 
 function syncComboDisplay(comboId, id) {
@@ -813,7 +816,6 @@ window.quickAdd = async function(table, promptText, buildPayload, onCreated) {
     const el = document.querySelector(`main input[type=checkbox][name="${name}"][value="${value}"]`);
     if (el) el.checked = true;
   });
-  document.getElementById('combo-input-show-works')?._renderChips?.();
   if (wasEditingKey) {
     const tbl = CANCEL_TABLE_MAP[wasEditingKey];
     const editId = editState[tbl];
@@ -909,7 +911,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
 
 // ---------- 마스터 데이터 캐시 ----------
 let cache = { troupes: [], venues: [], works: [], roles: [], staffRoles: [], people: [], creationTypes: [], shows: [],
-  showsFull: [], participationRows: [], participationRoleLinks: [], participationStaffLinks: [], creationRows: [], showWorksAll: [] };
+  showsFull: [], participationRows: [], participationRoleLinks: [], participationStaffLinks: [], creationRows: [] };
 
 async function loadMasterData() {
   const [troupes, venues, works, roles, staffRoles, people, creationTypes] = await Promise.all([
@@ -931,10 +933,12 @@ async function loadMasterData() {
 
   fillCombo('show-troupe', cache.troupes, 'id', 'name');
   fillCombo('show-venue', cache.venues, 'id', 'name');
-  document.getElementById('show-works-list').innerHTML = cache.works.map(w =>
-    `<label><input type="checkbox" name="work_ids" value="${w.id}"> ${w.title}</label>`).join('') || '<span class="empty">작품이 없어요</span>';
-  fillCombo('show-works', cache.works, 'id', 'title');
-  document.getElementById('combo-input-show-works')?._renderChips?.();
+  fillCombo('show-work', cache.works, 'id', 'title');
+  fillCombo('entity-work', cache.works, 'id', 'title');
+  fillCombo('entity-person', cache.people, 'id', 'name');
+  fillCombo('entity-troupe', cache.troupes, 'id', 'name');
+  fillCombo('entity-venue', cache.venues, 'id', 'name');
+  fillCombo('entity-creationtype', cache.creationTypes, 'id', 'name');
 
   fillCombo('role-work', cache.works, 'id', 'title');
   fillCombo('participation-person', cache.people, 'id', 'name');
@@ -949,23 +953,36 @@ async function loadMasterData() {
 }
 
 async function loadShowsForParticipation() {
-  const { data } = await supabase.from('shows').select('id,title,show_date').order('show_date', {ascending: false, nullsFirst: false});
+  const { data } = await supabase.from('shows').select('id,title,show_date,work_id').order('show_date', {ascending: false, nullsFirst: false});
   cache.shows = data || [];
   fillCombo('participation-show', cache.shows, 'id', s => s.title + (s.show_date ? ' (' + s.show_date + ')' : ''));
+  fillCombo('entity-show', cache.shows, 'id', s => s.title + (s.show_date ? ' (' + s.show_date + ')' : ''));
 }
 
 async function rolesForShow(showId) {
-  const { data: showWorks } = await supabase.from('show_works').select('work_id').eq('show_id', showId);
-  const workIds = (showWorks || []).map(w => w.work_id);
-  return cache.roles.filter(r => workIds.includes(r.work_id));
+  const show = cache.shows.find(s => s.id === showId);
+  if (!show || !show.work_id) return [];
+  return cache.roles.filter(r => r.work_id === show.work_id);
 }
 
 function renderRoleCheckboxes(roles, checkedIds = []) {
   const box = document.getElementById('participation-roles-list');
   box.innerHTML = roles.length
     ? roles.map(r => `<label><input type="checkbox" name="role_ids" value="${r.id}" ${checkedIds.includes(r.id)?'checked':''}> ${r.name}</label>`).join('')
-    : '<span class="empty">이 공연 작품에 등록된 배역이 없어요</span>';
+    : '<span class="empty">이 공연 작품에 등록된 배역이 없어요. "+ 새 배역"으로 추가해보세요.</span>';
 }
+
+window.quickAddRole = function() {
+  const showId = document.getElementById('participation-show-select').value;
+  const show = cache.shows.find(s => s.id === showId);
+  if (!show) { alert('먼저 공연을 선택해주세요.'); return; }
+  if (!show.work_id) { alert('이 공연에는 아직 연결된 작품이 없어요. "공연" 탭에서 먼저 작품을 연결해주세요.'); return; }
+  quickAdd('roles', '새 배역명을 입력하세요', n => ({ work_id: show.work_id, name: n }), async (id) => {
+    const roles = await rolesForShow(showId);
+    const checkedIds = [...document.querySelectorAll('#participation-roles-list input[name=role_ids]:checked')].map(c => c.value);
+    renderRoleCheckboxes(roles, [...checkedIds, id]);
+  });
+};
 
 document.getElementById('participation-show-select').addEventListener('change', async (e) => {
   const showId = e.target.value;
@@ -1031,8 +1048,8 @@ document.querySelector('main').addEventListener('click', (e) => {
   renderAllLists();
 });
 
-// 셀 클릭 -> 그 자리에서 바로 수정 (텍스트/숫자/날짜/셀렉트)
-document.querySelector('main').addEventListener('click', (e) => {
+// 셀 더블클릭 -> 그 자리에서 바로 수정 (텍스트/숫자/날짜/셀렉트/참조검색)
+document.querySelector('main').addEventListener('dblclick', (e) => {
   const td = e.target.closest('.editable-cell');
   if (!td || td.querySelector('input,select')) return;
   const containerId = td.dataset.container;
@@ -1049,6 +1066,10 @@ document.querySelector('main').addEventListener('click', (e) => {
     inputHtml = `<select style="width:100%; padding:4px;">` +
       col.editOptions.map(o => `<option value="${o.value}" ${o.value === curVal ? 'selected' : ''}>${o.label}</option>`).join('') +
       `</select>`;
+  } else if (col.editType === 'fk') {
+    const map = comboData['entity-' + col.fkEntity];
+    const curLabel = (curVal && map && map.byId.get(curVal)) || '';
+    inputHtml = `<input type="text" list="dl-entity-${col.fkEntity}" value="${curLabel.replace(/"/g,'&quot;')}" placeholder="검색해서 선택" autocomplete="off" style="width:100%; padding:4px; box-sizing:border-box;">`;
   } else {
     inputHtml = `<input type="${col.editType || 'text'}" value="${curVal}" style="width:100%; padding:4px; box-sizing:border-box;">`;
   }
@@ -1060,7 +1081,16 @@ document.querySelector('main').addEventListener('click', (e) => {
   let cancelled = false;
   function commit() {
     if (cancelled) return;
-    const newVal = inputEl.value === '' ? null : inputEl.value;
+    let newVal;
+    if (col.editType === 'fk') {
+      const map = comboData['entity-' + col.fkEntity];
+      const label = inputEl.value.trim();
+      if (!label) { newVal = null; }
+      else if (map && map.byLabel.has(label)) { newVal = map.byLabel.get(label); }
+      else { alert('목록에 있는 값을 검색해서 정확히 선택해주세요.'); td.innerHTML = oldHtml; return; }
+    } else {
+      newVal = inputEl.value === '' ? null : inputEl.value;
+    }
     supabase.from(meta.tableName).update({ [col.key]: newVal }).eq('id', rowId).then(async ({ error }) => {
       if (error) { alert('저장 실패: ' + error.message); td.innerHTML = oldHtml; return; }
       const wasEditingKey = currentEditKey;
@@ -1116,9 +1146,6 @@ async function reloadAll() {
   cache.shows = shows || cache.shows;
   cache.showsFull = shows || [];
 
-  const { data: showWorksAll } = await supabase.from('show_works').select('show_id,work_id');
-  cache.showWorksAll = showWorksAll || [];
-
   // 80건 제한 없이 전체 참여이력 로드
   const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false});
   cache.participationRows = parts || [];
@@ -1157,13 +1184,13 @@ function renderAllLists() {
     cache.troupes.find(t=>t.id===r.troupe_id)?.name, cache.venues.find(v=>v.id===r.venue_id)?.name)), [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'공연명', key:'title', editable:true},
-    {label:'연결작품', render: r => {
-      const wids = cache.showWorksAll.filter(sw=>sw.show_id===r.id).map(sw=>cache.works.find(w=>w.id===sw.work_id)?.title).filter(Boolean);
-      return wids.length ? wids.join(', ') : '<span class="warn-badge">⚠ 작품 미연결</span>';
-    }},
+    {label:'연결작품', key:'work_id', editable:true, editType:'fk', fkEntity:'work',
+      render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미연결</span>'},
     {label:'날짜', key:'show_date', editable:true, editType:'date'},
-    {label:'단체', render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
-    {label:'극장', render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
+    {label:'단체', key:'troupe_id', editable:true, editType:'fk', fkEntity:'troupe',
+      render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
+    {label:'극장', key:'venue_id', editable:true, editType:'fk', fkEntity:'venue',
+      render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
     {label:'형태', key:'production_type', editable:true},
     {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'Y',label:'Y'},{value:'N',label:'N'}]},
   ], 'shows', 'count-show', true);
@@ -1177,8 +1204,10 @@ function renderAllLists() {
     return matches(tPart, personName, showTitle, roleNames, staffNames);
   });
   const partColumns = [
-    {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
-    {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || '', sortValue: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
+    {label:'참여자', key:'person_id', editable:true, editType:'fk', fkEntity:'person',
+      render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'공연', key:'show_id', editable:true, editType:'fk', fkEntity:'show',
+      render: r => cache.shows.find(s=>s.id===r.show_id)?.title || '', sortValue: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
     {label:'단체', render: r => { const s = cache.shows.find(s=>s.id===r.show_id); return cache.troupes.find(t=>t.id===s?.troupe_id)?.name || ''; }},
     {label:'역할구분', key:'role_type', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'배우',label:'배우'},{value:'스텝',label:'스텝'}]},
     {label:'배역/스텝', render: r => {
@@ -1218,7 +1247,8 @@ function renderAllLists() {
   const tRole = searchVal('role');
   const roleColumns = [
     {label:'배역명', key:'name', editable:true},
-    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'작품', key:'work_id', editable:true, editType:'fk', fkEntity:'work',
+      render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
     {label:'순서', key:'order_num', editable:true, editType:'number'},
     {label:'성별', key:'gender', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'남',label:'남'},{value:'여',label:'여'}],
       render: r => r.gender || '<span class="warn-badge">⚠ 입력 필요</span>'},
@@ -1264,9 +1294,12 @@ function renderAllLists() {
   renderTable('list-creation', cache.creationRows.filter(r => matches(tCreation,
     cache.people.find(p=>p.id===r.person_id)?.name, cache.works.find(w=>w.id===r.work_id)?.title,
     cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name)), [
-    {label:'사람', render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
-    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
-    {label:'유형', render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || '', sortValue: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
+    {label:'사람', key:'person_id', editable:true, editType:'fk', fkEntity:'person',
+      render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'작품', key:'work_id', editable:true, editType:'fk', fkEntity:'work',
+      render: r => cache.works.find(w=>w.id===r.work_id)?.title || '', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'유형', key:'creation_type_id', editable:true, editType:'fk', fkEntity:'creationtype',
+      render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || '', sortValue: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
   ], 'creation_history', 'count-creation', true);
 }
 
@@ -1299,7 +1332,6 @@ window.showNewForm = function(key) {
   if (key === 'person') resetLinkWidget('person', []);
   if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
   if (key === 'work') resetWorkCreatorWidget([]);
-  if (key === 'show') { form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false); document.getElementById('combo-input-show-works')?._renderChips?.(); }
   if (key === 'participation') {
     document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
     form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
@@ -1373,8 +1405,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     if (key === 'person') resetLinkWidget('person', []);
     if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
     if (key === 'work') resetWorkCreatorWidget([]);
-    if (key === 'show') { form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false); document.getElementById('combo-input-show-works')?._renderChips?.(); }
-    if (key === 'participation') {
+      if (key === 'participation') {
       document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
       form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
     }
@@ -1394,10 +1425,6 @@ document.querySelector('main').addEventListener('click', async (e) => {
     const form = document.getElementById('form-show');
     fillFormFields(form, row);
     resetPhotoWidget('show', row.poster_urls);
-    const { data: sw } = await supabase.from('show_works').select('work_id').eq('show_id', id);
-    const workIds = (sw||[]).map(w=>w.work_id);
-    form.querySelectorAll('input[name=work_ids]').forEach(c => c.checked = workIds.includes(c.value));
-    document.getElementById('combo-input-show-works')?._renderChips?.();
     editState['shows'] = id;
     setEditMode('form-show', 'shows', true);
     moveCardToRow('show', btn.closest('tr'));
@@ -1480,28 +1507,16 @@ document.getElementById('form-creation').dataset.addLabel = '창작이력 저장
 document.getElementById('form-show').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
-  const checked = [...form.querySelectorAll('input[name=work_ids]:checked')].map(c => c.value);
-  const payload = formToObj(form, ['work_ids']);
+  const payload = formToObj(form);
   payload.poster_urls = photoState.show.length ? photoState.show : null;
   const editId = editState['shows'];
-  let showId;
-  if (editId) {
-    const { error } = await supabase.from('shows').update(payload).eq('id', editId);
-    if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
-    showId = editId;
-    await supabase.from('show_works').delete().eq('show_id', editId);
-  } else {
-    const { data, error } = await supabase.from('shows').insert(payload).select().single();
-    if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
-    showId = data.id;
-  }
-  if (checked.length) {
-    await supabase.from('show_works').insert(checked.map((wid, i) => ({show_id: showId, work_id: wid, sort_order: i+1})));
-  }
+  const { error } = editId
+    ? await supabase.from('shows').update(payload).eq('id', editId)
+    : await supabase.from('shows').insert(payload);
+  if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
   showMsg('msg-show', true, '저장됐어요.');
   form.reset();
   resetPhotoWidget('show', []);
-  document.getElementById('combo-input-show-works')?._renderChips?.();
   setEditMode('form-show', 'shows', false);
   document.getElementById('formcard-show').style.display = 'none';
   reloadAll();
@@ -1582,13 +1597,13 @@ simpleFormHandler('form-creation', 'creation_history', 'msg-creation');
 captureCardHomes();
 wireSingleCombo('show-troupe');
 wireSingleCombo('show-venue');
+wireSingleCombo('show-work');
 wireSingleCombo('role-work');
 wireSingleCombo('participation-person');
 wireSingleCombo('participation-show');
 wireSingleCombo('creation-person');
 wireSingleCombo('creation-work');
 wireSingleCombo('creation-type');
-wireMultiCombo('show-works', 'show-works-list', 'show-works-chips', 'work_ids');
 (async () => {
   await ensureAuth();
   await reloadAll();
