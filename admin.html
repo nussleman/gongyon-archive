@@ -79,8 +79,12 @@
   }
   .card h3 { margin: 0 0 14px; font-size: 15px; color: var(--ink-soft); font-weight: 600; display:flex; align-items:center; gap:10px; }
 
-  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px 14px; }
   .field-grid.wide { grid-template-columns: 1fr; }
+  .field-grid label { font-size: 11.5px; }
+  .field-grid input[type=text], .field-grid input[type=number], .field-grid input[type=date], .field-grid select {
+    padding: 6px 8px; font-size: 13px;
+  }
   label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 4px; }
   input[type=text], input[type=number], input[type=date], select, textarea {
     width: 100%;
@@ -112,6 +116,14 @@
     white-space: nowrap;
   }
   .checkbox-list input { width: auto; }
+  .combo-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 6px; }
+  .combo-chips:empty { margin-bottom: 0; }
+  .combo-chip {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--accent-soft); color: var(--accent);
+    border-radius: 14px; padding: 3px 6px 3px 10px; font-size: 12.5px;
+  }
+  .rm-chip-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px; }
+  .combo-field { position: relative; }
 
   .btn {
     display: inline-block;
@@ -144,7 +156,8 @@
   .msg.err { color: var(--danger); display: block; }
 
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  thead th { position: sticky; top: 0; background: var(--panel); z-index: 3; box-shadow: 0 1px 0 var(--line); }
   th { color: var(--ink-soft); font-weight: 600; font-size: 12.5px; }
   tr:hover td { background: #faf9f6; }
   .row-actions { white-space: nowrap; text-align: right; }
@@ -210,6 +223,7 @@
     <section class="tab-panel" id="tab-show">
       <h2>공연</h2>
       <p class="sub">새 공연을 등록해요. 상연 작품은 여러 개 고를 수 있어요.</p>
+      <button type="button" class="btn" onclick="showNewForm('show')" style="margin-bottom:16px;">+ 새 공연 등록</button>
       <div class="card" id="formcard-show">
         <h3 id="formtitle-show">새 공연 등록</h3>
         <form id="form-show">
@@ -217,15 +231,19 @@
             <div><label>공연명</label><input type="text" name="title" required></div>
             <div><label>공연 날짜</label><input type="date" name="show_date"></div>
             <div><label>단체 (극단/제작사)</label>
-              <div style="display:flex; gap:6px;">
-                <select name="troupe_id" style="flex:1;"><option value="">선택 안 함</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('troupes', '새 단체 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-show select[name=troupe_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-show-troupe" list="dl-show-troupe" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-show-troupe"></datalist>
+                <input type="hidden" name="troupe_id" data-combo="show-troupe">
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('troupes', '새 단체 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('show-troupe', id); })">+</button>
               </div>
             </div>
             <div><label>극장</label>
-              <div style="display:flex; gap:6px;">
-                <select name="venue_id" style="flex:1;"><option value="">선택 안 함</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('venues', '새 극장 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-show select[name=venue_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-show-venue" list="dl-show-venue" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-show-venue"></datalist>
+                <input type="hidden" name="venue_id" data-combo="show-venue">
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('venues', '새 극장 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('show-venue', id); })">+</button>
               </div>
             </div>
             <div><label>공연 형태</label><input type="text" name="production_type" placeholder="예: 정기공연"></div>
@@ -234,11 +252,14 @@
             </div>
           </div>
           <div style="margin-top:12px;">
-            <label>상연 작품 (여러 개 선택 가능)
+            <label>연결 작품 (여러 개 가능, 타이핑해서 검색)
               <button type="button" class="btn secondary" style="margin-top:0; margin-left:6px; padding:2px 10px; font-size:12px;"
-                onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ const b=document.querySelector('#show-works-list input[value=\''+id+'\']'); if(b) b.checked=true; })">+ 새 작품</button>
+                onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ const cb=document.querySelector('#show-works-list input[value=\''+id+'\']'); if(cb){cb.checked=true; document.getElementById('combo-input-show-works')._renderChips();} })">+ 새 작품</button>
             </label>
-            <div class="checkbox-list" id="show-works-list"></div>
+            <div class="combo-chips" id="show-works-chips"></div>
+            <input type="text" class="combo-input" id="combo-input-show-works" list="dl-show-works" placeholder="작품 검색 후 선택하면 추가돼요" autocomplete="off">
+            <datalist id="dl-show-works"></datalist>
+            <div class="checkbox-list" id="show-works-list" style="display:none"></div>
           </div>
           <div class="photo-widget">
             <label>포스터</label>
@@ -262,15 +283,24 @@
     <section class="tab-panel" id="tab-participation">
       <h2>참여이력</h2>
       <p class="sub">공연을 먼저 고르면 그 공연 작품에 속한 배역만 보여줘요. 배역/스텝역할은 동시에 여러 개 체크 가능(겸직).</p>
+      <button type="button" class="btn" onclick="showNewForm('participation')" style="margin-bottom:16px;">+ 새 참여이력 등록</button>
       <div class="card" id="formcard-participation">
         <h3 id="formtitle-participation">새 참여이력 입력</h3>
         <form id="form-participation">
           <div class="field-grid">
-            <div><label>공연</label><select name="show_id" id="participation-show-select" required><option value="">선택</option></select></div>
+            <div><label>공연</label>
+              <div class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-participation-show" list="dl-participation-show" placeholder="검색 또는 선택" autocomplete="off">
+                <datalist id="dl-participation-show"></datalist>
+                <input type="hidden" name="show_id" id="participation-show-select" data-combo="participation-show" required>
+              </div>
+            </div>
             <div><label>참여자</label>
-              <div style="display:flex; gap:6px;">
-                <select name="person_id" style="flex:1;" required><option value="">선택</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('people', '새 참여자 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-participation select[name=person_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-participation-person" list="dl-participation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-participation-person"></datalist>
+                <input type="hidden" name="person_id" data-combo="participation-person" required>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('people', '새 참여자 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('participation-person', id); })">+</button>
               </div>
             </div>
             <div><label>역할 구분 (레거시 필드)</label>
@@ -313,6 +343,7 @@
     <!-- ================= 작품 ================= -->
     <section class="tab-panel" id="tab-work">
       <h2>작품</h2>
+      <button type="button" class="btn" onclick="showNewForm('work')" style="margin-bottom:16px;">+ 새 작품 등록</button>
       <div class="card" id="formcard-work">
         <h3 id="formtitle-work">새 작품 등록</h3>
         <form id="form-work">
@@ -324,6 +355,17 @@
             <div><label>초연 연도</label><input type="number" name="premiere_year"></div>
             <div><label>창작극 여부</label>
               <select name="is_original"><option value="">선택 안 함</option><option value="Y">Y</option></select>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>창작자 (극작/작곡/작사 등)</label>
+            <div id="work-creators-list" style="margin-bottom:6px;"></div>
+            <div style="display:flex; gap:6px;">
+              <input type="text" class="combo-input" id="combo-input-workcreator-person" list="dl-workcreator-person" placeholder="사람 검색" autocomplete="off" style="flex:1;">
+              <datalist id="dl-workcreator-person"></datalist>
+              <input type="text" class="combo-input" id="combo-input-workcreator-type" list="dl-workcreator-type" placeholder="유형 검색 (극작/작곡...)" autocomplete="off" style="width:160px;">
+              <datalist id="dl-workcreator-type"></datalist>
+              <button type="button" class="btn secondary" style="margin-top:0;" onclick="addWorkCreatorRow()">+ 추가</button>
             </div>
           </div>
           <div class="photo-widget">
@@ -353,14 +395,17 @@
     <!-- ================= 배역 ================= -->
     <section class="tab-panel" id="tab-role">
       <h2>배역</h2>
+      <button type="button" class="btn" onclick="showNewForm('role')" style="margin-bottom:16px;">+ 새 배역 등록</button>
       <div class="card" id="formcard-role">
         <h3 id="formtitle-role">새 배역 등록</h3>
         <form id="form-role">
           <div class="field-grid">
             <div><label>작품</label>
-              <div style="display:flex; gap:6px;">
-                <select name="work_id" style="flex:1;" required><option value="">선택</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ document.querySelector('#form-role select[name=work_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-role-work" list="dl-role-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-role-work"></datalist>
+                <input type="hidden" name="work_id" data-combo="role-work" required>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('role-work', id); })">+</button>
               </div>
             </div>
             <div><label>배역명</label><input type="text" name="name" required></div>
@@ -391,16 +436,19 @@
     <section class="tab-panel" id="tab-troupe">
       <h2>단체</h2>
       <p class="sub">극단/제작사/동호회를 한 테이블에서 관리해요.</p>
+      <button type="button" class="btn" onclick="showNewForm('troupe')" style="margin-bottom:16px;">+ 새 단체 등록</button>
       <div class="card" id="formcard-troupe">
         <h3 id="formtitle-troupe">새 단체 등록</h3>
         <form id="form-troupe">
           <div class="field-grid">
             <div><label>단체명</label><input type="text" name="name" required></div>
-            <div><label>조직형태</label>
-              <select name="org_type">
-                <option value="">선택 안 함</option><option value="극단">극단</option>
-                <option value="제작사">제작사</option><option value="동호회">동호회</option>
-              </select>
+            <div style="grid-column: 1 / -1;">
+              <label>조직형태 (여러 개 가능)</label>
+              <div class="checkbox-list" id="troupe-org-type-list">
+                <label><input type="checkbox" name="org_type_vals" value="극단"> 극단</label>
+                <label><input type="checkbox" name="org_type_vals" value="제작사"> 제작사</label>
+                <label><input type="checkbox" name="org_type_vals" value="동호회"> 동호회</label>
+              </div>
             </div>
             <div><label>구성원기반</label>
               <select name="member_base">
@@ -427,7 +475,14 @@
       </div>
       <div class="card">
         <h3>등록된 단체 <span class="count-tag" id="count-troupe"></span></h3>
-        <input type="text" id="search-troupe" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="search-troupe" placeholder="검색..." style="flex:1; margin-bottom:0;" oninput="window.__applyFilters()">
+          <select id="group-troupe" onchange="window.__applyFilters()" style="width:160px;">
+            <option value="">그룹 없음</option>
+            <option value="orgtype">조직형태로 묶기</option>
+            <option value="memberbase">구성원기반으로 묶기</option>
+          </select>
+        </div>
         <div id="list-troupe"></div>
       </div>
     </section>
@@ -435,6 +490,7 @@
     <!-- ================= 극장 ================= -->
     <section class="tab-panel" id="tab-venue">
       <h2>극장</h2>
+      <button type="button" class="btn" onclick="showNewForm('venue')" style="margin-bottom:16px;">+ 새 극장 등록</button>
       <div class="card" id="formcard-venue">
         <h3 id="formtitle-venue">새 극장 등록</h3>
         <form id="form-venue">
@@ -464,6 +520,7 @@
     <!-- ================= 스텝역할 ================= -->
     <section class="tab-panel" id="tab-staffrole">
       <h2>스텝역할</h2>
+      <button type="button" class="btn" onclick="showNewForm('staffrole')" style="margin-bottom:16px;">+ 새 스텝역할 등록</button>
       <div class="card" id="formcard-staffrole">
         <h3 id="formtitle-staffrole">새 스텝역할 등록</h3>
         <form id="form-staffrole">
@@ -487,6 +544,7 @@
     <section class="tab-panel" id="tab-person">
       <h2>사람</h2>
       <p class="sub">참여자와 창작자가 통합된 테이블이에요.</p>
+      <button type="button" class="btn" onclick="showNewForm('person')" style="margin-bottom:16px;">+ 새 사람 등록</button>
       <div class="card" id="formcard-person">
         <h3 id="formtitle-person">새 사람 등록</h3>
         <form id="form-person">
@@ -522,23 +580,34 @@
     <!-- ================= 창작이력 ================= -->
     <section class="tab-panel" id="tab-creation">
       <h2>창작이력</h2>
+      <button type="button" class="btn" onclick="showNewForm('creation')" style="margin-bottom:16px;">+ 새 창작이력 등록</button>
       <div class="card" id="formcard-creation">
         <h3 id="formtitle-creation">새 창작이력 등록</h3>
         <form id="form-creation">
           <div class="field-grid">
             <div><label>사람</label>
-              <div style="display:flex; gap:6px;">
-                <select name="person_id" style="flex:1;" required><option value="">선택</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('people', '새 사람 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-creation select[name=person_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-creation-person" list="dl-creation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-creation-person"></datalist>
+                <input type="hidden" name="person_id" data-combo="creation-person" required>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('people', '새 사람 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('creation-person', id); })">+</button>
               </div>
             </div>
             <div><label>작품</label>
-              <div style="display:flex; gap:6px;">
-                <select name="work_id" style="flex:1;" required><option value="">선택</option></select>
-                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ document.querySelector('#form-creation select[name=work_id]').value = id; })">+</button>
+              <div style="display:flex; gap:6px;" class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-creation-work" list="dl-creation-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
+                <datalist id="dl-creation-work"></datalist>
+                <input type="hidden" name="work_id" data-combo="creation-work" required>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('creation-work', id); })">+</button>
               </div>
             </div>
-            <div><label>창작 유형</label><select name="creation_type_id" required><option value="">선택</option></select></div>
+            <div><label>창작 유형</label>
+              <div class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-creation-type" list="dl-creation-type" placeholder="검색 또는 선택" autocomplete="off">
+                <datalist id="dl-creation-type"></datalist>
+                <input type="hidden" name="creation_type_id" data-combo="creation-type" required>
+              </div>
+            </div>
           </div>
           <button type="submit" class="btn">창작이력 저장</button>
           <button type="button" class="btn secondary cancel-edit-btn" id="cancel-creation">취소</button>
@@ -599,6 +668,126 @@ function fillSelect(selectEl, rows, valueKey, labelKey, placeholder) {
     rows.map(r => `<option value="${r[valueKey]}">${(typeof labelKey==='function'? labelKey(r) : r[labelKey]) ?? '(이름 없음)'}</option>`).join('');
 }
 
+// ---------- 작품 폼 안의 창작자(극작/작곡 등) 인라인 관리 ----------
+let workCreatorRows = []; // [{person_id, creation_type_id}]
+
+function renderWorkCreators() {
+  const box = document.getElementById('work-creators-list');
+  box.innerHTML = workCreatorRows.map((r, i) => {
+    const pname = cache.people.find(p=>p.id===r.person_id)?.name || '(알 수 없음)';
+    const tname = cache.creationTypes.find(t=>t.id===r.creation_type_id)?.name || '(알 수 없음)';
+    return `<span class="combo-chip" style="margin:2px 4px 2px 0;">${pname} (${tname})<button type="button" class="rm-chip-btn" onclick="removeWorkCreatorRow(${i})">×</button></span>`;
+  }).join('') || '<span class="empty" style="padding:0;">아직 등록된 창작자가 없어요</span>';
+}
+window.addWorkCreatorRow = function() {
+  const personInput = document.getElementById('combo-input-workcreator-person');
+  const typeInput = document.getElementById('combo-input-workcreator-type');
+  const personMap = comboData['workcreator-person'];
+  const typeMap = comboData['workcreator-type'];
+  const personId = personMap && personMap.byLabel.get(personInput.value.trim());
+  const typeId = typeMap && typeMap.byLabel.get(typeInput.value.trim());
+  if (!personId || !typeId) { alert('사람과 유형을 목록에서 정확히 골라주세요.'); return; }
+  workCreatorRows.push({ person_id: personId, creation_type_id: typeId });
+  personInput.value = '';
+  typeInput.value = '';
+  renderWorkCreators();
+};
+window.removeWorkCreatorRow = function(i) {
+  workCreatorRows.splice(i, 1);
+  renderWorkCreators();
+};
+function resetWorkCreatorWidget(rows) {
+  workCreatorRows = rows.map(r => ({ person_id: r.person_id, creation_type_id: r.creation_type_id }));
+  renderWorkCreators();
+  const p = document.getElementById('combo-input-workcreator-person'); if (p) p.value = '';
+  const t = document.getElementById('combo-input-workcreator-type'); if (t) t.value = '';
+}
+async function saveWorkCreators(workId) {
+  const { error: delErr } = await supabase.from('creation_history').delete().eq('work_id', workId);
+  if (delErr) return delErr.message;
+  if (workCreatorRows.length) {
+    const { error } = await supabase.from('creation_history').insert(
+      workCreatorRows.map(r => ({ work_id: workId, person_id: r.person_id, creation_type_id: r.creation_type_id }))
+    );
+    if (error) return error.message;
+  }
+  return null;
+}
+
+// ---------- 검색형 콤보박스 (드롭다운을 타이핑으로 검색) ----------
+// 단일선택: <input list=dl-X> + <datalist id=dl-X> + <input type=hidden name=실제필드 data-combo=X>
+// 다중선택(연결작품 등): 위와 동일한 datalist를 "추가" 입력창으로 쓰고, 실제 값은 숨겨진 체크박스 목록 + 칩으로 표시.
+const comboData = {}; // comboId -> {byLabel: Map<label,id>, byId: Map<id,label>}
+
+function fillCombo(comboId, rows, valueKey, labelKey) {
+  const byLabel = new Map(), byId = new Map();
+  rows.forEach(r => {
+    const label = (typeof labelKey === 'function' ? labelKey(r) : r[labelKey]) || '(이름 없음)';
+    byLabel.set(label, r[valueKey]);
+    byId.set(r[valueKey], label);
+  });
+  comboData[comboId] = { byLabel, byId };
+  const dl = document.getElementById('dl-' + comboId);
+  if (dl) dl.innerHTML = [...byLabel.keys()].map(l => `<option value="${l.replace(/"/g,'&quot;')}">`).join('');
+}
+
+function syncComboDisplay(comboId, id) {
+  const input = document.getElementById('combo-input-' + comboId);
+  const map = comboData[comboId];
+  if (input) input.value = (id && map && map.byId.get(id)) || '';
+}
+
+window.setCombo = function(comboId, id) {
+  const hidden = document.querySelector(`[data-combo="${comboId}"]`);
+  if (hidden) { hidden.value = id || ''; hidden.dispatchEvent(new Event('change')); }
+  syncComboDisplay(comboId, id);
+};
+
+// 단일선택 콤보 입력창에 변경 이벤트를 연결한다 (라벨을 타이핑하면 실제 id를 hidden input에 채움)
+function wireSingleCombo(comboId) {
+  const input = document.getElementById('combo-input-' + comboId);
+  const hidden = document.querySelector(`[data-combo="${comboId}"]`);
+  if (!input || !hidden) return;
+  input.addEventListener('input', () => {
+    const map = comboData[comboId];
+    const val = input.value.trim();
+    if (!val) { hidden.value = ''; hidden.dispatchEvent(new Event('change')); return; }
+    if (map && map.byLabel.has(val)) { hidden.value = map.byLabel.get(val); hidden.dispatchEvent(new Event('change')); }
+  });
+}
+
+// 다중선택 콤보: 입력창에 작품명을 타이핑해서 매칭되면 해당 체크박스를 체크하고 칩으로 보여준다.
+function wireMultiCombo(comboId, checkboxListId, chipsId, checkboxName) {
+  const input = document.getElementById('combo-input-' + comboId);
+  if (!input) return;
+  function renderChips() {
+    const map = comboData[comboId];
+    const checked = [...document.querySelectorAll(`#${checkboxListId} input[name=${checkboxName}]:checked`)];
+    document.getElementById(chipsId).innerHTML = checked.map(c => {
+      const label = (map && map.byId.get(c.value)) || c.value;
+      return `<span class="combo-chip" data-multi-key="${comboId}" data-value="${c.value}">${label}<button type="button" class="rm-chip-btn">×</button></span>`;
+    }).join('') || '<span class="empty" style="padding:0;">아직 선택된 게 없어요</span>';
+  }
+  input._renderChips = renderChips;
+  input.addEventListener('input', () => {
+    const map = comboData[comboId];
+    const val = input.value.trim();
+    if (!map || !map.byLabel.has(val)) return;
+    const id = map.byLabel.get(val);
+    const cb = document.querySelector(`#${checkboxListId} input[name=${checkboxName}][value="${id}"]`);
+    if (cb) { cb.checked = true; input.value = ''; renderChips(); }
+  });
+  document.getElementById(chipsId)?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.rm-chip-btn');
+    if (!btn) return;
+    const chip = btn.closest('.combo-chip');
+    const cb = document.querySelector(`#${checkboxListId} input[name=${checkboxName}][value="${chip.dataset.value}"]`);
+    if (cb) cb.checked = false;
+    renderChips();
+  });
+  renderChips();
+}
+
 // ---------- 즉석 추가 (드롭다운에 원하는 값이 없을 때 바로 만들기) ----------
 window.quickAdd = async function(table, promptText, buildPayload, onCreated) {
   const name = prompt(promptText);
@@ -608,16 +797,19 @@ window.quickAdd = async function(table, promptText, buildPayload, onCreated) {
   if (error) { alert('생성 실패: ' + error.message); return; }
   // reloadAll이 select/체크박스 옵션을 다시 그리기 때문에, 다른 폼에서 이미 골라둔 값들이 날아가지 않게 보존한다.
   const preservedSelects = [...document.querySelectorAll('main select')].map(s => [s, s.value]);
+  const preservedCombos = [...document.querySelectorAll('main [data-combo]')].map(el => [el.dataset.combo, el.value]);
   const preservedChecks = [...document.querySelectorAll('main input[type=checkbox]:checked')].map(c => [c.name, c.value]);
   // 지금 인라인 수정 중인 카드가 있다면, 표가 다시 그려지며 그 자리가 사라지기 전에 잠시 홈으로 빼둔다.
   const wasEditingKey = currentEditKey;
   if (wasEditingKey) moveCardHome(wasEditingKey);
   await reloadAll();
   preservedSelects.forEach(([s, v]) => { if (v && s.querySelector(`option[value="${v}"]`)) s.value = v; });
+  preservedCombos.forEach(([comboId, v]) => { if (v) { const hidden = document.querySelector(`[data-combo="${comboId}"]`); if (hidden) hidden.value = v; syncComboDisplay(comboId, v); } });
   preservedChecks.forEach(([name, value]) => {
     const el = document.querySelector(`main input[type=checkbox][name="${name}"][value="${value}"]`);
     if (el) el.checked = true;
   });
+  document.getElementById('combo-input-show-works')?._renderChips?.();
   if (wasEditingKey) {
     const tbl = CANCEL_TABLE_MAP[wasEditingKey];
     const editId = editState[tbl];
@@ -733,16 +925,20 @@ async function loadMasterData() {
   cache.people = people.data || [];
   cache.creationTypes = creationTypes.data || [];
 
-  fillSelect(document.querySelector('#form-show select[name=troupe_id]'), cache.troupes, 'id', 'name', '선택 안 함');
-  fillSelect(document.querySelector('#form-show select[name=venue_id]'), cache.venues, 'id', 'name', '선택 안 함');
+  fillCombo('show-troupe', cache.troupes, 'id', 'name');
+  fillCombo('show-venue', cache.venues, 'id', 'name');
   document.getElementById('show-works-list').innerHTML = cache.works.map(w =>
     `<label><input type="checkbox" name="work_ids" value="${w.id}"> ${w.title}</label>`).join('') || '<span class="empty">작품이 없어요</span>';
+  fillCombo('show-works', cache.works, 'id', 'title');
+  document.getElementById('combo-input-show-works')?._renderChips?.();
 
-  fillSelect(document.querySelector('#form-role select[name=work_id]'), cache.works, 'id', 'title');
-  fillSelect(document.querySelector('#form-participation select[name=person_id]'), cache.people, 'id', 'name');
-  fillSelect(document.querySelector('#form-creation select[name=person_id]'), cache.people, 'id', 'name');
-  fillSelect(document.querySelector('#form-creation select[name=work_id]'), cache.works, 'id', 'title');
-  fillSelect(document.querySelector('#form-creation select[name=creation_type_id]'), cache.creationTypes, 'id', 'name');
+  fillCombo('role-work', cache.works, 'id', 'title');
+  fillCombo('participation-person', cache.people, 'id', 'name');
+  fillCombo('creation-person', cache.people, 'id', 'name');
+  fillCombo('creation-work', cache.works, 'id', 'title');
+  fillCombo('creation-type', cache.creationTypes, 'id', 'name');
+  fillCombo('workcreator-person', cache.people, 'id', 'name');
+  fillCombo('workcreator-type', cache.creationTypes, 'id', 'name');
 
   document.getElementById('participation-staffroles-list').innerHTML = cache.staffRoles.map(s =>
     `<label><input type="checkbox" name="staff_role_ids" value="${s.id}"> ${s.name}</label>`).join('') || '<span class="empty">스텝역할이 없어요</span>';
@@ -751,9 +947,7 @@ async function loadMasterData() {
 async function loadShowsForParticipation() {
   const { data } = await supabase.from('shows').select('id,title,show_date').order('show_date', {ascending: false, nullsFirst: false});
   cache.shows = data || [];
-  const sel = document.getElementById('participation-show-select');
-  sel.innerHTML = '<option value="">선택</option>' + cache.shows.map(s =>
-    `<option value="${s.id}">${s.title}${s.show_date ? ' (' + s.show_date + ')' : ''}</option>`).join('');
+  fillCombo('participation-show', cache.shows, 'id', s => s.title + (s.show_date ? ' (' + s.show_date + ')' : ''));
 }
 
 async function rolesForShow(showId) {
@@ -801,7 +995,11 @@ function renderGroupable(containerId, countId, rows, columns, tableName, groupLa
   if (!rows.length) { container.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>'; return; }
   if (!groupLabelFn) { renderTable(containerId, rows, columns, tableName, null, true); return; }
   const groups = {};
-  rows.forEach(r => { const k = groupLabelFn(r); (groups[k] = groups[k] || []).push(r); });
+  rows.forEach(r => {
+    let labels = groupLabelFn(r);
+    if (!Array.isArray(labels)) labels = [labels];
+    labels.forEach(k => { (groups[k] = groups[k] || []).push(r); });
+  });
   const sortedKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
   let html = '';
   sortedKeys.forEach((k, i) => {
@@ -930,10 +1128,19 @@ function renderAllLists() {
   renderGroupable('list-role', 'count-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title)), roleColumns, 'roles', roleGroupFn);
 
   const tTroupe = searchVal('troupe');
-  renderTable('list-troupe', cache.troupes.filter(r => matches(tTroupe, r.name, r.org_type, r.member_base, r.level)), [
+  const troupeColumns = [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
-    {label:'단체명', key:'name'}, {label:'조직형태', key:'org_type'}, {label:'구성원기반', key:'member_base'}, {label:'수준', key:'level'},
-  ], 'troupes', 'count-troupe', true);
+    {label:'단체명', key:'name'},
+    {label:'조직형태', render: r => (r.org_type||[]).join(', ')},
+    {label:'구성원기반', key:'member_base'},
+    {label:'수준', key:'level'},
+  ];
+  const troupeGroupBy = document.getElementById('group-troupe')?.value || '';
+  const troupeGroupFn = troupeGroupBy === 'orgtype' ? (r => (r.org_type && r.org_type.length) ? r.org_type : ['(미분류)'])
+    : troupeGroupBy === 'memberbase' ? (r => r.member_base || '(미분류)') : null;
+  renderGroupable('list-troupe', 'count-troupe',
+    cache.troupes.filter(r => matches(tTroupe, r.name, (r.org_type||[]).join(' '), r.member_base, r.level)),
+    troupeColumns, 'troupes', troupeGroupFn);
 
   const tVenue = searchVal('venue');
   renderTable('list-venue', cache.venues.filter(r => matches(tVenue, r.name, r.address)), [
@@ -974,9 +1181,30 @@ const TABLE_TO_KEY = {
 function captureCardHomes() {
   ['show','participation','work','role','troupe','venue','staffrole','person','creation'].forEach(key => {
     const card = document.getElementById('formcard-' + key);
-    if (card) cardHomes[key] = { parent: card.parentElement, next: card.nextElementSibling };
+    if (card) { cardHomes[key] = { parent: card.parentElement, next: card.nextElementSibling }; card.style.display = 'none'; }
   });
 }
+
+window.showNewForm = function(key) {
+  if (currentEditKey && currentEditKey !== key) moveCardHome(currentEditKey);
+  moveCardHome(key);
+  const table = CANCEL_TABLE_MAP[key];
+  const form = document.getElementById('form-' + key);
+  form.reset();
+  delete editState[table];
+  setEditMode('form-' + key, table, false);
+  if (photoState[key]) resetPhotoWidget(key, []);
+  if (key === 'person') resetLinkWidget('person', []);
+  if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
+  if (key === 'work') resetWorkCreatorWidget([]);
+  if (key === 'show') { form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false); document.getElementById('combo-input-show-works')?._renderChips?.(); }
+  if (key === 'participation') {
+    document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
+    form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
+  }
+  document.getElementById('formcard-' + key).style.display = 'block';
+  document.getElementById('formcard-' + key).scrollIntoView({behavior:'smooth', block:'start'});
+};
 let currentEditKey = null;
 function moveCardHome(key) {
   const card = document.getElementById('formcard-' + key);
@@ -991,6 +1219,7 @@ function moveCardToRow(key, rowEl) {
   const card = document.getElementById('formcard-' + key);
   if (!card || !rowEl) return;
   Object.keys(cardHomes).forEach(k => { if (k !== key) moveCardHome(k); });
+  card.style.display = 'block';
   const tr = document.createElement('tr');
   tr.className = 'inline-edit-row';
   const td = document.createElement('td');
@@ -1022,6 +1251,7 @@ function fillFormFields(form, row) {
   [...form.elements].forEach(el => {
     if (!el.name || !(el.name in row)) return;
     el.value = row[el.name] ?? '';
+    if (el.dataset.combo) syncComboDisplay(el.dataset.combo, row[el.name]);
   });
 }
 
@@ -1039,11 +1269,14 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     moveCardHome(key);
     if (photoState[key]) resetPhotoWidget(key, []);
     if (key === 'person') resetLinkWidget('person', []);
-    if (key === 'show') form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false);
+    if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
+    if (key === 'work') resetWorkCreatorWidget([]);
+    if (key === 'show') { form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false); document.getElementById('combo-input-show-works')?._renderChips?.(); }
     if (key === 'participation') {
       document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
       form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
     }
+    document.getElementById('formcard-' + key).style.display = 'none';
   });
 });
 
@@ -1062,6 +1295,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     const { data: sw } = await supabase.from('show_works').select('work_id').eq('show_id', id);
     const workIds = (sw||[]).map(w=>w.work_id);
     form.querySelectorAll('input[name=work_ids]').forEach(c => c.checked = workIds.includes(c.value));
+    document.getElementById('combo-input-show-works')?._renderChips?.();
     editState['shows'] = id;
     setEditMode('form-show', 'shows', true);
     moveCardToRow('show', btn.closest('tr'));
@@ -1085,6 +1319,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     const row = cache.works.find(w => w.id === id);
     fillFormFields(document.getElementById('form-work'), row);
     resetPhotoWidget('work', row.poster_urls);
+    resetWorkCreatorWidget(cache.creationRows.filter(c => c.work_id === id));
     editState['works'] = id;
     setEditMode('form-work', 'works', true);
     moveCardToRow('work', btn.closest('tr'));
@@ -1107,7 +1342,11 @@ document.querySelector('main').addEventListener('click', async (e) => {
     if (cacheMap[table]) row = cache[cacheMap[table]].find(x => x.id === id);
     else row = (await supabase.from(table).select('*').eq('id', id).single()).data;
     fillFormFields(document.getElementById(formId), row);
-    if (table === 'troupes') resetPhotoWidget('troupe', row.photo_urls);
+    if (table === 'troupes') {
+      resetPhotoWidget('troupe', row.photo_urls);
+      const orgVals = row.org_type || [];
+      document.querySelectorAll('#troupe-org-type-list input[name=org_type_vals]').forEach(c => c.checked = orgVals.includes(c.value));
+    }
     if (table === 'venues') resetPhotoWidget('venue', row.photo_urls);
     editState[table] = id;
     setEditMode(formId, table, true);
@@ -1160,7 +1399,9 @@ document.getElementById('form-show').addEventListener('submit', async (e) => {
   showMsg('msg-show', true, '저장됐어요.');
   form.reset();
   resetPhotoWidget('show', []);
+  document.getElementById('combo-input-show-works')?._renderChips?.();
   setEditMode('form-show', 'shows', false);
+  document.getElementById('formcard-show').style.display = 'none';
   reloadAll();
 });
 
@@ -1190,6 +1431,7 @@ document.getElementById('form-participation').addEventListener('submit', async (
   form.reset();
   resetPhotoWidget('participation', []);
   setEditMode('form-participation', 'participation_history', false);
+  document.getElementById('formcard-participation').style.display = 'none';
   document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
   reloadAll();
 });
@@ -1198,19 +1440,31 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
   document.getElementById(formId).addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
-    const payload = formToObj(form);
+    const payload = formToObj(form, ['org_type_vals']);
     if (photoKey) payload[photoKey === 'work' || photoKey === 'show' ? 'poster_urls' : 'photo_urls'] = photoState[photoKey].length ? photoState[photoKey] : null;
     if (tableName === 'people') payload.social_links = collectLinks('person');
+    if (tableName === 'troupes') {
+      const orgVals = [...form.querySelectorAll('input[name=org_type_vals]:checked')].map(c => c.value);
+      payload.org_type = orgVals.length ? orgVals : null;
+    }
     const editId = editState[tableName];
-    const { error } = editId
-      ? await supabase.from(tableName).update(payload).eq('id', editId)
-      : await supabase.from(tableName).insert(payload);
+    let savedId = editId;
+    const { data, error } = editId
+      ? await supabase.from(tableName).update(payload).eq('id', editId).select().single()
+      : await supabase.from(tableName).insert(payload).select().single();
     if (error) { showMsg(msgId, false, '저장 실패: ' + error.message); return; }
+    savedId = data.id;
+    if (tableName === 'works') {
+      const err = await saveWorkCreators(savedId);
+      if (err) { showMsg(msgId, false, '저장 실패(창작자): ' + err); return; }
+    }
     showMsg(msgId, true, '저장됐어요.');
     form.reset();
     if (photoKey) resetPhotoWidget(photoKey, []);
     if (tableName === 'people') resetLinkWidget('person', []);
+    if (tableName === 'works') resetWorkCreatorWidget([]);
     setEditMode(formId, tableName, false);
+    document.getElementById(formId.replace('form-','formcard-')).style.display = 'none';
     reloadAll();
   });
 }
@@ -1224,6 +1478,15 @@ simpleFormHandler('form-creation', 'creation_history', 'msg-creation');
 
 // ---------- 초기화 ----------
 captureCardHomes();
+wireSingleCombo('show-troupe');
+wireSingleCombo('show-venue');
+wireSingleCombo('role-work');
+wireSingleCombo('participation-person');
+wireSingleCombo('participation-show');
+wireSingleCombo('creation-person');
+wireSingleCombo('creation-work');
+wireSingleCombo('creation-type');
+wireMultiCombo('show-works', 'show-works-list', 'show-works-chips', 'work_ids');
 (async () => {
   await ensureAuth();
   await reloadAll();
