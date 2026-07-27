@@ -394,7 +394,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 </nav>
 
 <script>
-var BASE='appQtwYrSzJvmt9NA',TOKEN='patGrndUzESpEA1Dw.741c774c92d507034565c813ea223d26291c105e0a35b6282b5a2c501226e05d';
+var SUPABASE_URL='https://lezwarruqgccnecrmpga.supabase.co';
+var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlendhcnJ1cWdjY25lY3JtcGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODEzNjAsImV4cCI6MjEwMDQ1NzM2MH0.ERJBOwjc41Z0lzz8ocMqVeyqfXKZ3RHY3jZHCOCqMXk';
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[]};
 var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={},PERSON_PHOTO={};
 
@@ -421,28 +422,81 @@ function ids(v){if(!v||!Array.isArray(v))return[];return v.map(function(x){retur
 function nm(id){return MAP[id]||'';}
 function iurl(imgs){if(!imgs||!imgs[0])return '';return(imgs[0].thumbnails&&imgs[0].thumbnails.large)?imgs[0].thumbnails.large.url:imgs[0].url;}
 
-async function api(t){
-  var all=[],offset='';
-  do{
-    var url='https://api.airtable.com/v0/'+BASE+'/'+t+'?pageSize=100'+(offset?'&offset='+encodeURIComponent(offset):'');
-    var r=await fetch(url,{headers:{Authorization:'Bearer '+TOKEN}});
-    if(!r.ok)throw new Error(r.status);
-    var data=await r.json();
-    all=all.concat(data.records||[]);
-    offset=data.offset||'';
-  }while(offset);
-  return all;
+/* ══ Supabase REST 어댑터 ══
+   아래 rest()로 원본 테이블을 읽어와서, 기존 렌더링 코드가 기대하는
+   Airtable 레코드 모양({id, fields:{한글필드명:값}})으로 그대로 변환한다.
+   이렇게 하면 이 블록 밖의 1000줄 넘는 화면 코드는 전혀 손댈 필요가 없다. */
+async function rest(table, query){
+  var url=SUPABASE_URL+'/rest/v1/'+table+'?'+(query||'select=*')+'&limit=5000';
+  var r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
+  if(!r.ok)throw new Error(table+' 로드 실패: '+r.status);
+  return await r.json();
+}
+function photoField(urls){return(urls&&urls.length)?urls.map(function(u){return{url:u};}):null;}
+function groupBy(rows,key){
+  var m={};
+  rows.forEach(function(r){(m[r[key]]=m[r[key]]||[]).push(r);});
+  return m;
 }
 
 async function load(){
-  var r=await Promise.allSettled([
-    api('tblQ5oPChjABDqfsF'),api('tblOC3tLzU62ick8h'),api('tblozdPlUPzZXU2A6'),
-    api('tblTdJpe7J7LGKCM9'),api('tblA3YldoCySlRh3E'),api('tblewL5MuJ0aaSwQu'),
-    api('tblCg9DzicDbjJJKl'),api('tblhezC6tdH4o7xo7'),
+  var raw=await Promise.all([
+    rest('shows','select=id,title,show_date,troupe_id,venue_id,poster_urls'),
+    rest('show_works','select=show_id,work_id,sort_order'),
+    rest('people','select=id,name,photo_urls'),
+    rest('participation_history','select=id,person_id,show_id'),
+    rest('participation_roles','select=participation_id,role_id'),
+    rest('participation_staff_roles','select=participation_id,staff_role_id'),
+    rest('roles','select=id,name,order_num,gender,work_id'),
+    rest('staff_roles','select=id,name,order_num'),
+    rest('works','select=id,title,title_en,genre,country,premiere_year'),
+    rest('troupes','select=id,name'),
+    rest('venues','select=id,name,seat_count'),
   ]);
-  DB.shows=r[0].value||[];DB.people=r[1].value||[];DB.history=r[2].value||[];
-  DB.roles=r[3].value||[];DB.staffRoles=r[4].value||[];DB.works=r[5].value||[];
-  DB.troupes=r[6].value||[];DB.venues=r[7].value||[];
+  var shows=raw[0],showWorks=raw[1],people=raw[2],partHist=raw[3],partRoles=raw[4],
+      partStaff=raw[5],roles=raw[6],staffRoles=raw[7],works=raw[8],troupes=raw[9],venues=raw[10];
+
+  var worksByShow=groupBy(showWorks,'show_id');
+  Object.keys(worksByShow).forEach(function(sid){
+    worksByShow[sid].sort(function(a,b){return(a.sort_order||0)-(b.sort_order||0);});
+  });
+  var roleIdsByPart=groupBy(partRoles,'participation_id');
+  var staffIdsByPart=groupBy(partStaff,'participation_id');
+
+  DB.works=works.map(function(w){return{id:w.id,fields:{
+    '작품명':w.title,'작품명 (영문)':w.title_en,'국가':w.country,'구분':w.genre,'초연 연도':w.premiere_year
+  }};});
+  DB.roles=roles.map(function(r){return{id:r.id,fields:{
+    '배역명':r.name,'순서':r.order_num,'성별':r.gender,'작품':r.work_id?[r.work_id]:[]
+  }};});
+  DB.staffRoles=staffRoles.map(function(s){return{id:s.id,fields:{'Name':s.name,'순서':s.order_num}};});
+  DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name}};});
+  DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count}};});
+  DB.people=people.map(function(p){return{id:p.id,fields:{'이름':p.name,'사진':photoField(p.photo_urls)}};});
+  DB.shows=shows.map(function(s){return{id:s.id,fields:{
+    '공연명':s.title,'공연 날짜':s.show_date,
+    '극단':s.troupe_id?[s.troupe_id]:[],'극장':s.venue_id?[s.venue_id]:[],
+    '작품':(worksByShow[s.id]||[]).map(function(w){return w.work_id;}),
+    '포스터':photoField(s.poster_urls)
+  }};});
+
+  // 참여이력 한 행이 배역+스텝을 동시에 가질 수 있으므로(겸직),
+  // 기존 화면 코드(역할타입=배우/스텝 단일값 기대)에 맞춰 겸직 시 두 행으로 나눠 합성한다.
+  DB.history=[];
+  partHist.forEach(function(ph){
+    var roleIds=(roleIdsByPart[ph.id]||[]).map(function(x){return x.role_id;});
+    var staffIds=(staffIdsByPart[ph.id]||[]).map(function(x){return x.staff_role_id;});
+    if(roleIds.length){
+      DB.history.push({id:ph.id+'-actor',fields:{'참여자':[ph.person_id],'공연':[ph.show_id],'역할 타입':'배우','배역':roleIds}});
+    }
+    if(staffIds.length){
+      DB.history.push({id:ph.id+'-staff',fields:{'참여자':[ph.person_id],'공연':[ph.show_id],'역할 타입':'스텝','스텝':staffIds}});
+    }
+    if(!roleIds.length&&!staffIds.length){
+      DB.history.push({id:ph.id,fields:{'참여자':[ph.person_id],'공연':[ph.show_id]}});
+    }
+  });
+
   MAP={};
   DB.shows.forEach(function(r){MAP[r.id]=fld(r,'공연명')||'';});
   DB.people.forEach(function(r){MAP[r.id]=fld(r,'이름')||'';});
