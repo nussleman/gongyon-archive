@@ -267,7 +267,7 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .item-card-sub{font-size:0.75rem;color:var(--muted)}
 .empty{color:var(--muted);font-size:0.83rem;padding:2rem 0}
 
-/* ── 참여자 프로필 ── */
+/* ── 사람 프로필 ── */
 .person-header{display:flex;gap:1.6rem;margin-bottom:1.6rem;align-items:flex-start}
 .person-photo-col{flex-shrink:0}
 .person-photo-col .poster-img,.person-photo-col .poster-placeholder{width:120px;aspect-ratio:2/3}
@@ -369,11 +369,11 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
     <nav id="main-nav">
       <button id="nav-home" class="active" onclick="goHome()">홈</button>
       <button id="nav-shows" onclick="goShows()">공연</button>
-      <button id="nav-people" onclick="goPeople()">참여자</button>
+      <button id="nav-people" onclick="goPeople()">사람</button>
       <button id="nav-works" onclick="goWorks()">작품</button>
       <button id="nav-roles" onclick="goRoles()">배역</button>
       <button id="nav-venues" onclick="goVenues()">극장</button>
-      <button id="nav-troupes" onclick="goTroupes()">극단</button>
+      <button id="nav-troupes" onclick="goTroupes()">단체</button>
     </nav>
   </nav>
 
@@ -386,11 +386,11 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 <nav class="mobile-tab-bar" id="mob-nav">
   <button class="mob-tab active" id="mobt-home" onclick="goHome()"><span class="mob-icon">🏠</span>홈</button>
   <button class="mob-tab" id="mobt-shows" onclick="goShows()"><span class="mob-icon">🎭</span>공연</button>
-  <button class="mob-tab" id="mobt-people" onclick="goPeople()"><span class="mob-icon">👤</span>참여자</button>
+  <button class="mob-tab" id="mobt-people" onclick="goPeople()"><span class="mob-icon">👤</span>사람</button>
   <button class="mob-tab" id="mobt-works" onclick="goWorks()"><span class="mob-icon">📖</span>작품</button>
   <button class="mob-tab" id="mobt-roles" onclick="goRoles()"><span class="mob-icon">🎬</span>배역</button>
   <button class="mob-tab" id="mobt-venues" onclick="goVenues()"><span class="mob-icon">📍</span>극장</button>
-  <button class="mob-tab" id="mobt-troupes" onclick="goTroupes()"><span class="mob-icon">🏢</span>극단</button>
+  <button class="mob-tab" id="mobt-troupes" onclick="goTroupes()"><span class="mob-icon">🏢</span>단체</button>
 </nav>
 
 <script>
@@ -549,7 +549,7 @@ function gsRender(q){
   DB.roles.filter(function(r){return(fld(r,'배역명')||'').includes(q);}).slice(0,4).forEach(function(r){var wid=ids(fld(r,'작품'))[0]||'';var actCnt=DB.history.filter(function(h){return isValidH(h)&&ids(fld(h,'배역')).indexOf(r.id)>-1;}).length;results.push({type:'role',id:r.id,icon:'🎬',name:fld(r,'배역명'),sub:(nm(wid)?nm(wid)+' · ':'')+actCnt+'명 출연'});});
   _gsItems=results;_gsFocusIdx=-1;
   if(!results.length){d.innerHTML='<div class="gs-empty">검색 결과 없음</div>';d.classList.add('open');return;}
-  var typeLabel={show:'공연',person:'참여자',work:'작품',troupe:'극단',venue:'극장',role:'배역'};
+  var typeLabel={show:'공연',person:'사람',work:'작품',troupe:'단체',venue:'극장',role:'배역'};
   var lastType='';var html='';
   results.forEach(function(item,i){
     if(item.type!==lastType){if(lastType)html+='<div class="gs-divider"></div>';html+='<div class="gs-group-label">'+typeLabel[item.type]+'</div>';lastType=item.type;}
@@ -626,10 +626,10 @@ function renderHome(){
   var works=DB.works.filter(function(w){return fld(w,'작품명');});
   var statsH='<div class="home-stats">'
     +'<div class="stat-card" onclick="goShows()"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>'
-    +'<div class="stat-card" onclick="goPeople()"><div class="stat-num">'+people.length+'</div><div class="stat-label">참여자</div></div>'
+    +'<div class="stat-card" onclick="goPeople()"><div class="stat-num">'+people.length+'</div><div class="stat-label">사람</div></div>'
     +'<div class="stat-card" onclick="goWorks()"><div class="stat-num">'+works.length+'</div><div class="stat-label">작품</div></div>'
     +'<div class="stat-card" onclick="goVenues()"><div class="stat-num">'+venues.length+'</div><div class="stat-label">극장</div></div>'
-    +'<div class="stat-card" onclick="goTroupes()"><div class="stat-num">'+troupes.length+'</div><div class="stat-label">극단</div></div>'
+    +'<div class="stat-card" onclick="goTroupes()"><div class="stat-num">'+troupes.length+'</div><div class="stat-label">단체</div></div>'
     +'</div>';
   var sorted=sortShows(shows);var recent=sorted.slice(0,12);
   var toggleH='<div class="home-view-toggle"><span style="font-size:0.65rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-right:0.3rem">최근 공연</span>'
@@ -708,7 +708,7 @@ function renderShowIndex(){
 
   // 극단 필터
   if(troupeIds.length>0){
-    filterH+='<div class="filter-row"><span class="filter-row-label">극단</span><div class="filter-chips">';
+    filterH+='<div class="filter-row"><span class="filter-row-label">단체</span><div class="filter-chips">';
     troupeIds.forEach(function(tid){
       var on=_showFilter.troupes.indexOf(tid)>-1;
       filterH+='<button class="fchip'+(on?' on':'')+'" onclick="toggleShowFilter(\'troupes\',\''+tid+'\')">'+nm(tid)+'</button>';
@@ -1118,7 +1118,7 @@ function showShow(sid,push){
   injectBackBtn('← 공연',function(){goShows();});
 }
 
-/* ══ 참여자 ══ */
+/* ══ 사람 ══ */
 var _allPeople=[];
 var _peopleFilter={type:'all',staffRole:'',sort:'name'};
 var _peopleIndexView='grid';
@@ -1190,7 +1190,7 @@ function renderPeopleIndex(){
 
   var listH='';
   if(!filtered.length){
-    listH='<div class="result-empty"><div class="result-empty-icon">👤</div>해당하는 참여자가 없어요.</div>';
+    listH='<div class="result-empty"><div class="result-empty-icon">👤</div>해당하는 사람이 없어요.</div>';
   } else if(_peopleIndexView==='grid'){
     listH='<div class="result-grid">';
     filtered.forEach(function(p){
@@ -1268,7 +1268,7 @@ function showPerson(pid,push){
     +'<div class="psi-item"><div class="psi-num">'+actors.length+'</div><div class="psi-label">배우 참여</div></div>'
     +'<div class="psi-item"><div class="psi-num">'+staff.length+'</div><div class="psi-label">스텝 참여</div></div>'
     +'<div class="psi-item"><div class="psi-num">'+roleIds.length+'</div><div class="psi-label">맡은 배역</div></div>'
-    +'<div class="psi-item"><div class="psi-num">'+troupeIds.length+'</div><div class="psi-label">참여 극단</div></div>'
+    +'<div class="psi-item"><div class="psi-num">'+troupeIds.length+'</div><div class="psi-label">참여 단체</div></div>'
     +'</div>';
   var chartH='';
   if(allYears.length>=1){
@@ -1278,7 +1278,7 @@ function showPerson(pid,push){
     chartH+='</div></div>';
   }
   var troupeChipsH='';
-  if(troupeRanked.length){troupeChipsH='<div class="person-troupes-inline"><span class="person-troupes-label">주로 함께한 극단</span>';troupeRanked.forEach(function(tid){troupeChipsH+='<span class="troupe-chip" data-action="troupe" data-id="'+tid+'">'+nm(tid)+'<span class="troupe-chip-cnt">'+troupeCntMap[tid]+'회</span></span>';});troupeChipsH+='</div>';}
+  if(troupeRanked.length){troupeChipsH='<div class="person-troupes-inline"><span class="person-troupes-label">주로 함께한 단체</span>';troupeRanked.forEach(function(tid){troupeChipsH+='<span class="troupe-chip" data-action="troupe" data-id="'+tid+'">'+nm(tid)+'<span class="troupe-chip-cnt">'+troupeCntMap[tid]+'회</span></span>';});troupeChipsH+='</div>';}
   var h='<div class="detail-header"><div class="person-header">'
     +'<div class="person-photo-col">'+photoH+'</div>'
     +'<div class="person-info-col">'
@@ -1340,7 +1340,7 @@ function showPerson(pid,push){
   if(!hist.length)h+='<div class="empty">참여 이력이 없습니다.</div>';
   mn(h);
   if(window._renderPersonGrid)_renderPersonGrid('all');
-  injectBackBtn('← 참여자',function(){goPeople();});
+  injectBackBtn('← 사람',function(){goPeople();});
 }
 
 function showTroupe(tid,push){
@@ -1364,7 +1364,7 @@ function showTroupe(tid,push){
   var topMembers=Object.keys(memberMap).sort(function(a,b){return memberMap[b].cnt-memberMap[a].cnt;}).slice(0,12);
   var memberCnt=Object.keys(memberMap).length;
 
-  var h='<div class="detail-header"><div class="eyebrow">극단</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>참여자 '+memberCnt+'명</span>':'')+'</div></div>';
+  var h='<div class="detail-header"><div class="eyebrow">극단</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div></div>';
 
   if(topMembers.length){
     h+='<div class="sec"><div class="sec-label">많이 참여한 사람</div><div class="coactor-grid">';
@@ -1383,7 +1383,7 @@ function showTroupe(tid,push){
     shows.forEach(function(s){var wid=ids(fld(s,'작품'))[0]||'';var p=POSTER[s.id]||'';h+='<div class="item-card" data-action="show" data-id="'+s.id+'">'+(p?'<img src="'+p+'" style="width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:4px;margin-bottom:0.6rem">':'')+'<div class="item-card-title">'+fld(s,'공연명')+'</div><div class="item-card-sub">'+nm(wid)+(fld(s,'공연 날짜')?' · '+ym(fld(s,'공연 날짜')):'')+'</div></div>';});
     h+='</div></div>';
   } else {h+='<div class="empty">등록된 공연이 없습니다.</div>';}
-  mn(h);injectBackBtn('← 극단',function(){goTroupes();});
+  mn(h);injectBackBtn('← 단체',function(){goTroupes();});
 }
 
 
@@ -1459,9 +1459,9 @@ function goTroupes(push){
 
 function renderTroupeIndex(){
   var all=_allTroupes;
-  if(!all.length){mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">🏢</div>극단 데이터가 없습니다.</div></div>');return;}
+  if(!all.length){mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">🏢</div>단체 데이터가 없습니다.</div></div>');return;}
 
-  var resultH='<div class="result-header"><span class="result-count"><em>'+all.length+'</em>개 극단</span></div>';
+  var resultH='<div class="result-header"><span class="result-count"><em>'+all.length+'</em>개 단체</span></div>';
 
   var listH='<div class="result-grid">';
   all.forEach(function(t){
@@ -1477,7 +1477,7 @@ function renderTroupeIndex(){
       +'<div class="result-card-body">'
       +'<div class="result-card-title">'+fld(t,'극단명')+'</div>'
       +'<div class="result-card-sub">공연 '+shows.length+'개</div>'
-      +(memberCnt?'<div class="result-card-sub">참여자 '+memberCnt+'명</div>':'')
+      +(memberCnt?'<div class="result-card-sub">사람 '+memberCnt+'명</div>':'')
       +'</div></div>';
   });
   listH+='</div>';
