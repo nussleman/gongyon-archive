@@ -284,6 +284,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .person-links-inline{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem}
 .person-link-chip{display:inline-flex;align-items:center;gap:0.35rem;background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:0.25rem 0.85rem;font-size:0.75rem;color:var(--text);text-decoration:none;transition:background .15s,border-color .15s}
 .person-link-chip:hover{background:var(--bg3);border-color:rgba(255,255,255,0.18)}
+.mini-gallery{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem}
+.mini-gallery img{width:90px;height:90px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 .year-chart-block{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0.85rem 1rem;max-width:360px}
 .year-chart-title{font-size:0.62rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:0.7rem}
 .mini-chart{display:flex;align-items:flex-end;gap:4px;height:70px}
@@ -453,8 +455,8 @@ async function load(){
     rest('roles','select=id,name,order_num,gender,work_id'),
     rest('staff_roles','select=id,name,order_num'),
     rest('works','select=id,title,title_en,genre,country,premiere_year'),
-    rest('troupes','select=id,name,org_type,member_base,level'),
-    rest('venues','select=id,name,seat_count'),
+    rest('troupes','select=id,name,org_type,member_base,level,photo_urls'),
+    rest('venues','select=id,name,seat_count,photo_urls'),
   ]);
   var shows=raw[0],showWorks=raw[1],people=raw[2],partHist=raw[3],partRoles=raw[4],
       partStaff=raw[5],roles=raw[6],staffRoles=raw[7],works=raw[8],troupes=raw[9],venues=raw[10];
@@ -473,8 +475,8 @@ async function load(){
     '배역명':r.name,'순서':r.order_num,'성별':r.gender,'작품':r.work_id?[r.work_id]:[]
   }};});
   DB.staffRoles=staffRoles.map(function(s){return{id:s.id,fields:{'Name':s.name,'순서':s.order_num}};});
-  DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name,'조직형태':t.org_type,'구성원기반':t.member_base,'수준':t.level}};});
-  DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count}};});
+  DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name,'조직형태':t.org_type,'구성원기반':t.member_base,'수준':t.level,'사진':photoField(t.photo_urls)}};});
+  DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count,'사진':photoField(v.photo_urls)}};});
   DB.people=people.map(function(p){return{id:p.id,fields:{'이름':p.name,'사진':photoField(p.photo_urls),'홍보링크':p.social_links||[]}};});
   DB.shows=shows.map(function(s){return{id:s.id,fields:{
     '공연명':s.title,'공연 날짜':s.show_date,
@@ -1406,7 +1408,12 @@ function showTroupe(tid,push){
   var topMembers=Object.keys(memberMap).sort(function(a,b){return memberMap[b].cnt-memberMap[a].cnt;}).slice(0,12);
   var memberCnt=Object.keys(memberMap).length;
 
-  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div></div>';
+  var troupePhotos=fld(troupe,'사진')||[];
+  var galleryH='';
+  if(troupePhotos.length){
+    galleryH='<div class="mini-gallery">'+troupePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
+  }
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div>'+galleryH+'</div>';
 
   if(topMembers.length){
     h+='<div class="sec"><div class="sec-label">많이 참여한 사람</div><div class="coactor-grid">';
@@ -1498,7 +1505,9 @@ function renderVenueIndex(){
     listH='<div class="result-grid">';
     filtered.forEach(function(v){
       var seats=seatMap[v.id];
-      listH+='<div class="result-card" data-action="venue" data-id="'+v.id+'"><div class="result-card-ph">📍</div><div class="result-card-body"><div class="result-card-title">'+fld(v,'극장명')+'</div><div class="result-card-sub">공연 '+showCntMap[v.id]+'개'+(seats?' · 좌석 '+seats+'석':'')+'</div></div></div>';
+      var vphoto=iurl(fld(v,'사진'));
+      var vphH=vphoto?'<img src="'+vphoto+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':'📍';
+      listH+='<div class="result-card" data-action="venue" data-id="'+v.id+'"><div class="result-card-ph">'+vphH+'</div><div class="result-card-body"><div class="result-card-title">'+fld(v,'극장명')+'</div><div class="result-card-sub">공연 '+showCntMap[v.id]+'개'+(seats?' · 좌석 '+seats+'석':'')+'</div></div></div>';
     });
     listH+='</div>';
   }
@@ -1510,7 +1519,12 @@ function showVenue(vid,push){
   var venue=DB.venues.find(function(v){return v.id===vid;});if(!venue)return;
   var shows=sortShows(DB.shows.filter(function(s){return ids(fld(s,'극장')).indexOf(vid)>-1;}));
   var seats=venueSeats(venue);
-  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seats?'<span>💺 좌석 '+seats+'석</span>':'')+'</div></div>';
+  var venuePhotos=fld(venue,'사진')||[];
+  var vGalleryH='';
+  if(venuePhotos.length){
+    vGalleryH='<div class="mini-gallery">'+venuePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
+  }
+  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seats?'<span>💺 좌석 '+seats+'석</span>':'')+'</div>'+vGalleryH+'</div>';
   if(shows.length){
     // 연도별 그루핑
     var byYear={};var yearOrder=[];
@@ -1614,8 +1628,10 @@ function renderTroupeIndex(){
   } else {
     listH='<div class="result-grid">';
     filtered.forEach(function(t){
+      var tphoto=iurl(fld(t,'사진'));
+      var tphH=tphoto?'<img src="'+tphoto+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':'🏢';
       listH+='<div class="result-card" data-action="troupe" data-id="'+t.id+'">'
-        +'<div class="result-card-ph">🏢</div>'
+        +'<div class="result-card-ph">'+tphH+'</div>'
         +'<div class="result-card-body">'
         +'<div class="result-card-title">'+fld(t,'극단명')+'</div>'
         +'<div class="result-card-sub">공연 '+showCntMap[t.id]+'개</div>'
