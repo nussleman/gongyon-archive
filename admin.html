@@ -233,6 +233,13 @@
               <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
             </div>
           </div>
+          <div style="margin-top:12px;">
+            <label>상연 작품 (여러 개 선택 가능)
+              <button type="button" class="btn secondary" style="margin-top:0; margin-left:6px; padding:2px 10px; font-size:12px;"
+                onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ const b=document.querySelector('#show-works-list input[value=\''+id+'\']'); if(b) b.checked=true; })">+ 새 작품</button>
+            </label>
+            <div class="checkbox-list" id="show-works-list"></div>
+          </div>
           <div class="photo-widget">
             <label>포스터</label>
             <div class="photo-thumbs" id="photos-show"></div>
@@ -265,6 +272,9 @@
                 <select name="person_id" style="flex:1;" required><option value="">선택</option></select>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('people', '새 참여자 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-participation select[name=person_id]').value = id; })">+</button>
               </div>
+            </div>
+            <div><label>역할 구분 (레거시 필드)</label>
+              <select name="role_type"><option value="">선택 안 함</option><option value="배우">배우</option><option value="스텝">스텝</option></select>
             </div>
           </div>
           <div style="margin-top:12px;">
@@ -329,7 +339,13 @@
       </div>
       <div class="card">
         <h3>등록된 작품 <span class="count-tag" id="count-work"></span></h3>
-        <input type="text" id="search-work" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="search-work" placeholder="검색..." style="flex:1; margin-bottom:0;" oninput="window.__applyFilters()">
+          <select id="group-work" onchange="window.__applyFilters()" style="width:160px;">
+            <option value="">그룹 없음</option>
+            <option value="genre">장르별로 묶기</option>
+          </select>
+        </div>
         <div id="list-work"></div>
       </div>
     </section>
@@ -360,7 +376,13 @@
       </div>
       <div class="card">
         <h3>등록된 배역 <span class="count-tag" id="count-role"></span></h3>
-        <input type="text" id="search-role" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="search-role" placeholder="검색..." style="flex:1; margin-bottom:0;" oninput="window.__applyFilters()">
+          <select id="group-role" onchange="window.__applyFilters()" style="width:160px;">
+            <option value="">그룹 없음</option>
+            <option value="work">작품별로 묶기</option>
+          </select>
+        </div>
         <div id="list-role"></div>
       </div>
     </section>
@@ -713,6 +735,8 @@ async function loadMasterData() {
 
   fillSelect(document.querySelector('#form-show select[name=troupe_id]'), cache.troupes, 'id', 'name', '선택 안 함');
   fillSelect(document.querySelector('#form-show select[name=venue_id]'), cache.venues, 'id', 'name', '선택 안 함');
+  document.getElementById('show-works-list').innerHTML = cache.works.map(w =>
+    `<label><input type="checkbox" name="work_ids" value="${w.id}"> ${w.title}</label>`).join('') || '<span class="empty">작품이 없어요</span>';
 
   fillSelect(document.querySelector('#form-role select[name=work_id]'), cache.works, 'id', 'title');
   fillSelect(document.querySelector('#form-participation select[name=person_id]'), cache.people, 'id', 'name');
@@ -768,6 +792,24 @@ function renderTable(containerId, rows, columns, tableName, countId, editHandler
 function thumbHtml(urls) {
   if (!urls || !urls.length) return '';
   return `<img class="thumb" src="${urls[0]}">` + (urls.length > 1 ? `<span class="count-tag">+${urls.length-1}</span>` : '');
+}
+
+// 그룹 없음이면 평범한 표, 그룹 선택돼 있으면 그룹명별로 소제목+표를 나눠 그린다.
+function renderGroupable(containerId, countId, rows, columns, tableName, groupLabelFn) {
+  if (countId) document.getElementById(countId).textContent = `(${rows.length}건)`;
+  const container = document.getElementById(containerId);
+  if (!rows.length) { container.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>'; return; }
+  if (!groupLabelFn) { renderTable(containerId, rows, columns, tableName, null, true); return; }
+  const groups = {};
+  rows.forEach(r => { const k = groupLabelFn(r); (groups[k] = groups[k] || []).push(r); });
+  const sortedKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+  let html = '';
+  sortedKeys.forEach((k, i) => {
+    html += `<div style="margin:16px 0 6px; font-weight:600; font-size:13.5px;">${k} <span class="count-tag">(${groups[k].length}건)</span></div>`;
+    html += `<div id="${containerId}-grp-${i}"></div>`;
+  });
+  container.innerHTML = html;
+  sortedKeys.forEach((k, i) => renderTable(`${containerId}-grp-${i}`, groups[k], columns, tableName, null, true));
 }
 
 async function reloadAll() {
@@ -842,6 +884,7 @@ function renderAllLists() {
     {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
     {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
     {label:'단체', render: r => { const s = cache.shows.find(s=>s.id===r.show_id); return cache.troupes.find(t=>t.id===s?.troupe_id)?.name || ''; }},
+    {label:'역할구분', key:'role_type'},
     {label:'배역/스텝', render: r => {
       const roleNames = namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles);
       const staffNames = namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles);
@@ -851,50 +894,40 @@ function renderAllLists() {
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
   ];
   const groupBy = document.getElementById('group-participation')?.value || '';
-  document.getElementById('count-participation').textContent = `(${partFiltered.length}건)`;
-  const partContainer = document.getElementById('list-participation');
-  if (!partFiltered.length) {
-    partContainer.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>';
-  } else if (!groupBy) {
-    renderTable('list-participation', partFiltered, partColumns, 'participation_history', null, true);
-  } else {
-    const groupLabel = row => groupBy === 'show'
-      ? (cache.shows.find(s=>s.id===row.show_id)?.title || '(공연 없음)')
-      : (cache.people.find(p=>p.id===row.person_id)?.name || '(참여자 없음)');
-    const groups = {};
-    partFiltered.forEach(r => { const k = groupLabel(r); (groups[k] = groups[k] || []).push(r); });
-    const sortedKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
-    let html = '';
-    sortedKeys.forEach(k => {
-      html += `<div style="margin:16px 0 6px; font-weight:600; font-size:13.5px;">${k} <span class="count-tag">(${groups[k].length}건)</span></div>`;
-      const tempId = 'temp-group-' + Math.random().toString(36).slice(2,8);
-      html += `<div id="${tempId}"></div>`;
-    });
-    partContainer.innerHTML = html;
-    // 그룹별로 각각 표를 그려넣는다 (renderTable이 컨테이너 id를 받는 구조라 임시 id를 부여해 순차 렌더)
-    let idx = 0;
-    sortedKeys.forEach(k => {
-      const containerEl = partContainer.children[idx*2+1];
-      containerEl.id = containerEl.id; // 그대로 사용
-      renderTable(containerEl.id, groups[k], partColumns, 'participation_history', null, true);
-      idx++;
-    });
-  }
+  const groupLabelFn = !groupBy ? null : (row => groupBy === 'show'
+    ? (cache.shows.find(s=>s.id===row.show_id)?.title || '(공연 없음)')
+    : (cache.people.find(p=>p.id===row.person_id)?.name || '(참여자 없음)'));
+  renderGroupable('list-participation', 'count-participation', partFiltered, partColumns, 'participation_history', groupLabelFn);
 
+  function creatorsFor(workId) {
+    return cache.creationRows.filter(c => c.work_id === workId)
+      .map(c => {
+        const person = cache.people.find(p=>p.id===c.person_id)?.name;
+        const type = cache.creationTypes.find(t=>t.id===c.creation_type_id)?.name;
+        return person ? `${person}${type ? '('+type+')' : ''}` : '';
+      }).filter(Boolean).join(', ');
+  }
   const tWork = searchVal('work');
-  renderTable('list-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, r.country)), [
+  const workColumns = [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'작품명', key:'title'},
+    {label:'창작자', render: r => creatorsFor(r.id) || '<span class="warn-badge">⚠ 입력 필요</span>'},
     {label:'장르', key:'genre'},
     {label:'국가', key:'country'},
-  ], 'works', 'count-work', true);
+  ];
+  const workGroupBy = document.getElementById('group-work')?.value || '';
+  const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(장르 미입력)') : null;
+  renderGroupable('list-work', 'count-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, r.country)), workColumns, 'works', workGroupFn);
 
   const tRole = searchVal('role');
-  renderTable('list-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title)), [
+  const roleColumns = [
     {label:'배역명', key:'name'},
-    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
-    {label:'성별', key:'gender'},
-  ], 'roles', 'count-role', true);
+    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>'},
+    {label:'성별', render: r => r.gender || '<span class="warn-badge">⚠ 입력 필요</span>'},
+  ];
+  const roleGroupBy = document.getElementById('group-role')?.value || '';
+  const roleGroupFn = roleGroupBy === 'work' ? (r => cache.works.find(w=>w.id===r.work_id)?.title || '(작품 없음)') : null;
+  renderGroupable('list-role', 'count-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title)), roleColumns, 'roles', roleGroupFn);
 
   const tTroupe = searchVal('troupe');
   renderTable('list-troupe', cache.troupes.filter(r => matches(tTroupe, r.name, r.org_type, r.member_base, r.level)), [
@@ -1006,6 +1039,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     moveCardHome(key);
     if (photoState[key]) resetPhotoWidget(key, []);
     if (key === 'person') resetLinkWidget('person', []);
+    if (key === 'show') form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false);
     if (key === 'participation') {
       document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
       form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
@@ -1025,6 +1059,9 @@ document.querySelector('main').addEventListener('click', async (e) => {
     const form = document.getElementById('form-show');
     fillFormFields(form, row);
     resetPhotoWidget('show', row.poster_urls);
+    const { data: sw } = await supabase.from('show_works').select('work_id').eq('show_id', id);
+    const workIds = (sw||[]).map(w=>w.work_id);
+    form.querySelectorAll('input[name=work_ids]').forEach(c => c.checked = workIds.includes(c.value));
     editState['shows'] = id;
     setEditMode('form-show', 'shows', true);
     moveCardToRow('show', btn.closest('tr'));
@@ -1102,15 +1139,23 @@ document.getElementById('form-creation').dataset.addLabel = '창작이력 저장
 document.getElementById('form-show').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
-  const payload = formToObj(form);
+  const checked = [...form.querySelectorAll('input[name=work_ids]:checked')].map(c => c.value);
+  const payload = formToObj(form, ['work_ids']);
   payload.poster_urls = photoState.show.length ? photoState.show : null;
   const editId = editState['shows'];
+  let showId;
   if (editId) {
     const { error } = await supabase.from('shows').update(payload).eq('id', editId);
     if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
+    showId = editId;
+    await supabase.from('show_works').delete().eq('show_id', editId);
   } else {
-    const { error } = await supabase.from('shows').insert(payload);
+    const { data, error } = await supabase.from('shows').insert(payload).select().single();
     if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
+    showId = data.id;
+  }
+  if (checked.length) {
+    await supabase.from('show_works').insert(checked.map((wid, i) => ({show_id: showId, work_id: wid, sort_order: i+1})));
   }
   showMsg('msg-show', true, '저장됐어요.');
   form.reset();
