@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공연DB 어드민</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --panel: #ffffff;
+    --ink: #26241f;
+    --ink-soft: #6b6a63;
+    --line: #e4e1d8;
+    --accent: #8a5a3d;
+    --accent-soft: #f1e6dd;
+    --danger: #b3432f;
+    --ok: #3d6b4a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    padding: 18px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  #authStatus { font-size: 13px; color: var(--ink-soft); }
+  #authStatus.ok { color: var(--ok); }
+  #authStatus.err { color: var(--danger); }
+
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+  nav {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    padding: 12px 0;
+  }
+  nav button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  nav button:hover { background: var(--accent-soft); }
+  nav button.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
+
+  main { flex: 1; padding: 24px 32px; max-width: 960px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  h2 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 20px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .card h3 { margin: 0 0 14px; font-size: 15px; color: var(--ink-soft); font-weight: 600; display:flex; align-items:center; gap:10px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .field-grid.wide { grid-template-columns: 1fr; }
+  label { display: block; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 4px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--ink);
+  }
+  textarea { resize: vertical; min-height: 50px; }
+  .checkbox-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+  }
+  .checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    font-size: 13px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .checkbox-list input { width: auto; }
+
+  .btn {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
+  .cancel-edit-btn { display: none; margin-left: 8px; }
+  .cancel-edit-btn.show { display: inline-block; }
+  .edit-badge {
+    display: none;
+    font-size: 11.5px;
+    font-weight: normal;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .edit-badge.show { display: inline-block; }
+
+  .msg { font-size: 13px; margin-top: 10px; display: none; }
+  .msg.ok { color: var(--ok); display: block; }
+  .msg.err { color: var(--danger); display: block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { color: var(--ink-soft); font-weight: 600; font-size: 12.5px; }
+  tr:hover td { background: #faf9f6; }
+  .row-actions { white-space: nowrap; text-align: right; }
+  .edit-btn, .del-btn {
+    background: none; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 3px 9px; border-radius: 5px; font-size: 12px; cursor: pointer; margin-left: 4px;
+  }
+  .edit-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .del-btn { color: var(--danger); }
+  .del-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .empty { color: var(--ink-soft); font-size: 13px; padding: 10px 0; }
+  .count-tag { font-size: 12px; color: var(--ink-soft); font-weight: normal; }
+  .thumb { width: 32px; height: 32px; object-fit: cover; border-radius: 5px; vertical-align: middle; margin-right: 4px; border:1px solid var(--line); }
+
+  /* 사진 위젯 */
+  .photo-widget { margin-top: 12px; }
+  .photo-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .photo-thumb { position: relative; width: 72px; height: 72px; }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+  .photo-thumb .rm-btn {
+    position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--danger); color: #fff; border: none; font-size: 12px; cursor: pointer; line-height: 1;
+  }
+  .photo-upload-status { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>공연DB 어드민</h1>
+  <span id="authStatus">인증 확인 중...</span>
+</header>
+
+<div class="layout">
+  <nav id="navTabs">
+    <button data-tab="show">공연</button>
+    <button data-tab="participation">참여이력</button>
+    <button data-tab="work">작품</button>
+    <button data-tab="role">배역</button>
+    <button data-tab="troupe">단체</button>
+    <button data-tab="venue">극장</button>
+    <button data-tab="staffrole">스텝역할</button>
+    <button data-tab="person">사람</button>
+    <button data-tab="creation">창작이력</button>
+  </nav>
+
+  <main>
+
+    <!-- ================= 공연 ================= -->
+    <section class="tab-panel" id="tab-show">
+      <h2>공연</h2>
+      <p class="sub">새 공연을 등록해요. 상연 작품은 여러 개 고를 수 있어요.</p>
+      <div class="card">
+        <h3>새 공연 등록 <span class="edit-badge" id="editbadge-show">수정 중</span></h3>
+        <form id="form-show">
+          <div class="field-grid">
+            <div><label>공연명</label><input type="text" name="title" required></div>
+            <div><label>공연 날짜</label><input type="date" name="show_date"></div>
+            <div><label>단체 (극단/제작사)</label><select name="troupe_id"><option value="">선택 안 함</option></select></div>
+            <div><label>극장</label><select name="venue_id"><option value="">선택 안 함</option></select></div>
+            <div><label>공연 형태</label><input type="text" name="production_type" placeholder="예: 정기공연"></div>
+            <div><label>라이선스 여부</label>
+              <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>상연 작품 (여러 개 선택 가능)</label>
+            <div class="checkbox-list" id="show-works-list"></div>
+          </div>
+          <div class="photo-widget">
+            <label>포스터</label>
+            <div class="photo-thumbs" id="photos-show"></div>
+            <input type="file" id="upload-show" accept="image/*" multiple>
+            <div class="photo-upload-status" id="upload-status-show"></div>
+          </div>
+          <button type="submit" class="btn">공연 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-show">취소</button>
+          <div class="msg" id="msg-show"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 공연 <span class="count-tag" id="count-show"></span></h3>
+        <div id="list-show"></div>
+      </div>
+    </section>
+
+    <!-- ================= 참여이력 ================= -->
+    <section class="tab-panel" id="tab-participation">
+      <h2>참여이력</h2>
+      <p class="sub">공연을 먼저 고르면 그 공연 작품에 속한 배역만 보여줘요. 배역/스텝역할은 동시에 여러 개 체크 가능(겸직).</p>
+      <div class="card">
+        <h3>새 참여이력 입력 <span class="edit-badge" id="editbadge-participation">수정 중</span></h3>
+        <form id="form-participation">
+          <div class="field-grid">
+            <div><label>공연</label><select name="show_id" id="participation-show-select" required><option value="">선택</option></select></div>
+            <div><label>참여자</label><select name="person_id" required><option value="">선택</option></select></div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>배역 (공연 선택 시 자동으로 채워져요)</label>
+            <div class="checkbox-list" id="participation-roles-list"><span class="empty">공연을 먼저 선택하세요</span></div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>스텝 역할</label>
+            <div class="checkbox-list" id="participation-staffroles-list"></div>
+          </div>
+          <div class="photo-widget">
+            <label>사진</label>
+            <div class="photo-thumbs" id="photos-participation"></div>
+            <input type="file" id="upload-participation" accept="image/*" multiple>
+            <div class="photo-upload-status" id="upload-status-participation"></div>
+          </div>
+          <button type="submit" class="btn">참여이력 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-participation">취소</button>
+          <div class="msg" id="msg-participation"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>참여이력 <span class="count-tag" id="count-participation"></span></h3>
+        <div id="list-participation"></div>
+      </div>
+    </section>
+
+    <!-- ================= 작품 ================= -->
+    <section class="tab-panel" id="tab-work">
+      <h2>작품</h2>
+      <div class="card">
+        <h3>새 작품 등록 <span class="edit-badge" id="editbadge-work">수정 중</span></h3>
+        <form id="form-work">
+          <div class="field-grid">
+            <div><label>작품명</label><input type="text" name="title" required></div>
+            <div><label>작품명 (영문)</label><input type="text" name="title_en"></div>
+            <div><label>구분 (장르)</label><input type="text" name="genre" placeholder="예: 뮤지컬"></div>
+            <div><label>국가</label><input type="text" name="country"></div>
+            <div><label>초연 연도</label><input type="number" name="premiere_year"></div>
+            <div><label>창작극 여부</label>
+              <select name="is_original"><option value="">선택 안 함</option><option value="Y">Y</option></select>
+            </div>
+          </div>
+          <div class="photo-widget">
+            <label>포스터</label>
+            <div class="photo-thumbs" id="photos-work"></div>
+            <input type="file" id="upload-work" accept="image/*" multiple>
+            <div class="photo-upload-status" id="upload-status-work"></div>
+          </div>
+          <button type="submit" class="btn">작품 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-work">취소</button>
+          <div class="msg" id="msg-work"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 작품 <span class="count-tag" id="count-work"></span></h3>
+        <div id="list-work"></div>
+      </div>
+    </section>
+
+    <!-- ================= 배역 ================= -->
+    <section class="tab-panel" id="tab-role">
+      <h2>배역</h2>
+      <div class="card">
+        <h3>새 배역 등록 <span class="edit-badge" id="editbadge-role">수정 중</span></h3>
+        <form id="form-role">
+          <div class="field-grid">
+            <div><label>작품</label><select name="work_id" required><option value="">선택</option></select></div>
+            <div><label>배역명</label><input type="text" name="name" required></div>
+            <div><label>순서</label><input type="number" name="order_num"></div>
+            <div><label>성별</label>
+              <select name="gender"><option value="">선택 안 함</option><option value="남">남</option><option value="여">여</option></select>
+            </div>
+          </div>
+          <button type="submit" class="btn">배역 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-role">취소</button>
+          <div class="msg" id="msg-role"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 배역 <span class="count-tag" id="count-role"></span></h3>
+        <div id="list-role"></div>
+      </div>
+    </section>
+
+    <!-- ================= 단체 ================= -->
+    <section class="tab-panel" id="tab-troupe">
+      <h2>단체</h2>
+      <p class="sub">극단/제작사/동호회를 한 테이블에서 관리해요.</p>
+      <div class="card">
+        <h3>새 단체 등록 <span class="edit-badge" id="editbadge-troupe">수정 중</span></h3>
+        <form id="form-troupe">
+          <div class="field-grid">
+            <div><label>단체명</label><input type="text" name="name" required></div>
+            <div><label>조직형태</label>
+              <select name="org_type">
+                <option value="">선택 안 함</option><option value="극단">극단</option>
+                <option value="제작사">제작사</option><option value="동호회">동호회</option>
+              </select>
+            </div>
+            <div><label>구성원기반</label>
+              <select name="member_base">
+                <option value="">선택 안 함</option><option value="학생">학생</option>
+                <option value="직장인">직장인</option><option value="일반">일반</option>
+              </select>
+            </div>
+            <div><label>수준</label>
+              <select name="level"><option value="">선택 안 함</option><option value="아마추어">아마추어</option><option value="프로">프로</option></select>
+            </div>
+            <div><label>상태</label><input type="text" name="status"></div>
+            <div><label>메모</label><input type="text" name="memo"></div>
+          </div>
+          <button type="submit" class="btn">단체 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-troupe">취소</button>
+          <div class="msg" id="msg-troupe"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 단체 <span class="count-tag" id="count-troupe"></span></h3>
+        <div id="list-troupe"></div>
+      </div>
+    </section>
+
+    <!-- ================= 극장 ================= -->
+    <section class="tab-panel" id="tab-venue">
+      <h2>극장</h2>
+      <div class="card">
+        <h3>새 극장 등록 <span class="edit-badge" id="editbadge-venue">수정 중</span></h3>
+        <form id="form-venue">
+          <div class="field-grid">
+            <div><label>극장명</label><input type="text" name="name" required></div>
+            <div><label>좌석수</label><input type="number" name="seat_count"></div>
+            <div><label>주소</label><input type="text" name="address"></div>
+          </div>
+          <button type="submit" class="btn">극장 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-venue">취소</button>
+          <div class="msg" id="msg-venue"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 극장 <span class="count-tag" id="count-venue"></span></h3>
+        <div id="list-venue"></div>
+      </div>
+    </section>
+
+    <!-- ================= 스텝역할 ================= -->
+    <section class="tab-panel" id="tab-staffrole">
+      <h2>스텝역할</h2>
+      <div class="card">
+        <h3>새 스텝역할 등록 <span class="edit-badge" id="editbadge-staffrole">수정 중</span></h3>
+        <form id="form-staffrole">
+          <div class="field-grid">
+            <div><label>이름</label><input type="text" name="name" required></div>
+            <div><label>순서</label><input type="number" name="order_num"></div>
+          </div>
+          <button type="submit" class="btn">스텝역할 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-staffrole">취소</button>
+          <div class="msg" id="msg-staffrole"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 스텝역할 <span class="count-tag" id="count-staffrole"></span></h3>
+        <div id="list-staffrole"></div>
+      </div>
+    </section>
+
+    <!-- ================= 사람 ================= -->
+    <section class="tab-panel" id="tab-person">
+      <h2>사람</h2>
+      <p class="sub">참여자와 창작자가 통합된 테이블이에요.</p>
+      <div class="card">
+        <h3>새 사람 등록 <span class="edit-badge" id="editbadge-person">수정 중</span></h3>
+        <form id="form-person">
+          <div class="field-grid">
+            <div><label>이름</label><input type="text" name="name" required></div>
+            <div><label>이름 (영문)</label><input type="text" name="name_en"></div>
+            <div><label>닉네임</label><input type="text" name="nickname"></div>
+            <div><label>생년월일</label><input type="date" name="birth_date"></div>
+          </div>
+          <div class="photo-widget">
+            <label>사진</label>
+            <div class="photo-thumbs" id="photos-person"></div>
+            <input type="file" id="upload-person" accept="image/*" multiple>
+            <div class="photo-upload-status" id="upload-status-person"></div>
+          </div>
+          <button type="submit" class="btn">사람 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-person">취소</button>
+          <div class="msg" id="msg-person"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 사람 <span class="count-tag" id="count-person"></span></h3>
+        <div id="list-person"></div>
+      </div>
+    </section>
+
+    <!-- ================= 창작이력 ================= -->
+    <section class="tab-panel" id="tab-creation">
+      <h2>창작이력</h2>
+      <div class="card">
+        <h3>새 창작이력 등록 <span class="edit-badge" id="editbadge-creation">수정 중</span></h3>
+        <form id="form-creation">
+          <div class="field-grid">
+            <div><label>사람</label><select name="person_id" required><option value="">선택</option></select></div>
+            <div><label>작품</label><select name="work_id" required><option value="">선택</option></select></div>
+            <div><label>창작 유형</label><select name="creation_type_id" required><option value="">선택</option></select></div>
+          </div>
+          <button type="submit" class="btn">창작이력 저장</button>
+          <button type="button" class="btn secondary cancel-edit-btn" id="cancel-creation">취소</button>
+          <div class="msg" id="msg-creation"></div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>등록된 창작이력 <span class="count-tag" id="count-creation"></span></h3>
+        <div id="list-creation"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://lezwarruqgccnecrmpga.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlendhcnJ1cWdjY25lY3JtcGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODEzNjAsImV4cCI6MjEwMDQ1NzM2MH0.ERJBOwjc41Z0lzz8ocMqVeyqfXKZ3RHY3jZHCOCqMXk';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const authStatusEl = document.getElementById('authStatus');
+
+async function ensureAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) { authStatusEl.textContent = '인증됨 (임시)'; authStatusEl.className = 'ok'; return; }
+  const { error } = await supabase.auth.signInAnonymously();
+  if (error) {
+    authStatusEl.textContent = '인증 실패: ' + error.message + ' (Anonymous sign-in을 켜야 해요)';
+    authStatusEl.className = 'err';
+  } else {
+    authStatusEl.textContent = '인증됨 (임시)';
+    authStatusEl.className = 'ok';
+  }
+}
+
+// ---------- 탭 전환 ----------
+document.getElementById('navTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if (!btn) return;
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+});
+document.querySelector('nav button[data-tab=show]').classList.add('active');
+document.getElementById('tab-show').classList.add('active');
+
+function showMsg(id, ok, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'msg ' + (ok ? 'ok' : 'err');
+}
+function fillSelect(selectEl, rows, valueKey, labelKey, placeholder) {
+  selectEl.innerHTML = `<option value="">${placeholder || '선택'}</option>` +
+    rows.map(r => `<option value="${r[valueKey]}">${(typeof labelKey==='function'? labelKey(r) : r[labelKey]) ?? '(이름 없음)'}</option>`).join('');
+}
+
+// ---------- 사진 위젯 ----------
+// key별로 현재 URL 배열을 들고 있다가, 폼 제출 시 그대로 payload에 실어보낸다.
+let photoState = { work: [], show: [], person: [], participation: [] };
+
+function renderPhotoThumbs(key) {
+  const box = document.getElementById('photos-' + key);
+  box.innerHTML = photoState[key].map((url, i) =>
+    `<div class="photo-thumb"><img src="${url}"><button type="button" class="rm-btn" data-photokey="${key}" data-idx="${i}">×</button></div>`
+  ).join('');
+}
+function resetPhotoWidget(key, urls) {
+  photoState[key] = urls ? [...urls] : [];
+  renderPhotoThumbs(key);
+  document.getElementById('upload-status-' + key).textContent = '';
+}
+document.querySelector('main').addEventListener('click', (e) => {
+  const rm = e.target.closest('.rm-btn');
+  if (!rm) return;
+  const key = rm.dataset.photokey;
+  photoState[key].splice(Number(rm.dataset.idx), 1);
+  renderPhotoThumbs(key);
+});
+['work','show','person','participation'].forEach(key => {
+  document.getElementById('upload-' + key).addEventListener('change', async (e) => {
+    const files = [...e.target.files];
+    if (!files.length) return;
+    const statusEl = document.getElementById('upload-status-' + key);
+    for (const file of files) {
+      statusEl.textContent = `업로드 중... (${file.name})`;
+      try {
+        const path = key + '/' + Date.now() + '_' + Math.random().toString(36).slice(2,7) + '_' + file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+        const { error } = await supabase.storage.from('photos').upload(path, file);
+        if (error) throw error;
+        const { data } = supabase.storage.from('photos').getPublicUrl(path);
+        photoState[key].push(data.publicUrl);
+        renderPhotoThumbs(key);
+        statusEl.textContent = '업로드 완료';
+      } catch (err) {
+        statusEl.textContent = '업로드 실패: ' + err.message;
+      }
+    }
+    e.target.value = '';
+  });
+});
+
+// ---------- 삭제 버튼 위임 처리 ----------
+document.querySelector('main').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.del-btn');
+  if (!btn) return;
+  if (!confirm('정말 삭제할까요?')) return;
+  const table = btn.dataset.table;
+  const id = btn.dataset.id;
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) { alert('삭제 실패: ' + error.message); return; }
+  reloadAll();
+});
+
+// ---------- 마스터 데이터 캐시 ----------
+let cache = { troupes: [], venues: [], works: [], roles: [], staffRoles: [], people: [], creationTypes: [], shows: [] };
+
+async function loadMasterData() {
+  const [troupes, venues, works, roles, staffRoles, people, creationTypes] = await Promise.all([
+    supabase.from('troupes').select('*').order('name'),
+    supabase.from('venues').select('*').order('name'),
+    supabase.from('works').select('*').order('title'),
+    supabase.from('roles').select('*').order('name'),
+    supabase.from('staff_roles').select('*').order('order_num', {ascending: true, nullsFirst: false}),
+    supabase.from('people').select('*').order('name'),
+    supabase.from('creation_types').select('*').order('name'),
+  ]);
+  cache.troupes = troupes.data || [];
+  cache.venues = venues.data || [];
+  cache.works = works.data || [];
+  cache.roles = roles.data || [];
+  cache.staffRoles = staffRoles.data || [];
+  cache.people = people.data || [];
+  cache.creationTypes = creationTypes.data || [];
+
+  fillSelect(document.querySelector('#form-show select[name=troupe_id]'), cache.troupes, 'id', 'name', '선택 안 함');
+  fillSelect(document.querySelector('#form-show select[name=venue_id]'), cache.venues, 'id', 'name', '선택 안 함');
+  document.getElementById('show-works-list').innerHTML = cache.works.map(w =>
+    `<label><input type="checkbox" name="work_ids" value="${w.id}"> ${w.title}</label>`).join('') || '<span class="empty">작품이 없어요</span>';
+
+  fillSelect(document.querySelector('#form-role select[name=work_id]'), cache.works, 'id', 'title');
+  fillSelect(document.querySelector('#form-participation select[name=person_id]'), cache.people, 'id', 'name');
+  fillSelect(document.querySelector('#form-creation select[name=person_id]'), cache.people, 'id', 'name');
+  fillSelect(document.querySelector('#form-creation select[name=work_id]'), cache.works, 'id', 'title');
+  fillSelect(document.querySelector('#form-creation select[name=creation_type_id]'), cache.creationTypes, 'id', 'name');
+
+  document.getElementById('participation-staffroles-list').innerHTML = cache.staffRoles.map(s =>
+    `<label><input type="checkbox" name="staff_role_ids" value="${s.id}"> ${s.name}</label>`).join('') || '<span class="empty">스텝역할이 없어요</span>';
+}
+
+async function loadShowsForParticipation() {
+  const { data } = await supabase.from('shows').select('id,title,show_date').order('show_date', {ascending: false, nullsFirst: false});
+  cache.shows = data || [];
+  const sel = document.getElementById('participation-show-select');
+  sel.innerHTML = '<option value="">선택</option>' + cache.shows.map(s =>
+    `<option value="${s.id}">${s.title}${s.show_date ? ' (' + s.show_date + ')' : ''}</option>`).join('');
+}
+
+async function rolesForShow(showId) {
+  const { data: showWorks } = await supabase.from('show_works').select('work_id').eq('show_id', showId);
+  const workIds = (showWorks || []).map(w => w.work_id);
+  return cache.roles.filter(r => workIds.includes(r.work_id));
+}
+
+function renderRoleCheckboxes(roles, checkedIds = []) {
+  const box = document.getElementById('participation-roles-list');
+  box.innerHTML = roles.length
+    ? roles.map(r => `<label><input type="checkbox" name="role_ids" value="${r.id}" ${checkedIds.includes(r.id)?'checked':''}> ${r.name}</label>`).join('')
+    : '<span class="empty">이 공연 작품에 등록된 배역이 없어요</span>';
+}
+
+document.getElementById('participation-show-select').addEventListener('change', async (e) => {
+  const showId = e.target.value;
+  if (!showId) { document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>'; return; }
+  renderRoleCheckboxes(await rolesForShow(showId));
+});
+
+// ---------- 목록 렌더 ----------
+function renderTable(containerId, rows, columns, tableName, countId, editHandler) {
+  const container = document.getElementById(containerId);
+  if (countId) document.getElementById(countId).textContent = `(${rows.length}건)`;
+  if (!rows.length) { container.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>'; return; }
+  const head = columns.map(c => `<th>${c.label}</th>`).join('') + '<th></th>';
+  const body = rows.map(r => {
+    const cells = columns.map(c => `<td>${c.render ? c.render(r) : (r[c.key] ?? '')}</td>`).join('');
+    const editBtn = editHandler ? `<button class="edit-btn" data-edit-table="${tableName}" data-edit-id="${r.id}">수정</button>` : '';
+    return `<tr>${cells}<td class="row-actions">${editBtn}<button class="del-btn" data-table="${tableName}" data-id="${r.id}">삭제</button></td></tr>`;
+  }).join('');
+  container.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function thumbHtml(urls) {
+  if (!urls || !urls.length) return '';
+  return `<img class="thumb" src="${urls[0]}">` + (urls.length > 1 ? `<span class="count-tag">+${urls.length-1}</span>` : '');
+}
+
+async function reloadAll() {
+  await loadMasterData();
+  await loadShowsForParticipation();
+
+  const { data: shows } = await supabase.from('shows').select('*').order('show_date', {ascending:false, nullsFirst:false});
+  cache.shows = shows || cache.shows;
+  renderTable('list-show', shows || [], [
+    {label:'포스터', render: r => thumbHtml(r.poster_urls)},
+    {label:'공연명', key:'title'},
+    {label:'날짜', key:'show_date'},
+    {label:'단체', render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
+    {label:'극장', render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
+  ], 'shows', 'count-show', true);
+
+  const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false}).limit(80);
+  const partIds = (parts||[]).map(p=>p.id);
+  const [{data: rlRows}, {data: srRows}] = await Promise.all([
+    partIds.length ? supabase.from('participation_roles').select('participation_id,role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
+    partIds.length ? supabase.from('participation_staff_roles').select('participation_id,staff_role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
+  ]);
+  function namesFor(pid, rows, key, list) {
+    return (rows||[]).filter(r=>r.participation_id===pid).map(r=>list.find(x=>x.id===r[key])?.name).filter(Boolean).join(', ');
+  }
+  renderTable('list-participation', parts || [], [
+    {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
+    {label:'배역', render: r => namesFor(r.id, rlRows, 'role_id', cache.roles) || '—'},
+    {label:'스텝', render: r => namesFor(r.id, srRows, 'staff_role_id', cache.staffRoles) || '—'},
+    {label:'사진', render: r => thumbHtml(r.photo_urls)},
+  ], 'participation_history', 'count-participation', true);
+
+  renderTable('list-work', cache.works, [
+    {label:'포스터', render: r => thumbHtml(r.poster_urls)},
+    {label:'작품명', key:'title'},
+    {label:'장르', key:'genre'},
+    {label:'국가', key:'country'},
+  ], 'works', 'count-work', true);
+  renderTable('list-role', cache.roles, [
+    {label:'배역명', key:'name'},
+    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'성별', key:'gender'},
+  ], 'roles', 'count-role', true);
+  renderTable('list-troupe', cache.troupes, [
+    {label:'단체명', key:'name'}, {label:'조직형태', key:'org_type'}, {label:'구성원기반', key:'member_base'}, {label:'수준', key:'level'},
+  ], 'troupes', 'count-troupe', true);
+  renderTable('list-venue', cache.venues, [
+    {label:'극장명', key:'name'}, {label:'좌석수', key:'seat_count'}, {label:'주소', key:'address'},
+  ], 'venues', 'count-venue', true);
+  renderTable('list-staffrole', cache.staffRoles, [{label:'이름', key:'name'}, {label:'순서', key:'order_num'}], 'staff_roles', 'count-staffrole', true);
+  renderTable('list-person', cache.people, [
+    {label:'사진', render: r => thumbHtml(r.photo_urls)},
+    {label:'이름', key:'name'}, {label:'닉네임', key:'nickname'},
+  ], 'people', 'count-person', true);
+
+  const { data: creations } = await supabase.from('creation_history').select('*');
+  renderTable('list-creation', creations || [], [
+    {label:'사람', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'유형', render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
+  ], 'creation_history', 'count-creation', true);
+}
+
+// ---------- 수정 상태 관리 ----------
+// 한 번에 한 폼만 수정 모드로 두되, 폼별로 독립적으로 취급한다.
+const editState = {}; // { tableName: id }
+
+function setEditMode(formId, tableName, on) {
+  const form = document.getElementById(formId);
+  form.querySelector('button[type=submit]').textContent = on ? (form.dataset.editLabel || '수정 저장') : (form.dataset.addLabel);
+  document.getElementById('cancel-' + formId.replace('form-','')).classList.toggle('show', on);
+  document.getElementById('editbadge-' + formId.replace('form-','')).classList.toggle('show', on);
+  if (!on) delete editState[tableName];
+}
+
+function fillFormFields(form, row) {
+  [...form.elements].forEach(el => {
+    if (!el.name || !(el.name in row)) return;
+    el.value = row[el.name] ?? '';
+  });
+}
+
+const CANCEL_TABLE_MAP = {
+  show: 'shows', participation: 'participation_history', work: 'works', role: 'roles',
+  troupe: 'troupes', venue: 'venues', staffrole: 'staff_roles', person: 'people', creation: 'creation_history'
+};
+document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.id.replace('cancel-','');
+    const formId = 'form-' + key;
+    const form = document.getElementById(formId);
+    form.reset();
+    setEditMode(formId, CANCEL_TABLE_MAP[key], false);
+    if (photoState[key]) resetPhotoWidget(key, []);
+    if (key === 'show') form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false);
+    if (key === 'participation') {
+      document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
+      form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
+    }
+  });
+});
+
+// ---------- 수정 버튼 델리게이션 (탭별 분기) ----------
+document.querySelector('main').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.edit-btn');
+  if (!btn) return;
+  const table = btn.dataset.editTable;
+  const id = btn.dataset.editId;
+
+  if (table === 'shows') {
+    const row = cache.shows.find(s => s.id === id) || (await supabase.from('shows').select('*').eq('id', id).single()).data;
+    const form = document.getElementById('form-show');
+    fillFormFields(form, row);
+    resetPhotoWidget('show', row.poster_urls);
+    const { data: sw } = await supabase.from('show_works').select('work_id').eq('show_id', id);
+    const workIds = (sw||[]).map(w=>w.work_id);
+    form.querySelectorAll('input[name=work_ids]').forEach(c => c.checked = workIds.includes(c.value));
+    editState['shows'] = id;
+    setEditMode('form-show', 'shows', true);
+    document.getElementById('tab-show').scrollIntoView({behavior:'smooth'});
+  }
+  else if (table === 'participation_history') {
+    const row = (await supabase.from('participation_history').select('*').eq('id', id).single()).data;
+    const form = document.getElementById('form-participation');
+    fillFormFields(form, row);
+    resetPhotoWidget('participation', row.photo_urls);
+    const roles = await rolesForShow(row.show_id);
+    const { data: rl } = await supabase.from('participation_roles').select('role_id').eq('participation_id', id);
+    const { data: sr } = await supabase.from('participation_staff_roles').select('staff_role_id').eq('participation_id', id);
+    renderRoleCheckboxes(roles, (rl||[]).map(x=>x.role_id));
+    const staffIds = (sr||[]).map(x=>x.staff_role_id);
+    form.querySelectorAll('input[name=staff_role_ids]').forEach(c => c.checked = staffIds.includes(c.value));
+    editState['participation_history'] = id;
+    setEditMode('form-participation', 'participation_history', true);
+    document.getElementById('tab-participation').scrollIntoView({behavior:'smooth'});
+  }
+  else if (table === 'works') {
+    const row = cache.works.find(w => w.id === id);
+    fillFormFields(document.getElementById('form-work'), row);
+    resetPhotoWidget('work', row.poster_urls);
+    editState['works'] = id;
+    setEditMode('form-work', 'works', true);
+  }
+  else if (table === 'people') {
+    const row = cache.people.find(p => p.id === id);
+    fillFormFields(document.getElementById('form-person'), row);
+    resetPhotoWidget('person', row.photo_urls);
+    editState['people'] = id;
+    setEditMode('form-person', 'people', true);
+  }
+  else {
+    // roles, troupes, venues, staff_roles, creation_history 등 단순 폼
+    const formMap = { roles: 'form-role', troupes: 'form-troupe', venues: 'form-venue', staff_roles: 'form-staffrole', creation_history: 'form-creation' };
+    const cacheMap = { roles: 'roles', troupes: 'troupes', venues: 'venues', staff_roles: 'staffRoles', creation_history: null };
+    const formId = formMap[table];
+    let row;
+    if (cacheMap[table]) row = cache[cacheMap[table]].find(x => x.id === id);
+    else row = (await supabase.from(table).select('*').eq('id', id).single()).data;
+    fillFormFields(document.getElementById(formId), row);
+    editState[table] = id;
+    setEditMode(formId, table, true);
+  }
+});
+
+// ---------- 폼 제출 처리 ----------
+function formToObj(form, skipNames = []) {
+  const obj = {};
+  new FormData(form).forEach((v, k) => {
+    if (skipNames.includes(k)) return;
+    if (v === '') return;
+    obj[k] = v;
+  });
+  return obj;
+}
+
+document.getElementById('form-show').dataset.addLabel = '공연 저장';
+document.getElementById('form-participation').dataset.addLabel = '참여이력 저장';
+document.getElementById('form-work').dataset.addLabel = '작품 저장';
+document.getElementById('form-role').dataset.addLabel = '배역 저장';
+document.getElementById('form-troupe').dataset.addLabel = '단체 저장';
+document.getElementById('form-venue').dataset.addLabel = '극장 저장';
+document.getElementById('form-staffrole').dataset.addLabel = '스텝역할 저장';
+document.getElementById('form-person').dataset.addLabel = '사람 저장';
+document.getElementById('form-creation').dataset.addLabel = '창작이력 저장';
+
+document.getElementById('form-show').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const checked = [...form.querySelectorAll('input[name=work_ids]:checked')].map(c => c.value);
+  const payload = formToObj(form, ['work_ids']);
+  payload.poster_urls = photoState.show.length ? photoState.show : null;
+  const editId = editState['shows'];
+  let showId;
+  if (editId) {
+    const { error } = await supabase.from('shows').update(payload).eq('id', editId);
+    if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
+    showId = editId;
+    await supabase.from('show_works').delete().eq('show_id', editId);
+  } else {
+    const { data, error } = await supabase.from('shows').insert(payload).select().single();
+    if (error) { showMsg('msg-show', false, '저장 실패: ' + error.message); return; }
+    showId = data.id;
+  }
+  if (checked.length) {
+    await supabase.from('show_works').insert(checked.map((wid, i) => ({show_id: showId, work_id: wid, sort_order: i+1})));
+  }
+  showMsg('msg-show', true, '저장됐어요.');
+  form.reset();
+  resetPhotoWidget('show', []);
+  setEditMode('form-show', 'shows', false);
+  reloadAll();
+});
+
+document.getElementById('form-participation').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const roleIds = [...form.querySelectorAll('input[name=role_ids]:checked')].map(c => c.value);
+  const staffRoleIds = [...form.querySelectorAll('input[name=staff_role_ids]:checked')].map(c => c.value);
+  const payload = formToObj(form, ['role_ids', 'staff_role_ids']);
+  payload.photo_urls = photoState.participation.length ? photoState.participation : null;
+  const editId = editState['participation_history'];
+  let partId;
+  if (editId) {
+    const { error } = await supabase.from('participation_history').update(payload).eq('id', editId);
+    if (error) { showMsg('msg-participation', false, '저장 실패: ' + error.message); return; }
+    partId = editId;
+    await supabase.from('participation_roles').delete().eq('participation_id', editId);
+    await supabase.from('participation_staff_roles').delete().eq('participation_id', editId);
+  } else {
+    const { data, error } = await supabase.from('participation_history').insert(payload).select().single();
+    if (error) { showMsg('msg-participation', false, '저장 실패: ' + error.message); return; }
+    partId = data.id;
+  }
+  if (roleIds.length) await supabase.from('participation_roles').insert(roleIds.map(rid => ({participation_id: partId, role_id: rid})));
+  if (staffRoleIds.length) await supabase.from('participation_staff_roles').insert(staffRoleIds.map(sid => ({participation_id: partId, staff_role_id: sid})));
+  showMsg('msg-participation', true, '저장됐어요.');
+  form.reset();
+  resetPhotoWidget('participation', []);
+  setEditMode('form-participation', 'participation_history', false);
+  document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
+  reloadAll();
+});
+
+function simpleFormHandler(formId, tableName, msgId, photoKey) {
+  document.getElementById(formId).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const payload = formToObj(form);
+    if (photoKey) payload[photoKey === 'work' || photoKey === 'show' ? 'poster_urls' : 'photo_urls'] = photoState[photoKey].length ? photoState[photoKey] : null;
+    const editId = editState[tableName];
+    const { error } = editId
+      ? await supabase.from(tableName).update(payload).eq('id', editId)
+      : await supabase.from(tableName).insert(payload);
+    if (error) { showMsg(msgId, false, '저장 실패: ' + error.message); return; }
+    showMsg(msgId, true, '저장됐어요.');
+    form.reset();
+    if (photoKey) resetPhotoWidget(photoKey, []);
+    setEditMode(formId, tableName, false);
+    reloadAll();
+  });
+}
+simpleFormHandler('form-work', 'works', 'msg-work', 'work');
+simpleFormHandler('form-role', 'roles', 'msg-role');
+simpleFormHandler('form-troupe', 'troupes', 'msg-troupe');
+simpleFormHandler('form-venue', 'venues', 'msg-venue');
+simpleFormHandler('form-staffrole', 'staff_roles', 'msg-staffrole');
+simpleFormHandler('form-person', 'people', 'msg-person', 'person');
+simpleFormHandler('form-creation', 'creation_history', 'msg-creation');
+
+// ---------- 초기화 ----------
+(async () => {
+  await ensureAuth();
+  await reloadAll();
+})();
+</script>
+</body>
+</html>
