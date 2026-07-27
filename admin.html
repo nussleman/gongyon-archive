@@ -170,6 +170,12 @@
     background: none; border: 1px solid var(--line); color: var(--danger);
     border-radius: 5px; width: 32px; cursor: pointer; font-size: 14px;
   }
+  tr.inline-edit-row td { background: var(--accent-soft); padding: 16px; border-bottom: 2px solid var(--accent); }
+  tr.inline-edit-row .card { margin-bottom: 0; border: none; padding: 0; background: none; }
+  .warn-badge {
+    display: inline-block; font-size: 11px; background: #fdecea; color: var(--danger);
+    border: 1px solid #f3c6c1; border-radius: 4px; padding: 1px 6px; margin-left: 6px; white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -198,21 +204,34 @@
     <section class="tab-panel" id="tab-show">
       <h2>공연</h2>
       <p class="sub">새 공연을 등록해요. 상연 작품은 여러 개 고를 수 있어요.</p>
-      <div class="card">
+      <div class="card" id="formcard-show">
         <h3>새 공연 등록 <span class="edit-badge" id="editbadge-show">수정 중</span></h3>
         <form id="form-show">
           <div class="field-grid">
             <div><label>공연명</label><input type="text" name="title" required></div>
             <div><label>공연 날짜</label><input type="date" name="show_date"></div>
-            <div><label>단체 (극단/제작사)</label><select name="troupe_id"><option value="">선택 안 함</option></select></div>
-            <div><label>극장</label><select name="venue_id"><option value="">선택 안 함</option></select></div>
+            <div><label>단체 (극단/제작사)</label>
+              <div style="display:flex; gap:6px;">
+                <select name="troupe_id" style="flex:1;"><option value="">선택 안 함</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('troupes', '새 단체 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-show select[name=troupe_id]').value = id; })">+</button>
+              </div>
+            </div>
+            <div><label>극장</label>
+              <div style="display:flex; gap:6px;">
+                <select name="venue_id" style="flex:1;"><option value="">선택 안 함</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('venues', '새 극장 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-show select[name=venue_id]').value = id; })">+</button>
+              </div>
+            </div>
             <div><label>공연 형태</label><input type="text" name="production_type" placeholder="예: 정기공연"></div>
             <div><label>라이선스 여부</label>
               <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
             </div>
           </div>
           <div style="margin-top:12px;">
-            <label>상연 작품 (여러 개 선택 가능)</label>
+            <label>상연 작품 (여러 개 선택 가능)
+              <button type="button" class="btn secondary" style="margin-top:0; margin-left:6px; padding:2px 10px; font-size:12px;"
+                onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ const b=document.querySelector('#show-works-list input[value=\''+id+'\']'); if(b) b.checked=true; })">+ 새 작품</button>
+            </label>
             <div class="checkbox-list" id="show-works-list"></div>
           </div>
           <div class="photo-widget">
@@ -237,12 +256,17 @@
     <section class="tab-panel" id="tab-participation">
       <h2>참여이력</h2>
       <p class="sub">공연을 먼저 고르면 그 공연 작품에 속한 배역만 보여줘요. 배역/스텝역할은 동시에 여러 개 체크 가능(겸직).</p>
-      <div class="card">
+      <div class="card" id="formcard-participation">
         <h3>새 참여이력 입력 <span class="edit-badge" id="editbadge-participation">수정 중</span></h3>
         <form id="form-participation">
           <div class="field-grid">
             <div><label>공연</label><select name="show_id" id="participation-show-select" required><option value="">선택</option></select></div>
-            <div><label>참여자</label><select name="person_id" required><option value="">선택</option></select></div>
+            <div><label>참여자</label>
+              <div style="display:flex; gap:6px;">
+                <select name="person_id" style="flex:1;" required><option value="">선택</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('people', '새 참여자 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-participation select[name=person_id]').value = id; })">+</button>
+              </div>
+            </div>
           </div>
           <div style="margin-top:12px;">
             <label>배역 (공연 선택 시 자동으로 채워져요)</label>
@@ -265,7 +289,14 @@
       </div>
       <div class="card">
         <h3>참여이력 <span class="count-tag" id="count-participation"></span></h3>
-        <input type="text" id="search-participation" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="search-participation" placeholder="검색..." style="flex:1; margin-bottom:0;" oninput="window.__applyFilters()">
+          <select id="group-participation" onchange="window.__applyFilters()" style="width:160px;">
+            <option value="">그룹 없음</option>
+            <option value="show">공연별로 묶기</option>
+            <option value="person">참여자별로 묶기</option>
+          </select>
+        </div>
         <div id="list-participation"></div>
       </div>
     </section>
@@ -273,7 +304,7 @@
     <!-- ================= 작품 ================= -->
     <section class="tab-panel" id="tab-work">
       <h2>작품</h2>
-      <div class="card">
+      <div class="card" id="formcard-work">
         <h3>새 작품 등록 <span class="edit-badge" id="editbadge-work">수정 중</span></h3>
         <form id="form-work">
           <div class="field-grid">
@@ -307,11 +338,16 @@
     <!-- ================= 배역 ================= -->
     <section class="tab-panel" id="tab-role">
       <h2>배역</h2>
-      <div class="card">
+      <div class="card" id="formcard-role">
         <h3>새 배역 등록 <span class="edit-badge" id="editbadge-role">수정 중</span></h3>
         <form id="form-role">
           <div class="field-grid">
-            <div><label>작품</label><select name="work_id" required><option value="">선택</option></select></div>
+            <div><label>작품</label>
+              <div style="display:flex; gap:6px;">
+                <select name="work_id" style="flex:1;" required><option value="">선택</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ document.querySelector('#form-role select[name=work_id]').value = id; })">+</button>
+              </div>
+            </div>
             <div><label>배역명</label><input type="text" name="name" required></div>
             <div><label>순서</label><input type="number" name="order_num"></div>
             <div><label>성별</label>
@@ -334,7 +370,7 @@
     <section class="tab-panel" id="tab-troupe">
       <h2>단체</h2>
       <p class="sub">극단/제작사/동호회를 한 테이블에서 관리해요.</p>
-      <div class="card">
+      <div class="card" id="formcard-troupe">
         <h3>새 단체 등록 <span class="edit-badge" id="editbadge-troupe">수정 중</span></h3>
         <form id="form-troupe">
           <div class="field-grid">
@@ -372,7 +408,7 @@
     <!-- ================= 극장 ================= -->
     <section class="tab-panel" id="tab-venue">
       <h2>극장</h2>
-      <div class="card">
+      <div class="card" id="formcard-venue">
         <h3>새 극장 등록 <span class="edit-badge" id="editbadge-venue">수정 중</span></h3>
         <form id="form-venue">
           <div class="field-grid">
@@ -395,7 +431,7 @@
     <!-- ================= 스텝역할 ================= -->
     <section class="tab-panel" id="tab-staffrole">
       <h2>스텝역할</h2>
-      <div class="card">
+      <div class="card" id="formcard-staffrole">
         <h3>새 스텝역할 등록 <span class="edit-badge" id="editbadge-staffrole">수정 중</span></h3>
         <form id="form-staffrole">
           <div class="field-grid">
@@ -418,7 +454,7 @@
     <section class="tab-panel" id="tab-person">
       <h2>사람</h2>
       <p class="sub">참여자와 창작자가 통합된 테이블이에요.</p>
-      <div class="card">
+      <div class="card" id="formcard-person">
         <h3>새 사람 등록 <span class="edit-badge" id="editbadge-person">수정 중</span></h3>
         <form id="form-person">
           <div class="field-grid">
@@ -453,12 +489,22 @@
     <!-- ================= 창작이력 ================= -->
     <section class="tab-panel" id="tab-creation">
       <h2>창작이력</h2>
-      <div class="card">
+      <div class="card" id="formcard-creation">
         <h3>새 창작이력 등록 <span class="edit-badge" id="editbadge-creation">수정 중</span></h3>
         <form id="form-creation">
           <div class="field-grid">
-            <div><label>사람</label><select name="person_id" required><option value="">선택</option></select></div>
-            <div><label>작품</label><select name="work_id" required><option value="">선택</option></select></div>
+            <div><label>사람</label>
+              <div style="display:flex; gap:6px;">
+                <select name="person_id" style="flex:1;" required><option value="">선택</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('people', '새 사람 이름을 입력하세요', n=>({name:n}), id=>{ document.querySelector('#form-creation select[name=person_id]').value = id; })">+</button>
+              </div>
+            </div>
+            <div><label>작품</label>
+              <div style="display:flex; gap:6px;">
+                <select name="work_id" style="flex:1;" required><option value="">선택</option></select>
+                <button type="button" class="btn secondary" style="margin-top:0; padding:8px 12px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ document.querySelector('#form-creation select[name=work_id]').value = id; })">+</button>
+              </div>
+            </div>
             <div><label>창작 유형</label><select name="creation_type_id" required><option value="">선택</option></select></div>
           </div>
           <button type="submit" class="btn">창작이력 저장</button>
@@ -519,6 +565,34 @@ function fillSelect(selectEl, rows, valueKey, labelKey, placeholder) {
   selectEl.innerHTML = `<option value="">${placeholder || '선택'}</option>` +
     rows.map(r => `<option value="${r[valueKey]}">${(typeof labelKey==='function'? labelKey(r) : r[labelKey]) ?? '(이름 없음)'}</option>`).join('');
 }
+
+// ---------- 즉석 추가 (드롭다운에 원하는 값이 없을 때 바로 만들기) ----------
+window.quickAdd = async function(table, promptText, buildPayload, onCreated) {
+  const name = prompt(promptText);
+  if (!name || !name.trim()) return;
+  const payload = buildPayload(name.trim());
+  const { data, error } = await supabase.from(table).insert(payload).select().single();
+  if (error) { alert('생성 실패: ' + error.message); return; }
+  // reloadAll이 select/체크박스 옵션을 다시 그리기 때문에, 다른 폼에서 이미 골라둔 값들이 날아가지 않게 보존한다.
+  const preservedSelects = [...document.querySelectorAll('main select')].map(s => [s, s.value]);
+  const preservedChecks = [...document.querySelectorAll('main input[type=checkbox]:checked')].map(c => [c.name, c.value]);
+  // 지금 인라인 수정 중인 카드가 있다면, 표가 다시 그려지며 그 자리가 사라지기 전에 잠시 홈으로 빼둔다.
+  const wasEditingKey = currentEditKey;
+  if (wasEditingKey) moveCardHome(wasEditingKey);
+  await reloadAll();
+  preservedSelects.forEach(([s, v]) => { if (v && s.querySelector(`option[value="${v}"]`)) s.value = v; });
+  preservedChecks.forEach(([name, value]) => {
+    const el = document.querySelector(`main input[type=checkbox][name="${name}"][value="${value}"]`);
+    if (el) el.checked = true;
+  });
+  if (wasEditingKey) {
+    const tbl = CANCEL_TABLE_MAP[wasEditingKey];
+    const editId = editState[tbl];
+    const btn = editId && document.querySelector(`.edit-btn[data-edit-table="${tbl}"][data-edit-id="${editId}"]`);
+    if (btn) moveCardToRow(wasEditingKey, btn.closest('tr'));
+  }
+  onCreated(data.id);
+};
 
 // ---------- 사진 위젯 ----------
 // key별로 현재 URL 배열을 들고 있다가, 폼 제출 시 그대로 payload에 실어보낸다.
@@ -606,7 +680,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
 
 // ---------- 마스터 데이터 캐시 ----------
 let cache = { troupes: [], venues: [], works: [], roles: [], staffRoles: [], people: [], creationTypes: [], shows: [],
-  showsFull: [], participationRows: [], participationRoleLinks: [], participationStaffLinks: [], creationRows: [] };
+  showsFull: [], participationRows: [], participationRoleLinks: [], participationStaffLinks: [], creationRows: [], showWorksAll: [] };
 
 async function loadMasterData() {
   const [troupes, venues, works, roles, staffRoles, people, creationTypes] = await Promise.all([
@@ -695,6 +769,9 @@ async function reloadAll() {
   cache.shows = shows || cache.shows;
   cache.showsFull = shows || [];
 
+  const { data: showWorksAll } = await supabase.from('show_works').select('show_id,work_id');
+  cache.showWorksAll = showWorksAll || [];
+
   // 80건 제한 없이 전체 참여이력 로드
   const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false});
   cache.participationRows = parts || [];
@@ -733,9 +810,15 @@ function renderAllLists() {
     cache.troupes.find(t=>t.id===r.troupe_id)?.name, cache.venues.find(v=>v.id===r.venue_id)?.name)), [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'공연명', key:'title'},
+    {label:'연결작품', render: r => {
+      const wids = cache.showWorksAll.filter(sw=>sw.show_id===r.id).map(sw=>cache.works.find(w=>w.id===sw.work_id)?.title).filter(Boolean);
+      return wids.length ? wids.join(', ') : '<span class="warn-badge">⚠ 작품 미연결</span>';
+    }},
     {label:'날짜', key:'show_date'},
     {label:'단체', render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
     {label:'극장', render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
+    {label:'형태', key:'production_type'},
+    {label:'라이선스', key:'is_licensed'},
   ], 'shows', 'count-show', true);
 
   const tPart = searchVal('participation');
@@ -746,13 +829,48 @@ function renderAllLists() {
     const staffNames = namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles);
     return matches(tPart, personName, showTitle, roleNames, staffNames);
   });
-  renderTable('list-participation', partFiltered, [
+  const partColumns = [
     {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
     {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
-    {label:'배역', render: r => namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles) || '—'},
-    {label:'스텝', render: r => namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles) || '—'},
+    {label:'단체', render: r => { const s = cache.shows.find(s=>s.id===r.show_id); return cache.troupes.find(t=>t.id===s?.troupe_id)?.name || ''; }},
+    {label:'배역/스텝', render: r => {
+      const roleNames = namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles);
+      const staffNames = namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles);
+      const parts = [roleNames, staffNames].filter(Boolean);
+      return parts.length ? parts.join(' / ') : '<span class="warn-badge">⚠ 배역·스텝 미지정</span>';
+    }},
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
-  ], 'participation_history', 'count-participation', true);
+  ];
+  const groupBy = document.getElementById('group-participation')?.value || '';
+  document.getElementById('count-participation').textContent = `(${partFiltered.length}건)`;
+  const partContainer = document.getElementById('list-participation');
+  if (!partFiltered.length) {
+    partContainer.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>';
+  } else if (!groupBy) {
+    renderTable('list-participation', partFiltered, partColumns, 'participation_history', null, true);
+  } else {
+    const groupLabel = row => groupBy === 'show'
+      ? (cache.shows.find(s=>s.id===row.show_id)?.title || '(공연 없음)')
+      : (cache.people.find(p=>p.id===row.person_id)?.name || '(참여자 없음)');
+    const groups = {};
+    partFiltered.forEach(r => { const k = groupLabel(r); (groups[k] = groups[k] || []).push(r); });
+    const sortedKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+    let html = '';
+    sortedKeys.forEach(k => {
+      html += `<div style="margin:16px 0 6px; font-weight:600; font-size:13.5px;">${k} <span class="count-tag">(${groups[k].length}건)</span></div>`;
+      const tempId = 'temp-group-' + Math.random().toString(36).slice(2,8);
+      html += `<div id="${tempId}"></div>`;
+    });
+    partContainer.innerHTML = html;
+    // 그룹별로 각각 표를 그려넣는다 (renderTable이 컨테이너 id를 받는 구조라 임시 id를 부여해 순차 렌더)
+    let idx = 0;
+    sortedKeys.forEach(k => {
+      const containerEl = partContainer.children[idx*2+1];
+      containerEl.id = containerEl.id; // 그대로 사용
+      renderTable(containerEl.id, groups[k], partColumns, 'participation_history', null, true);
+      idx++;
+    });
+  }
 
   const tWork = searchVal('work');
   renderTable('list-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, r.country)), [
@@ -803,12 +921,52 @@ function renderAllLists() {
 // 한 번에 한 폼만 수정 모드로 두되, 폼별로 독립적으로 취급한다.
 const editState = {}; // { tableName: id }
 
+// 수정 버튼을 누르면 폼 카드를 맨 위에서 그 행 바로 아래로 옮긴다 (스크롤 없이 그 자리에서 수정).
+const cardHomes = {}; // key -> {parent, next}
+const TABLE_TO_KEY = {
+  shows: 'show', participation_history: 'participation', works: 'work', roles: 'role',
+  troupes: 'troupe', venues: 'venue', staff_roles: 'staffrole', people: 'person', creation_history: 'creation'
+};
+function captureCardHomes() {
+  ['show','participation','work','role','troupe','venue','staffrole','person','creation'].forEach(key => {
+    const card = document.getElementById('formcard-' + key);
+    if (card) cardHomes[key] = { parent: card.parentElement, next: card.nextElementSibling };
+  });
+}
+let currentEditKey = null;
+function moveCardHome(key) {
+  const card = document.getElementById('formcard-' + key);
+  const home = cardHomes[key];
+  if (!card || !home) return;
+  const wrapperTr = card.closest('tr.inline-edit-row');
+  home.parent.insertBefore(card, home.next);
+  if (wrapperTr) wrapperTr.remove();
+  if (currentEditKey === key) currentEditKey = null;
+}
+function moveCardToRow(key, rowEl) {
+  const card = document.getElementById('formcard-' + key);
+  if (!card || !rowEl) return;
+  Object.keys(cardHomes).forEach(k => { if (k !== key) moveCardHome(k); });
+  const tr = document.createElement('tr');
+  tr.className = 'inline-edit-row';
+  const td = document.createElement('td');
+  td.colSpan = 20;
+  tr.appendChild(td);
+  rowEl.after(tr);
+  td.appendChild(card);
+  card.scrollIntoView({behavior:'smooth', block:'center'});
+  currentEditKey = key;
+}
+
 function setEditMode(formId, tableName, on) {
   const form = document.getElementById(formId);
   form.querySelector('button[type=submit]').textContent = on ? (form.dataset.editLabel || '수정 저장') : (form.dataset.addLabel);
   document.getElementById('cancel-' + formId.replace('form-','')).classList.toggle('show', on);
   document.getElementById('editbadge-' + formId.replace('form-','')).classList.toggle('show', on);
-  if (!on) delete editState[tableName];
+  if (!on) {
+    delete editState[tableName];
+    moveCardHome(TABLE_TO_KEY[tableName]);
+  }
 }
 
 function fillFormFields(form, row) {
@@ -829,6 +987,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     const form = document.getElementById(formId);
     form.reset();
     setEditMode(formId, CANCEL_TABLE_MAP[key], false);
+    moveCardHome(key);
     if (photoState[key]) resetPhotoWidget(key, []);
     if (key === 'person') resetLinkWidget('person', []);
     if (key === 'show') form.querySelectorAll('input[name=work_ids]:checked').forEach(c=>c.checked=false);
@@ -856,7 +1015,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     form.querySelectorAll('input[name=work_ids]').forEach(c => c.checked = workIds.includes(c.value));
     editState['shows'] = id;
     setEditMode('form-show', 'shows', true);
-    document.getElementById('tab-show').scrollIntoView({behavior:'smooth'});
+    moveCardToRow('show', btn.closest('tr'));
   }
   else if (table === 'participation_history') {
     const row = (await supabase.from('participation_history').select('*').eq('id', id).single()).data;
@@ -871,7 +1030,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     form.querySelectorAll('input[name=staff_role_ids]').forEach(c => c.checked = staffIds.includes(c.value));
     editState['participation_history'] = id;
     setEditMode('form-participation', 'participation_history', true);
-    document.getElementById('tab-participation').scrollIntoView({behavior:'smooth'});
+    moveCardToRow('participation', btn.closest('tr'));
   }
   else if (table === 'works') {
     const row = cache.works.find(w => w.id === id);
@@ -879,6 +1038,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     resetPhotoWidget('work', row.poster_urls);
     editState['works'] = id;
     setEditMode('form-work', 'works', true);
+    moveCardToRow('work', btn.closest('tr'));
   }
   else if (table === 'people') {
     const row = cache.people.find(p => p.id === id);
@@ -887,6 +1047,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     resetLinkWidget('person', row.social_links);
     editState['people'] = id;
     setEditMode('form-person', 'people', true);
+    moveCardToRow('person', btn.closest('tr'));
   }
   else {
     // roles, troupes, venues, staff_roles, creation_history 등 단순 폼
@@ -899,6 +1060,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     fillFormFields(document.getElementById(formId), row);
     editState[table] = id;
     setEditMode(formId, table, true);
+    moveCardToRow(TABLE_TO_KEY[table], btn.closest('tr'));
   }
 });
 
@@ -1010,6 +1172,7 @@ simpleFormHandler('form-person', 'people', 'msg-person', 'person');
 simpleFormHandler('form-creation', 'creation_history', 'msg-creation');
 
 // ---------- 초기화 ----------
+captureCardHomes();
 (async () => {
   await ensureAuth();
   await reloadAll();
