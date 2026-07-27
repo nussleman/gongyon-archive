@@ -158,6 +158,10 @@
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
   thead th { position: sticky; top: 0; background: var(--panel); z-index: 3; box-shadow: 0 1px 0 var(--line); }
+  .sortable-th { cursor: pointer; user-select: none; }
+  .sortable-th:hover { color: var(--accent); }
+  .editable-cell { cursor: text; }
+  .editable-cell:hover { background: var(--accent-soft); }
   th { color: var(--ink-soft); font-weight: 600; font-size: 12.5px; }
   tr:hover td { background: #faf9f6; }
   .row-actions { white-space: nowrap; text-align: right; }
@@ -970,18 +974,112 @@ document.getElementById('participation-show-select').addEventListener('change', 
 });
 
 // ---------- 목록 렌더 ----------
+const tableSortState = {}; // containerId -> {idx, dir}
+const tableMeta = {}; // containerId -> {columns, tableName}
+
 function renderTable(containerId, rows, columns, tableName, countId, editHandler) {
   const container = document.getElementById(containerId);
   if (countId) document.getElementById(countId).textContent = `(${rows.length}건)`;
+  tableMeta[containerId] = { columns, tableName };
   if (!rows.length) { container.innerHTML = '<p class="empty">등록된 데이터가 없어요.</p>'; return; }
-  const head = columns.map(c => `<th>${c.label}</th>`).join('') + '<th></th>';
-  const body = rows.map(r => {
-    const cells = columns.map(c => `<td>${c.render ? c.render(r) : (r[c.key] ?? '')}</td>`).join('');
+
+  const sortInfo = tableSortState[containerId];
+  let sortedRows = rows;
+  if (sortInfo) {
+    const col = columns[sortInfo.idx];
+    const getVal = col.sortValue || (col.key ? (r => r[col.key]) : null);
+    if (getVal) {
+      sortedRows = [...rows].sort((a, b) => {
+        let va = getVal(a), vb = getVal(b);
+        va = va == null ? '' : va; vb = vb == null ? '' : vb;
+        if (typeof va === 'number' && typeof vb === 'number') return sortInfo.dir * (va - vb);
+        return sortInfo.dir * String(va).localeCompare(String(vb));
+      });
+    }
+  }
+
+  const head = columns.map((c, i) => {
+    const sortable = !!(c.sortValue || c.key);
+    if (!sortable) return `<th>${c.label}</th>`;
+    const arrow = sortInfo && sortInfo.idx === i ? (sortInfo.dir === 1 ? ' ▲' : ' ▼') : '';
+    return `<th class="sortable-th" data-container="${containerId}" data-colidx="${i}">${c.label}${arrow}</th>`;
+  }).join('') + '<th></th>';
+
+  const body = sortedRows.map(r => {
+    const cells = columns.map((c, ci) => {
+      const content = c.render ? c.render(r) : (r[c.key] ?? '');
+      if (c.editable) {
+        const raw = (r[c.key] ?? '').toString().replace(/"/g,'&quot;');
+        return `<td class="editable-cell" data-container="${containerId}" data-rowid="${r.id}" data-colidx="${ci}" data-value="${raw}">${content}</td>`;
+      }
+      return `<td>${content}</td>`;
+    }).join('');
     const editBtn = editHandler ? `<button class="edit-btn" data-edit-table="${tableName}" data-edit-id="${r.id}">수정</button>` : '';
     return `<tr>${cells}<td class="row-actions">${editBtn}<button class="del-btn" data-table="${tableName}" data-id="${r.id}">삭제</button></td></tr>`;
   }).join('');
   container.innerHTML = `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
+
+// 열 헤더 클릭 -> 정렬 토글
+document.querySelector('main').addEventListener('click', (e) => {
+  const th = e.target.closest('.sortable-th');
+  if (!th) return;
+  const containerId = th.dataset.container;
+  const idx = Number(th.dataset.colidx);
+  const cur = tableSortState[containerId];
+  tableSortState[containerId] = (cur && cur.idx === idx) ? { idx, dir: -cur.dir } : { idx, dir: 1 };
+  renderAllLists();
+});
+
+// 셀 클릭 -> 그 자리에서 바로 수정 (텍스트/숫자/날짜/셀렉트)
+document.querySelector('main').addEventListener('click', (e) => {
+  const td = e.target.closest('.editable-cell');
+  if (!td || td.querySelector('input,select')) return;
+  const containerId = td.dataset.container;
+  const rowId = td.dataset.rowid;
+  const colIdx = Number(td.dataset.colidx);
+  const meta = tableMeta[containerId];
+  if (!meta) return;
+  const col = meta.columns[colIdx];
+  const oldHtml = td.innerHTML;
+  const curVal = td.dataset.value;
+
+  let inputHtml;
+  if (col.editType === 'select') {
+    inputHtml = `<select style="width:100%; padding:4px;">` +
+      col.editOptions.map(o => `<option value="${o.value}" ${o.value === curVal ? 'selected' : ''}>${o.label}</option>`).join('') +
+      `</select>`;
+  } else {
+    inputHtml = `<input type="${col.editType || 'text'}" value="${curVal}" style="width:100%; padding:4px; box-sizing:border-box;">`;
+  }
+  td.innerHTML = inputHtml;
+  const inputEl = td.querySelector('input,select');
+  inputEl.focus();
+  if (inputEl.select) inputEl.select();
+
+  let cancelled = false;
+  function commit() {
+    if (cancelled) return;
+    const newVal = inputEl.value === '' ? null : inputEl.value;
+    supabase.from(meta.tableName).update({ [col.key]: newVal }).eq('id', rowId).then(async ({ error }) => {
+      if (error) { alert('저장 실패: ' + error.message); td.innerHTML = oldHtml; return; }
+      const wasEditingKey = currentEditKey;
+      if (wasEditingKey) moveCardHome(wasEditingKey);
+      await reloadAll();
+      if (wasEditingKey) {
+        const tbl = CANCEL_TABLE_MAP[wasEditingKey];
+        const editId = editState[tbl];
+        const btn = editId && document.querySelector(`.edit-btn[data-edit-table="${tbl}"][data-edit-id="${editId}"]`);
+        if (btn) moveCardToRow(wasEditingKey, btn.closest('tr'));
+      }
+    });
+  }
+  inputEl.addEventListener('blur', commit);
+  inputEl.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); inputEl.blur(); }
+    if (ev.key === 'Escape') { cancelled = true; td.innerHTML = oldHtml; }
+  });
+});
 
 function thumbHtml(urls) {
   if (!urls || !urls.length) return '';
@@ -1058,16 +1156,16 @@ function renderAllLists() {
   renderTable('list-show', cache.showsFull.filter(r => matches(tShow, r.title,
     cache.troupes.find(t=>t.id===r.troupe_id)?.name, cache.venues.find(v=>v.id===r.venue_id)?.name)), [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
-    {label:'공연명', key:'title'},
+    {label:'공연명', key:'title', editable:true},
     {label:'연결작품', render: r => {
       const wids = cache.showWorksAll.filter(sw=>sw.show_id===r.id).map(sw=>cache.works.find(w=>w.id===sw.work_id)?.title).filter(Boolean);
       return wids.length ? wids.join(', ') : '<span class="warn-badge">⚠ 작품 미연결</span>';
     }},
-    {label:'날짜', key:'show_date'},
+    {label:'날짜', key:'show_date', editable:true, editType:'date'},
     {label:'단체', render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
     {label:'극장', render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
-    {label:'형태', key:'production_type'},
-    {label:'라이선스', key:'is_licensed'},
+    {label:'형태', key:'production_type', editable:true},
+    {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'Y',label:'Y'},{value:'N',label:'N'}]},
   ], 'shows', 'count-show', true);
 
   const tPart = searchVal('participation');
@@ -1079,10 +1177,10 @@ function renderAllLists() {
     return matches(tPart, personName, showTitle, roleNames, staffNames);
   });
   const partColumns = [
-    {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
-    {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
+    {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || '', sortValue: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
     {label:'단체', render: r => { const s = cache.shows.find(s=>s.id===r.show_id); return cache.troupes.find(t=>t.id===s?.troupe_id)?.name || ''; }},
-    {label:'역할구분', key:'role_type'},
+    {label:'역할구분', key:'role_type', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'배우',label:'배우'},{value:'스텝',label:'스텝'}]},
     {label:'배역/스텝', render: r => {
       const roleNames = namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles);
       const staffNames = namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles);
@@ -1108,10 +1206,10 @@ function renderAllLists() {
   const tWork = searchVal('work');
   const workColumns = [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
-    {label:'작품명', key:'title'},
+    {label:'작품명', key:'title', editable:true},
     {label:'창작자', render: r => creatorsFor(r.id) || '<span class="warn-badge">⚠ 입력 필요</span>'},
-    {label:'장르', key:'genre'},
-    {label:'국가', key:'country'},
+    {label:'장르', key:'genre', editable:true},
+    {label:'국가', key:'country', editable:true},
   ];
   const workGroupBy = document.getElementById('group-work')?.value || '';
   const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(장르 미입력)') : null;
@@ -1119,9 +1217,11 @@ function renderAllLists() {
 
   const tRole = searchVal('role');
   const roleColumns = [
-    {label:'배역명', key:'name'},
-    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>'},
-    {label:'성별', render: r => r.gender || '<span class="warn-badge">⚠ 입력 필요</span>'},
+    {label:'배역명', key:'name', editable:true},
+    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'순서', key:'order_num', editable:true, editType:'number'},
+    {label:'성별', key:'gender', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'남',label:'남'},{value:'여',label:'여'}],
+      render: r => r.gender || '<span class="warn-badge">⚠ 입력 필요</span>'},
   ];
   const roleGroupBy = document.getElementById('group-role')?.value || '';
   const roleGroupFn = roleGroupBy === 'work' ? (r => cache.works.find(w=>w.id===r.work_id)?.title || '(작품 없음)') : null;
@@ -1130,10 +1230,10 @@ function renderAllLists() {
   const tTroupe = searchVal('troupe');
   const troupeColumns = [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
-    {label:'단체명', key:'name'},
+    {label:'단체명', key:'name', editable:true},
     {label:'조직형태', render: r => (r.org_type||[]).join(', ')},
-    {label:'구성원기반', key:'member_base'},
-    {label:'수준', key:'level'},
+    {label:'구성원기반', key:'member_base', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'학생',label:'학생'},{value:'직장인',label:'직장인'},{value:'일반',label:'일반'}]},
+    {label:'수준', key:'level', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'아마추어',label:'아마추어'},{value:'프로',label:'프로'}]},
   ];
   const troupeGroupBy = document.getElementById('group-troupe')?.value || '';
   const troupeGroupFn = troupeGroupBy === 'orgtype' ? (r => (r.org_type && r.org_type.length) ? r.org_type : ['(미분류)'])
@@ -1145,26 +1245,28 @@ function renderAllLists() {
   const tVenue = searchVal('venue');
   renderTable('list-venue', cache.venues.filter(r => matches(tVenue, r.name, r.address)), [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
-    {label:'극장명', key:'name'}, {label:'좌석수', key:'seat_count'}, {label:'주소', key:'address'},
+    {label:'극장명', key:'name', editable:true},
+    {label:'좌석수', key:'seat_count', editable:true, editType:'number'},
+    {label:'주소', key:'address', editable:true},
   ], 'venues', 'count-venue', true);
 
   const tStaffrole = searchVal('staffrole');
   renderTable('list-staffrole', cache.staffRoles.filter(r => matches(tStaffrole, r.name)),
-    [{label:'이름', key:'name'}, {label:'순서', key:'order_num'}], 'staff_roles', 'count-staffrole', true);
+    [{label:'이름', key:'name', editable:true}, {label:'순서', key:'order_num', editable:true, editType:'number'}], 'staff_roles', 'count-staffrole', true);
 
   const tPerson = searchVal('person');
   renderTable('list-person', cache.people.filter(r => matches(tPerson, r.name, r.name_en, r.nickname)), [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
-    {label:'이름', key:'name'}, {label:'닉네임', key:'nickname'},
+    {label:'이름', key:'name', editable:true}, {label:'닉네임', key:'nickname', editable:true},
   ], 'people', 'count-person', true);
 
   const tCreation = searchVal('creation');
   renderTable('list-creation', cache.creationRows.filter(r => matches(tCreation,
     cache.people.find(p=>p.id===r.person_id)?.name, cache.works.find(w=>w.id===r.work_id)?.title,
     cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name)), [
-    {label:'사람', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
-    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
-    {label:'유형', render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
+    {label:'사람', render: r => cache.people.find(p=>p.id===r.person_id)?.name || '', sortValue: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
+    {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || '', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
+    {label:'유형', render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || '', sortValue: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
   ], 'creation_history', 'count-creation', true);
 }
 
