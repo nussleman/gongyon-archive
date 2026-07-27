@@ -446,8 +446,7 @@ function groupBy(rows,key){
 
 async function load(){
   var raw=await Promise.all([
-    rest('shows','select=id,title,show_date,troupe_id,venue_id,poster_urls'),
-    rest('show_works','select=show_id,work_id,sort_order'),
+    rest('shows','select=id,title,show_date,troupe_id,venue_id,work_id,poster_urls'),
     rest('people','select=id,name,photo_urls,social_links'),
     rest('participation_history','select=id,person_id,show_id'),
     rest('participation_roles','select=participation_id,role_id'),
@@ -458,13 +457,9 @@ async function load(){
     rest('troupes','select=id,name,org_type,member_base,level,photo_urls'),
     rest('venues','select=id,name,seat_count,photo_urls'),
   ]);
-  var shows=raw[0],showWorks=raw[1],people=raw[2],partHist=raw[3],partRoles=raw[4],
-      partStaff=raw[5],roles=raw[6],staffRoles=raw[7],works=raw[8],troupes=raw[9],venues=raw[10];
+  var shows=raw[0],people=raw[1],partHist=raw[2],partRoles=raw[3],
+      partStaff=raw[4],roles=raw[5],staffRoles=raw[6],works=raw[7],troupes=raw[8],venues=raw[9];
 
-  var worksByShow=groupBy(showWorks,'show_id');
-  Object.keys(worksByShow).forEach(function(sid){
-    worksByShow[sid].sort(function(a,b){return(a.sort_order||0)-(b.sort_order||0);});
-  });
   var roleIdsByPart=groupBy(partRoles,'participation_id');
   var staffIdsByPart=groupBy(partStaff,'participation_id');
 
@@ -481,7 +476,7 @@ async function load(){
   DB.shows=shows.map(function(s){return{id:s.id,fields:{
     '공연명':s.title,'공연 날짜':s.show_date,
     '극단':s.troupe_id?[s.troupe_id]:[],'극장':s.venue_id?[s.venue_id]:[],
-    '작품':(worksByShow[s.id]||[]).map(function(w){return w.work_id;}),
+    '작품':s.work_id?[s.work_id]:[],
     '포스터':photoField(s.poster_urls)
   }};});
 
