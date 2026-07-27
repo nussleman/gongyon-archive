@@ -221,6 +221,7 @@
       </div>
       <div class="card">
         <h3>등록된 공연 <span class="count-tag" id="count-show"></span></h3>
+        <input type="text" id="search-show" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-show"></div>
       </div>
     </section>
@@ -257,6 +258,7 @@
       </div>
       <div class="card">
         <h3>참여이력 <span class="count-tag" id="count-participation"></span></h3>
+        <input type="text" id="search-participation" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-participation"></div>
       </div>
     </section>
@@ -290,6 +292,7 @@
       </div>
       <div class="card">
         <h3>등록된 작품 <span class="count-tag" id="count-work"></span></h3>
+        <input type="text" id="search-work" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-work"></div>
       </div>
     </section>
@@ -315,6 +318,7 @@
       </div>
       <div class="card">
         <h3>등록된 배역 <span class="count-tag" id="count-role"></span></h3>
+        <input type="text" id="search-role" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-role"></div>
       </div>
     </section>
@@ -353,6 +357,7 @@
       </div>
       <div class="card">
         <h3>등록된 단체 <span class="count-tag" id="count-troupe"></span></h3>
+        <input type="text" id="search-troupe" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-troupe"></div>
       </div>
     </section>
@@ -375,6 +380,7 @@
       </div>
       <div class="card">
         <h3>등록된 극장 <span class="count-tag" id="count-venue"></span></h3>
+        <input type="text" id="search-venue" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-venue"></div>
       </div>
     </section>
@@ -396,6 +402,7 @@
       </div>
       <div class="card">
         <h3>등록된 스텝역할 <span class="count-tag" id="count-staffrole"></span></h3>
+        <input type="text" id="search-staffrole" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-staffrole"></div>
       </div>
     </section>
@@ -426,6 +433,7 @@
       </div>
       <div class="card">
         <h3>등록된 사람 <span class="count-tag" id="count-person"></span></h3>
+        <input type="text" id="search-person" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-person"></div>
       </div>
     </section>
@@ -448,6 +456,7 @@
       </div>
       <div class="card">
         <h3>등록된 창작이력 <span class="count-tag" id="count-creation"></span></h3>
+        <input type="text" id="search-creation" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-creation"></div>
       </div>
     </section>
@@ -557,7 +566,8 @@ document.querySelector('main').addEventListener('click', async (e) => {
 });
 
 // ---------- 마스터 데이터 캐시 ----------
-let cache = { troupes: [], venues: [], works: [], roles: [], staffRoles: [], people: [], creationTypes: [], shows: [] };
+let cache = { troupes: [], venues: [], works: [], roles: [], staffRoles: [], people: [], creationTypes: [], shows: [],
+  showsFull: [], participationRows: [], participationRoleLinks: [], participationStaffLinks: [], creationRows: [] };
 
 async function loadMasterData() {
   const [troupes, venues, works, roles, staffRoles, people, creationTypes] = await Promise.all([
@@ -644,7 +654,44 @@ async function reloadAll() {
 
   const { data: shows } = await supabase.from('shows').select('*').order('show_date', {ascending:false, nullsFirst:false});
   cache.shows = shows || cache.shows;
-  renderTable('list-show', shows || [], [
+  cache.showsFull = shows || [];
+
+  // 80건 제한 없이 전체 참여이력 로드
+  const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false});
+  cache.participationRows = parts || [];
+  const partIds = cache.participationRows.map(p=>p.id);
+  const [{data: rlRows}, {data: srRows}] = await Promise.all([
+    partIds.length ? supabase.from('participation_roles').select('participation_id,role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
+    partIds.length ? supabase.from('participation_staff_roles').select('participation_id,staff_role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
+  ]);
+  cache.participationRoleLinks = rlRows || [];
+  cache.participationStaffLinks = srRows || [];
+
+  const { data: creations } = await supabase.from('creation_history').select('*');
+  cache.creationRows = creations || [];
+
+  renderAllLists();
+}
+
+function namesFor(pid, rows, key, list) {
+  return (rows||[]).filter(r=>r.participation_id===pid).map(r=>list.find(x=>x.id===r[key])?.name).filter(Boolean).join(', ');
+}
+
+function searchVal(key) {
+  return (document.getElementById('search-' + key)?.value || '').trim().toLowerCase();
+}
+function matches(term, ...fields) {
+  if (!term) return true;
+  return fields.some(f => (f || '').toString().toLowerCase().includes(term));
+}
+
+// 검색창 입력 시 재조회 없이 캐시된 데이터로만 다시 그린다 (IME 문제 없음: 입력창 자체는 다시 그리지 않음)
+window.__applyFilters = renderAllLists;
+
+function renderAllLists() {
+  const tShow = searchVal('show');
+  renderTable('list-show', cache.showsFull.filter(r => matches(tShow, r.title,
+    cache.troupes.find(t=>t.id===r.troupe_id)?.name, cache.venues.find(v=>v.id===r.venue_id)?.name)), [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'공연명', key:'title'},
     {label:'날짜', key:'show_date'},
@@ -652,48 +699,61 @@ async function reloadAll() {
     {label:'극장', render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
   ], 'shows', 'count-show', true);
 
-  const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false}).limit(80);
-  const partIds = (parts||[]).map(p=>p.id);
-  const [{data: rlRows}, {data: srRows}] = await Promise.all([
-    partIds.length ? supabase.from('participation_roles').select('participation_id,role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
-    partIds.length ? supabase.from('participation_staff_roles').select('participation_id,staff_role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
-  ]);
-  function namesFor(pid, rows, key, list) {
-    return (rows||[]).filter(r=>r.participation_id===pid).map(r=>list.find(x=>x.id===r[key])?.name).filter(Boolean).join(', ');
-  }
-  renderTable('list-participation', parts || [], [
+  const tPart = searchVal('participation');
+  const partFiltered = cache.participationRows.filter(r => {
+    const personName = cache.people.find(p=>p.id===r.person_id)?.name;
+    const showTitle = cache.shows.find(s=>s.id===r.show_id)?.title;
+    const roleNames = namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles);
+    const staffNames = namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles);
+    return matches(tPart, personName, showTitle, roleNames, staffNames);
+  });
+  renderTable('list-participation', partFiltered, [
     {label:'참여자', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
     {label:'공연', render: r => cache.shows.find(s=>s.id===r.show_id)?.title || ''},
-    {label:'배역', render: r => namesFor(r.id, rlRows, 'role_id', cache.roles) || '—'},
-    {label:'스텝', render: r => namesFor(r.id, srRows, 'staff_role_id', cache.staffRoles) || '—'},
+    {label:'배역', render: r => namesFor(r.id, cache.participationRoleLinks, 'role_id', cache.roles) || '—'},
+    {label:'스텝', render: r => namesFor(r.id, cache.participationStaffLinks, 'staff_role_id', cache.staffRoles) || '—'},
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
   ], 'participation_history', 'count-participation', true);
 
-  renderTable('list-work', cache.works, [
+  const tWork = searchVal('work');
+  renderTable('list-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, r.country)), [
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'작품명', key:'title'},
     {label:'장르', key:'genre'},
     {label:'국가', key:'country'},
   ], 'works', 'count-work', true);
-  renderTable('list-role', cache.roles, [
+
+  const tRole = searchVal('role');
+  renderTable('list-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title)), [
     {label:'배역명', key:'name'},
     {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
     {label:'성별', key:'gender'},
   ], 'roles', 'count-role', true);
-  renderTable('list-troupe', cache.troupes, [
+
+  const tTroupe = searchVal('troupe');
+  renderTable('list-troupe', cache.troupes.filter(r => matches(tTroupe, r.name, r.org_type, r.member_base, r.level)), [
     {label:'단체명', key:'name'}, {label:'조직형태', key:'org_type'}, {label:'구성원기반', key:'member_base'}, {label:'수준', key:'level'},
   ], 'troupes', 'count-troupe', true);
-  renderTable('list-venue', cache.venues, [
+
+  const tVenue = searchVal('venue');
+  renderTable('list-venue', cache.venues.filter(r => matches(tVenue, r.name, r.address)), [
     {label:'극장명', key:'name'}, {label:'좌석수', key:'seat_count'}, {label:'주소', key:'address'},
   ], 'venues', 'count-venue', true);
-  renderTable('list-staffrole', cache.staffRoles, [{label:'이름', key:'name'}, {label:'순서', key:'order_num'}], 'staff_roles', 'count-staffrole', true);
-  renderTable('list-person', cache.people, [
+
+  const tStaffrole = searchVal('staffrole');
+  renderTable('list-staffrole', cache.staffRoles.filter(r => matches(tStaffrole, r.name)),
+    [{label:'이름', key:'name'}, {label:'순서', key:'order_num'}], 'staff_roles', 'count-staffrole', true);
+
+  const tPerson = searchVal('person');
+  renderTable('list-person', cache.people.filter(r => matches(tPerson, r.name, r.name_en, r.nickname)), [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
     {label:'이름', key:'name'}, {label:'닉네임', key:'nickname'},
   ], 'people', 'count-person', true);
 
-  const { data: creations } = await supabase.from('creation_history').select('*');
-  renderTable('list-creation', creations || [], [
+  const tCreation = searchVal('creation');
+  renderTable('list-creation', cache.creationRows.filter(r => matches(tCreation,
+    cache.people.find(p=>p.id===r.person_id)?.name, cache.works.find(w=>w.id===r.work_id)?.title,
+    cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name)), [
     {label:'사람', render: r => cache.people.find(p=>p.id===r.person_id)?.name || ''},
     {label:'작품', render: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
     {label:'유형', render: r => cache.creationTypes.find(c=>c.id===r.creation_type_id)?.name || ''},
