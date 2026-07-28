@@ -123,7 +123,38 @@
     border-radius: 14px; padding: 3px 6px 3px 10px; font-size: 12.5px;
   }
   .rm-chip-btn { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px; }
+  .tag-badge {
+    display: inline-block; font-size: 11px; background: var(--accent-soft); color: var(--accent);
+    border-radius: 10px; padding: 1px 8px; margin: 1px 3px 1px 0;
+  }
+
+  /* ── 커스텀 검색형 드롭다운 (datalist 대체) ── */
   .combo-field { position: relative; }
+  .combo-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(38,36,31,0.14);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 60;
+  }
+  .combo-dropdown.open { display: block; }
+  .combo-option {
+    padding: 8px 12px;
+    font-size: 13.5px;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background .1s;
+  }
+  .combo-option:hover, .combo-option.focused { background: var(--accent-soft); color: var(--accent); }
+  .combo-empty { padding: 8px 12px; font-size: 13px; color: var(--ink-soft); }
+  .cell-combo-wrap { position: relative; width: 100%; }
 
   .btn {
     display: inline-block;
@@ -233,24 +264,24 @@
         <form id="form-show">
           <div class="field-grid">
             <div><label>공연명</label><input type="text" name="title" required></div>
-            <div><label>공연 날짜</label><input type="date" name="show_date"></div>
+            <div><label>시작날짜</label><input type="date" name="show_date"></div>
+            <div><label>종료날짜</label><input type="date" name="end_date"></div>
             <div><label>단체 (극단/제작사)</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-show-troupe" list="dl-show-troupe" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-show-troupe"></datalist>
+                <input type="text" class="combo-input" id="combo-input-show-troupe" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="troupe_id" data-combo="show-troupe">
+                <div class="combo-dropdown" id="ddl-show-troupe"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('troupes', '새 단체 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('show-troupe', id); })">+</button>
               </div>
             </div>
             <div><label>극장</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-show-venue" list="dl-show-venue" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-show-venue"></datalist>
+                <input type="text" class="combo-input" id="combo-input-show-venue" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="venue_id" data-combo="show-venue">
+                <div class="combo-dropdown" id="ddl-show-venue"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('venues', '새 극장 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('show-venue', id); })">+</button>
               </div>
             </div>
-            <div><label>공연 형태</label><input type="text" name="production_type" placeholder="예: 정기공연"></div>
             <div><label>라이선스 여부</label>
               <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
             </div>
@@ -258,9 +289,9 @@
           <div style="margin-top:12px;">
             <label>연결 작품</label>
             <div style="display:flex; gap:6px;" class="combo-field">
-              <input type="text" class="combo-input" id="combo-input-show-work" list="dl-show-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-              <datalist id="dl-show-work"></datalist>
+              <input type="text" class="combo-input" id="combo-input-show-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
               <input type="hidden" name="work_id" data-combo="show-work">
+              <div class="combo-dropdown" id="ddl-show-work"></div>
               <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('show-work', id); })">+</button>
             </div>
           </div>
@@ -294,16 +325,16 @@
           <div class="field-grid">
             <div><label>공연</label>
               <div class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-participation-show" list="dl-participation-show" placeholder="검색 또는 선택" autocomplete="off">
-                <datalist id="dl-participation-show"></datalist>
+                <input type="text" class="combo-input" id="combo-input-participation-show" placeholder="검색 또는 선택" autocomplete="off">
                 <input type="hidden" name="show_id" id="participation-show-select" data-combo="participation-show" required>
+                <div class="combo-dropdown" id="ddl-participation-show"></div>
               </div>
             </div>
             <div><label>참여자</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-participation-person" list="dl-participation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-participation-person"></datalist>
+                <input type="text" class="combo-input" id="combo-input-participation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="person_id" data-combo="participation-person" required>
+                <div class="combo-dropdown" id="ddl-participation-person"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('people', '새 참여자 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('participation-person', id); })">+</button>
               </div>
             </div>
@@ -356,7 +387,16 @@
           <div class="field-grid">
             <div><label>작품명</label><input type="text" name="title" required></div>
             <div><label>작품명 (영문)</label><input type="text" name="title_en"></div>
-            <div><label>구분 (장르)</label><input type="text" name="genre" placeholder="예: 뮤지컬"></div>
+            <div><label>구분</label>
+              <select name="genre" id="work-genre-select">
+                <option value="">선택 안 함</option>
+                <option value="연극">연극</option>
+                <option value="뮤지컬">뮤지컬</option>
+                <option value="무용">무용</option>
+                <option value="오페라">오페라</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
             <div><label>국가</label><input type="text" name="country"></div>
             <div><label>초연 연도</label><input type="number" name="premiere_year"></div>
             <div><label>창작극 여부</label>
@@ -367,10 +407,14 @@
             <label>창작자 (극작/작곡/작사 등)</label>
             <div id="work-creators-list" style="margin-bottom:6px;"></div>
             <div style="display:flex; gap:6px;">
-              <input type="text" class="combo-input" id="combo-input-workcreator-person" list="dl-workcreator-person" placeholder="사람 검색" autocomplete="off" style="flex:1;">
-              <datalist id="dl-workcreator-person"></datalist>
-              <input type="text" class="combo-input" id="combo-input-workcreator-type" list="dl-workcreator-type" placeholder="유형 검색 (극작/작곡...)" autocomplete="off" style="width:160px;">
-              <datalist id="dl-workcreator-type"></datalist>
+              <div class="combo-field" style="flex:1;">
+                <input type="text" class="combo-input" id="combo-input-workcreator-person" placeholder="사람 검색" autocomplete="off">
+                <div class="combo-dropdown" id="ddl-workcreator-person"></div>
+              </div>
+              <div class="combo-field" style="width:160px;">
+                <input type="text" class="combo-input" id="combo-input-workcreator-type" placeholder="유형 검색 (극작/작곡...)" autocomplete="off">
+                <div class="combo-dropdown" id="ddl-workcreator-type"></div>
+              </div>
               <button type="button" class="btn secondary" style="margin-top:0;" onclick="addWorkCreatorRow()">+ 추가</button>
             </div>
           </div>
@@ -391,7 +435,7 @@
           <input type="text" id="search-work" placeholder="검색..." style="flex:1; margin-bottom:0;" oninput="window.__applyFilters()">
           <select id="group-work" onchange="window.__applyFilters()" style="width:160px;">
             <option value="">그룹 없음</option>
-            <option value="genre">장르별로 묶기</option>
+            <option value="genre">구분별로 묶기</option>
           </select>
         </div>
         <div id="list-work"></div>
@@ -408,9 +452,9 @@
           <div class="field-grid">
             <div><label>작품</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-role-work" list="dl-role-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-role-work"></datalist>
+                <input type="text" class="combo-input" id="combo-input-role-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="work_id" data-combo="role-work" required>
+                <div class="combo-dropdown" id="ddl-role-work"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('role-work', id); })">+</button>
               </div>
             </div>
@@ -419,6 +463,11 @@
             <div><label>성별</label>
               <select name="gender"><option value="">선택 안 함</option><option value="남">남</option><option value="여">여</option></select>
             </div>
+          </div>
+          <div style="margin-top:12px;">
+            <label>캐릭터 태그 (자유 입력, 여러 개 가능 — 예: 군인, 엄마, 아빠, 섹시, 찐따)</label>
+            <div class="combo-chips" id="role-tags-chips"></div>
+            <input type="text" id="role-tag-input" placeholder="태그 입력 후 Enter 또는 콤마(,)" autocomplete="off">
           </div>
           <button type="submit" class="btn">배역 저장</button>
           <button type="button" class="btn secondary cancel-edit-btn" id="cancel-role">취소</button>
@@ -502,7 +551,8 @@
         <form id="form-venue">
           <div class="field-grid">
             <div><label>극장명</label><input type="text" name="name" required></div>
-            <div><label>좌석수</label><input type="number" name="seat_count"></div>
+            <div><label>최소 좌석수</label><input type="number" name="seat_count"></div>
+            <div><label>최대 좌석수</label><input type="number" name="seat_count_max"></div>
             <div><label>주소</label><input type="text" name="address"></div>
           </div>
           <div class="photo-widget">
@@ -593,25 +643,25 @@
           <div class="field-grid">
             <div><label>사람</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-creation-person" list="dl-creation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-creation-person"></datalist>
+                <input type="text" class="combo-input" id="combo-input-creation-person" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="person_id" data-combo="creation-person" required>
+                <div class="combo-dropdown" id="ddl-creation-person"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('people', '새 사람 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('creation-person', id); })">+</button>
               </div>
             </div>
             <div><label>작품</label>
               <div style="display:flex; gap:6px;" class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-creation-work" list="dl-creation-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
-                <datalist id="dl-creation-work"></datalist>
+                <input type="text" class="combo-input" id="combo-input-creation-work" placeholder="검색 또는 선택" autocomplete="off" style="flex:1;">
                 <input type="hidden" name="work_id" data-combo="creation-work" required>
+                <div class="combo-dropdown" id="ddl-creation-work"></div>
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('works', '새 작품명을 입력하세요', n=>({title:n}), id=>{ setCombo('creation-work', id); })">+</button>
               </div>
             </div>
             <div><label>창작 유형</label>
               <div class="combo-field">
-                <input type="text" class="combo-input" id="combo-input-creation-type" list="dl-creation-type" placeholder="검색 또는 선택" autocomplete="off">
-                <datalist id="dl-creation-type"></datalist>
+                <input type="text" class="combo-input" id="combo-input-creation-type" placeholder="검색 또는 선택" autocomplete="off">
                 <input type="hidden" name="creation_type_id" data-combo="creation-type" required>
+                <div class="combo-dropdown" id="ddl-creation-type"></div>
               </div>
             </div>
           </div>
@@ -669,9 +719,23 @@ function showMsg(id, ok, text) {
   el.textContent = text;
   el.className = 'msg ' + (ok ? 'ok' : 'err');
 }
-function fillSelect(selectEl, rows, valueKey, labelKey, placeholder) {
-  selectEl.innerHTML = `<option value="">${placeholder || '선택'}</option>` +
-    rows.map(r => `<option value="${r[valueKey]}">${(typeof labelKey==='function'? labelKey(r) : r[labelKey]) ?? '(이름 없음)'}</option>`).join('');
+
+// ---------- 작품 구분(장르) 옵션 ----------
+// 고정 기본값 + 실제 DB에 이미 들어있는 값(과거 자유입력분)을 합쳐서 드롭다운으로만 고를 수 있게 한다.
+let GENRE_OPTIONS = ['연극', '뮤지컬', '무용', '오페라', '기타'];
+function updateGenreOptions() {
+  const existing = new Set((cache.works || []).map(w => w.genre).filter(Boolean));
+  const extra = [...existing].filter(g => !GENRE_OPTIONS.includes(g)).sort();
+  GENRE_OPTIONS = ['연극', '뮤지컬', '무용', '오페라', '기타', ...extra];
+  const sel = document.getElementById('work-genre-select');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">선택 안 함</option>' + GENRE_OPTIONS.map(g => `<option value="${g}">${g}</option>`).join('');
+    if (cur) sel.value = cur;
+  }
+}
+function genreEditOptions() {
+  return [{ value: '', label: '(없음)' }, ...GENRE_OPTIONS.map(g => ({ value: g, label: g }))];
 }
 
 // ---------- 작품 폼 안의 창작자(극작/작곡 등) 인라인 관리 ----------
@@ -720,9 +784,44 @@ async function saveWorkCreators(workId) {
   return null;
 }
 
-// ---------- 검색형 콤보박스 (드롭다운을 타이핑으로 검색) ----------
-// 단일선택: <input list=dl-X> + <datalist id=dl-X> + <input type=hidden name=실제필드 data-combo=X>
-// 다중선택(연결작품 등): 위와 동일한 datalist를 "추가" 입력창으로 쓰고, 실제 값은 숨겨진 체크박스 목록 + 칩으로 표시.
+// ---------- 배역 캐릭터 태그 위젯 (자유 입력, 다중값) ----------
+let roleTagsState = [];
+function renderRoleTagsChips() {
+  const box = document.getElementById('role-tags-chips');
+  box.innerHTML = roleTagsState.map((t, i) =>
+    `<span class="combo-chip">${t.replace(/</g,'&lt;')}<button type="button" class="rm-chip-btn" data-tagidx="${i}">×</button></span>`
+  ).join('');
+}
+function resetRoleTags(tags) {
+  roleTagsState = tags ? [...tags] : [];
+  renderRoleTagsChips();
+  const inp = document.getElementById('role-tag-input');
+  if (inp) inp.value = '';
+}
+function addRoleTagFromInput(inputEl) {
+  const v = inputEl.value.trim().replace(/,$/, '').trim();
+  if (v && !roleTagsState.includes(v)) { roleTagsState.push(v); renderRoleTagsChips(); }
+  inputEl.value = '';
+}
+document.getElementById('role-tag-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    addRoleTagFromInput(e.target);
+  }
+});
+document.getElementById('role-tag-input').addEventListener('blur', (e) => {
+  if (e.target.value.trim()) addRoleTagFromInput(e.target);
+});
+document.getElementById('role-tags-chips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.rm-chip-btn');
+  if (!btn) return;
+  roleTagsState.splice(Number(btn.dataset.tagidx), 1);
+  renderRoleTagsChips();
+});
+
+// ---------- 커스텀 검색형 드롭다운 (datalist 대체) ----------
+// 드롭다운이 입력창 바로 아래에 카드 형태로 뜨고, 마우스를 올리면 그 항목 배경색이 바뀐다.
+// 단일선택: <input class=combo-input> + <div class=combo-dropdown> + <input type=hidden data-combo=X>
 const comboData = {}; // comboId -> {byLabel: Map<label,id>, byId: Map<id,label>}
 
 function fillCombo(comboId, rows, valueKey, labelKey) {
@@ -733,9 +832,62 @@ function fillCombo(comboId, rows, valueKey, labelKey) {
     byId.set(r[valueKey], label);
   });
   comboData[comboId] = { byLabel, byId };
-  let dl = document.getElementById('dl-' + comboId);
-  if (!dl) { dl = document.createElement('datalist'); dl.id = 'dl-' + comboId; document.body.appendChild(dl); }
-  dl.innerHTML = [...byLabel.keys()].map(l => `<option value="${l.replace(/"/g,'&quot;')}">`).join('');
+}
+
+// 입력창 + 드롭다운 한 쌍에 검색/키보드 탐색/클릭선택 동작을 연결한다.
+// onSelectLabel(label): 사용자가 항목을 고르면 호출됨 (라벨 문자열을 넘겨줌)
+function createComboDropdown(comboId, inputEl, dropdownEl, onSelectLabel) {
+  let items = [];
+  let focusIdx = -1;
+
+  function render() {
+    const map = comboData[comboId];
+    if (!map) { close(); return; }
+    const q = inputEl.value.trim().toLowerCase();
+    items = [...map.byLabel.keys()].filter(l => !q || l.toLowerCase().includes(q)).slice(0, 300);
+    focusIdx = -1;
+    if (!items.length) {
+      dropdownEl.innerHTML = '<div class="combo-empty">검색 결과가 없어요</div>';
+      dropdownEl.classList.add('open');
+      return;
+    }
+    dropdownEl.innerHTML = items.map((l, i) => `<div class="combo-option" data-idx="${i}">${l.replace(/</g,'&lt;')}</div>`).join('');
+    dropdownEl.classList.add('open');
+  }
+  function close() { dropdownEl.classList.remove('open'); dropdownEl.innerHTML = ''; focusIdx = -1; }
+  function highlight() {
+    [...dropdownEl.children].forEach((el, i) => el.classList.toggle('focused', i === focusIdx));
+    const cur = dropdownEl.children[focusIdx];
+    if (cur) cur.scrollIntoView({ block: 'nearest' });
+  }
+  function selectIdx(i) {
+    const label = items[i];
+    if (label === undefined) return;
+    inputEl.value = label;
+    close();
+    onSelectLabel(label);
+  }
+
+  inputEl.addEventListener('focus', render);
+  inputEl.addEventListener('input', render);
+  inputEl.addEventListener('keydown', (e) => {
+    if (!dropdownEl.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); focusIdx = Math.min(focusIdx + 1, items.length - 1); highlight(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); focusIdx = Math.max(focusIdx - 1, 0); highlight(); }
+    else if (e.key === 'Enter') { if (focusIdx >= 0) { e.preventDefault(); selectIdx(focusIdx); } }
+    else if (e.key === 'Escape') { close(); }
+  });
+  dropdownEl.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.combo-option');
+    if (!opt) return;
+    e.preventDefault();
+    selectIdx(Number(opt.dataset.idx));
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target !== inputEl && !dropdownEl.contains(e.target)) close();
+  });
+
+  return { close, refresh: render };
 }
 
 function syncComboDisplay(comboId, id) {
@@ -750,49 +902,29 @@ window.setCombo = function(comboId, id) {
   syncComboDisplay(comboId, id);
 };
 
-// 단일선택 콤보 입력창에 변경 이벤트를 연결한다 (라벨을 타이핑하면 실제 id를 hidden input에 채움)
+// 폼 안의 고정 단일선택 콤보에 드롭다운 동작을 연결한다.
 function wireSingleCombo(comboId) {
   const input = document.getElementById('combo-input-' + comboId);
   const hidden = document.querySelector(`[data-combo="${comboId}"]`);
-  if (!input || !hidden) return;
-  input.addEventListener('input', () => {
+  const dropdown = document.getElementById('ddl-' + comboId);
+  if (!input || !hidden || !dropdown) return;
+  createComboDropdown(comboId, input, dropdown, (label) => {
     const map = comboData[comboId];
-    const val = input.value.trim();
-    if (!val) { hidden.value = ''; hidden.dispatchEvent(new Event('change')); return; }
-    if (map && map.byLabel.has(val)) { hidden.value = map.byLabel.get(val); hidden.dispatchEvent(new Event('change')); }
+    const id = map && map.byLabel.get(label);
+    hidden.value = id || '';
+    hidden.dispatchEvent(new Event('change'));
   });
-}
-
-// 다중선택 콤보: 입력창에 작품명을 타이핑해서 매칭되면 해당 체크박스를 체크하고 칩으로 보여준다.
-function wireMultiCombo(comboId, checkboxListId, chipsId, checkboxName) {
-  const input = document.getElementById('combo-input-' + comboId);
-  if (!input) return;
-  function renderChips() {
-    const map = comboData[comboId];
-    const checked = [...document.querySelectorAll(`#${checkboxListId} input[name=${checkboxName}]:checked`)];
-    document.getElementById(chipsId).innerHTML = checked.map(c => {
-      const label = (map && map.byId.get(c.value)) || c.value;
-      return `<span class="combo-chip" data-multi-key="${comboId}" data-value="${c.value}">${label}<button type="button" class="rm-chip-btn">×</button></span>`;
-    }).join('') || '<span class="empty" style="padding:0;">아직 선택된 게 없어요</span>';
-  }
-  input._renderChips = renderChips;
-  input.addEventListener('input', () => {
-    const map = comboData[comboId];
-    const val = input.value.trim();
-    if (!map || !map.byLabel.has(val)) return;
-    const id = map.byLabel.get(val);
-    const cb = document.querySelector(`#${checkboxListId} input[name=${checkboxName}][value="${id}"]`);
-    if (cb) { cb.checked = true; input.value = ''; renderChips(); }
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      const map = comboData[comboId];
+      const val = input.value.trim();
+      if (!val) { if (hidden.value) { hidden.value = ''; hidden.dispatchEvent(new Event('change')); } return; }
+      if (!(map && map.byLabel.has(val))) {
+        // 목록에 없는 값을 입력한 채 벗어나면, 마지막으로 유효했던 선택으로 되돌린다.
+        syncComboDisplay(comboId, hidden.value);
+      }
+    }, 150);
   });
-  document.getElementById(chipsId)?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.rm-chip-btn');
-    if (!btn) return;
-    const chip = btn.closest('.combo-chip');
-    const cb = document.querySelector(`#${checkboxListId} input[name=${checkboxName}][value="${chip.dataset.value}"]`);
-    if (cb) cb.checked = false;
-    renderChips();
-  });
-  renderChips();
 }
 
 // ---------- 즉석 추가 (드롭다운에 원하는 값이 없을 때 바로 만들기) ----------
@@ -930,6 +1062,8 @@ async function loadMasterData() {
   cache.staffRoles = staffRoles.data || [];
   cache.people = people.data || [];
   cache.creationTypes = creationTypes.data || [];
+
+  updateGenreOptions();
 
   fillCombo('show-troupe', cache.troupes, 'id', 'name');
   fillCombo('show-venue', cache.venues, 'id', 'name');
@@ -1069,12 +1203,16 @@ document.querySelector('main').addEventListener('dblclick', (e) => {
   } else if (col.editType === 'fk') {
     const map = comboData['entity-' + col.fkEntity];
     const curLabel = (curVal && map && map.byId.get(curVal)) || '';
-    inputHtml = `<input type="text" list="dl-entity-${col.fkEntity}" value="${curLabel.replace(/"/g,'&quot;')}" placeholder="검색해서 선택" autocomplete="off" style="width:100%; padding:4px; box-sizing:border-box;">`;
+    inputHtml = `<div class="cell-combo-wrap"><input type="text" value="${curLabel.replace(/"/g,'&quot;')}" placeholder="검색해서 선택" autocomplete="off" style="width:100%; padding:4px; box-sizing:border-box;"><div class="combo-dropdown"></div></div>`;
   } else {
     inputHtml = `<input type="${col.editType || 'text'}" value="${curVal}" style="width:100%; padding:4px; box-sizing:border-box;">`;
   }
   td.innerHTML = inputHtml;
   const inputEl = td.querySelector('input,select');
+  if (col.editType === 'fk') {
+    const dropdownEl = td.querySelector('.combo-dropdown');
+    createComboDropdown('entity-' + col.fkEntity, inputEl, dropdownEl, () => {});
+  }
   inputEl.focus();
   if (inputEl.select) inputEl.select();
 
@@ -1104,7 +1242,7 @@ document.querySelector('main').addEventListener('dblclick', (e) => {
       }
     });
   }
-  inputEl.addEventListener('blur', commit);
+  inputEl.addEventListener('blur', () => setTimeout(commit, 120));
   inputEl.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter') { ev.preventDefault(); inputEl.blur(); }
     if (ev.key === 'Escape') { cancelled = true; td.innerHTML = oldHtml; }
@@ -1114,6 +1252,10 @@ document.querySelector('main').addEventListener('dblclick', (e) => {
 function thumbHtml(urls) {
   if (!urls || !urls.length) return '';
   return `<img class="thumb" src="${urls[0]}">` + (urls.length > 1 ? `<span class="count-tag">+${urls.length-1}</span>` : '');
+}
+function tagsHtml(tags) {
+  if (!tags || !tags.length) return '';
+  return tags.map(t => `<span class="tag-badge">${(t||'').toString().replace(/</g,'&lt;')}</span>`).join('');
 }
 
 // 그룹 없음이면 평범한 표, 그룹 선택돼 있으면 그룹명별로 소제목+표를 나눠 그린다.
@@ -1186,12 +1328,12 @@ function renderAllLists() {
     {label:'공연명', key:'title', editable:true},
     {label:'연결작품', key:'work_id', editable:true, editType:'fk', fkEntity:'work',
       render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미연결</span>'},
-    {label:'날짜', key:'show_date', editable:true, editType:'date'},
+    {label:'시작일', key:'show_date', editable:true, editType:'date'},
+    {label:'종료일', key:'end_date', editable:true, editType:'date'},
     {label:'단체', key:'troupe_id', editable:true, editType:'fk', fkEntity:'troupe',
       render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
     {label:'극장', key:'venue_id', editable:true, editType:'fk', fkEntity:'venue',
       render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
-    {label:'형태', key:'production_type', editable:true},
     {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'Y',label:'Y'},{value:'N',label:'N'}]},
   ], 'shows', 'count-show', true);
 
@@ -1237,11 +1379,11 @@ function renderAllLists() {
     {label:'포스터', render: r => thumbHtml(r.poster_urls)},
     {label:'작품명', key:'title', editable:true},
     {label:'창작자', render: r => creatorsFor(r.id) || '<span class="warn-badge">⚠ 입력 필요</span>'},
-    {label:'장르', key:'genre', editable:true},
+    {label:'구분', key:'genre', editable:true, editType:'select', editOptions: genreEditOptions()},
     {label:'국가', key:'country', editable:true},
   ];
   const workGroupBy = document.getElementById('group-work')?.value || '';
-  const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(장르 미입력)') : null;
+  const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(구분 미입력)') : null;
   renderGroupable('list-work', 'count-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, r.country)), workColumns, 'works', workGroupFn);
 
   const tRole = searchVal('role');
@@ -1252,10 +1394,11 @@ function renderAllLists() {
     {label:'순서', key:'order_num', editable:true, editType:'number'},
     {label:'성별', key:'gender', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'남',label:'남'},{value:'여',label:'여'}],
       render: r => r.gender || '<span class="warn-badge">⚠ 입력 필요</span>'},
+    {label:'태그', render: r => tagsHtml(r.tags) || ''},
   ];
   const roleGroupBy = document.getElementById('group-role')?.value || '';
   const roleGroupFn = roleGroupBy === 'work' ? (r => cache.works.find(w=>w.id===r.work_id)?.title || '(작품 없음)') : null;
-  renderGroupable('list-role', 'count-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title)), roleColumns, 'roles', roleGroupFn);
+  renderGroupable('list-role', 'count-role', cache.roles.filter(r => matches(tRole, r.name, cache.works.find(w=>w.id===r.work_id)?.title, (r.tags||[]).join(' '))), roleColumns, 'roles', roleGroupFn);
 
   const tTroupe = searchVal('troupe');
   const troupeColumns = [
@@ -1276,7 +1419,8 @@ function renderAllLists() {
   renderTable('list-venue', cache.venues.filter(r => matches(tVenue, r.name, r.address)), [
     {label:'사진', render: r => thumbHtml(r.photo_urls)},
     {label:'극장명', key:'name', editable:true},
-    {label:'좌석수', key:'seat_count', editable:true, editType:'number'},
+    {label:'최소좌석', key:'seat_count', editable:true, editType:'number'},
+    {label:'최대좌석', key:'seat_count_max', editable:true, editType:'number'},
     {label:'주소', key:'address', editable:true},
   ], 'venues', 'count-venue', true);
 
@@ -1332,6 +1476,7 @@ window.showNewForm = function(key) {
   if (key === 'person') resetLinkWidget('person', []);
   if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
   if (key === 'work') resetWorkCreatorWidget([]);
+  if (key === 'role') resetRoleTags([]);
   if (key === 'participation') {
     document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
     form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
@@ -1405,6 +1550,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     if (key === 'person') resetLinkWidget('person', []);
     if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
     if (key === 'work') resetWorkCreatorWidget([]);
+    if (key === 'role') resetRoleTags([]);
       if (key === 'participation') {
       document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
       form.querySelectorAll('input[name=staff_role_ids]:checked').forEach(c=>c.checked=false);
@@ -1477,6 +1623,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
       document.querySelectorAll('#troupe-org-type-list input[name=org_type_vals]').forEach(c => c.checked = orgVals.includes(c.value));
     }
     if (table === 'venues') resetPhotoWidget('venue', row.photo_urls);
+    if (table === 'roles') resetRoleTags(row.tags || []);
     editState[table] = id;
     setEditMode(formId, table, true);
     moveCardToRow(TABLE_TO_KEY[table], btn.closest('tr'));
@@ -1564,6 +1711,9 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
       const orgVals = [...form.querySelectorAll('input[name=org_type_vals]:checked')].map(c => c.value);
       payload.org_type = orgVals.length ? orgVals : null;
     }
+    if (tableName === 'roles') {
+      payload.tags = roleTagsState.length ? roleTagsState : null;
+    }
     const editId = editState[tableName];
     let savedId = editId;
     const { data, error } = editId
@@ -1580,6 +1730,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
     if (photoKey) resetPhotoWidget(photoKey, []);
     if (tableName === 'people') resetLinkWidget('person', []);
     if (tableName === 'works') resetWorkCreatorWidget([]);
+    if (tableName === 'roles') resetRoleTags([]);
     setEditMode(formId, tableName, false);
     document.getElementById(formId.replace('form-','formcard-')).style.display = 'none';
     reloadAll();
@@ -1604,6 +1755,8 @@ wireSingleCombo('participation-show');
 wireSingleCombo('creation-person');
 wireSingleCombo('creation-work');
 wireSingleCombo('creation-type');
+wireSingleCombo('workcreator-person');
+wireSingleCombo('workcreator-type');
 (async () => {
   await ensureAuth();
   await reloadAll();
