@@ -153,6 +153,7 @@
     transition: background .1s;
   }
   .combo-option:hover, .combo-option.focused { background: var(--accent-soft); color: var(--accent); }
+  .combo-option.tag-selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
   .combo-empty { padding: 8px 12px; font-size: 13px; color: var(--ink-soft); }
   .cell-combo-wrap { position: relative; width: 100%; }
 
@@ -397,7 +398,12 @@
                 <option value="기타">기타</option>
               </select>
             </div>
-            <div><label>국가</label><input type="text" name="country"></div>
+            <div><label>국가</label>
+              <div class="combo-field">
+                <input type="text" class="combo-input" id="combo-input-work-country" name="country" placeholder="검색 또는 선택" autocomplete="off">
+                <div class="combo-dropdown" id="ddl-work-country"></div>
+              </div>
+            </div>
             <div><label>초연 연도</label><input type="number" name="premiere_year"></div>
             <div><label>창작극 여부</label>
               <select name="is_original"><option value="">선택 안 함</option><option value="Y">Y</option></select>
@@ -465,9 +471,12 @@
             </div>
           </div>
           <div style="margin-top:12px;">
-            <label>캐릭터 태그 (자유 입력, 여러 개 가능 — 예: 군인, 엄마, 아빠, 섹시, 찐따)</label>
+            <label>캐릭터 태그 (클릭해서 선택, 여러 개 가능 — 예: 군인, 엄마, 아빠, 섹시, 찐따)</label>
             <div class="combo-chips" id="role-tags-chips"></div>
-            <input type="text" id="role-tag-input" placeholder="태그 입력 후 Enter 또는 콤마(,)" autocomplete="off">
+            <div class="combo-field">
+              <input type="text" id="role-tag-input" placeholder="태그 검색 또는 새 태그 입력 후 Enter" autocomplete="off">
+              <div class="combo-dropdown" id="ddl-role-tag"></div>
+            </div>
           </div>
           <button type="submit" class="btn">배역 저장</button>
           <button type="button" class="btn secondary cancel-edit-btn" id="cancel-role">취소</button>
@@ -510,9 +519,6 @@
                 <option value="">선택 안 함</option><option value="학생">학생</option>
                 <option value="직장인">직장인</option><option value="일반">일반</option>
               </select>
-            </div>
-            <div><label>수준</label>
-              <select name="level"><option value="">선택 안 함</option><option value="아마추어">아마추어</option><option value="프로">프로</option></select>
             </div>
             <div><label>상태</label><input type="text" name="status"></div>
             <div><label>메모</label><input type="text" name="memo"></div>
@@ -738,6 +744,30 @@ function genreEditOptions() {
   return [{ value: '', label: '(없음)' }, ...GENRE_OPTIONS.map(g => ({ value: g, label: g }))];
 }
 
+// ---------- 작품 국가 옵션 ----------
+// 자주 쓰이는 국가 목록 + DB에 이미 들어있는 값(과거 자유입력분)을 합쳐서 드롭다운으로 고를 수 있게 한다.
+let COUNTRY_OPTIONS = [
+  '대한민국','영국','미국','프랑스','독일','일본','러시아','이탈리아','스페인','캐나다','호주',
+  '중국','오스트리아','헝가리','스웨덴','노르웨이','덴마크','네덜란드','벨기에','스위스','아일랜드',
+  '체코','폴란드','그리스','포르투갈','브라질','아르헨티나','멕시코','인도','기타'
+];
+function updateCountryOptions() {
+  const existing = new Set((cache.works || []).map(w => w.country).filter(Boolean));
+  const extra = [...existing].filter(c => !COUNTRY_OPTIONS.includes(c)).sort();
+  COUNTRY_OPTIONS = [...new Set([...COUNTRY_OPTIONS, ...extra])];
+  comboData['work-country'] = {
+    byLabel: new Map(COUNTRY_OPTIONS.map(c => [c, c])),
+    byId: new Map(COUNTRY_OPTIONS.map(c => [c, c]))
+  };
+}
+// 국가처럼 "값 자체가 곧 저장값"인 입력창에 드롭다운을 연결한다 (hidden 필드 없이 입력창 자신의 값을 바로 바꿈).
+function wireTextCombo(comboId) {
+  const input = document.getElementById('combo-input-' + comboId);
+  const dropdown = document.getElementById('ddl-' + comboId);
+  if (!input || !dropdown) return;
+  createComboDropdown(comboId, input, dropdown, () => {});
+}
+
 // ---------- 작품 폼 안의 창작자(극작/작곡 등) 인라인 관리 ----------
 let workCreatorRows = []; // [{person_id, creation_type_id}]
 
@@ -784,8 +814,19 @@ async function saveWorkCreators(workId) {
   return null;
 }
 
-// ---------- 배역 캐릭터 태그 위젯 (자유 입력, 다중값) ----------
+// ---------- 배역 캐릭터 태그 위젯 (클릭으로 다중 선택 + 새 태그는 입력 후 Enter) ----------
 let roleTagsState = [];
+// 미리 준비된 태그 + 이미 DB에 쓰인 태그를 합쳐서 드롭다운 목록으로 쓴다.
+let ROLE_TAG_OPTIONS = [
+  '군인','엄마','아빠','섹시','찐따','코믹','진지','주연','조연','악역',
+  '순정남','순정녀','능글맞은','귀여운','카리스마','냉정한','유머러스한','순수한','사이코','반전매력'
+];
+function updateRoleTagOptions() {
+  const existing = new Set();
+  (cache.roles || []).forEach(r => (r.tags || []).forEach(t => existing.add(t)));
+  const extra = [...existing].filter(t => !ROLE_TAG_OPTIONS.includes(t)).sort();
+  ROLE_TAG_OPTIONS = [...new Set([...ROLE_TAG_OPTIONS, ...extra])];
+}
 function renderRoleTagsChips() {
   const box = document.getElementById('role-tags-chips');
   box.innerHTML = roleTagsState.map((t, i) =>
@@ -797,21 +838,59 @@ function resetRoleTags(tags) {
   renderRoleTagsChips();
   const inp = document.getElementById('role-tag-input');
   if (inp) inp.value = '';
+  renderRoleTagDropdown();
 }
-function addRoleTagFromInput(inputEl) {
-  const v = inputEl.value.trim().replace(/,$/, '').trim();
-  if (v && !roleTagsState.includes(v)) { roleTagsState.push(v); renderRoleTagsChips(); }
-  inputEl.value = '';
-}
-document.getElementById('role-tag-input').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault();
-    addRoleTagFromInput(e.target);
+function renderRoleTagDropdown() {
+  const dropdownEl = document.getElementById('ddl-role-tag');
+  const inputEl = document.getElementById('role-tag-input');
+  if (!dropdownEl || !inputEl) return;
+  const q = inputEl.value.trim().toLowerCase();
+  const items = ROLE_TAG_OPTIONS.filter(t => !q || t.toLowerCase().includes(q));
+  let html = items.map(t => {
+    const on = roleTagsState.includes(t);
+    return `<div class="combo-option${on ? ' tag-selected' : ''}" data-tag="${t.replace(/"/g,'&quot;')}">${on ? '✓ ' : ''}${t}</div>`;
+  }).join('');
+  if (q && !ROLE_TAG_OPTIONS.includes(q)) {
+    html += `<div class="combo-option" data-newtag="${q.replace(/"/g,'&quot;')}">+ "${q}" 새 태그로 추가</div>`;
   }
-});
-document.getElementById('role-tag-input').addEventListener('blur', (e) => {
-  if (e.target.value.trim()) addRoleTagFromInput(e.target);
-});
+  dropdownEl.innerHTML = html || '<div class="combo-empty">태그를 입력해보세요</div>';
+  dropdownEl.classList.add('open');
+}
+function addOrToggleRoleTag(t) {
+  if (!t) return;
+  const idx = roleTagsState.indexOf(t);
+  if (idx > -1) roleTagsState.splice(idx, 1); else roleTagsState.push(t);
+  if (!ROLE_TAG_OPTIONS.includes(t)) ROLE_TAG_OPTIONS.push(t);
+  renderRoleTagsChips();
+}
+(function initRoleTagWidget() {
+  const inputEl = document.getElementById('role-tag-input');
+  const dropdownEl = document.getElementById('ddl-role-tag');
+  inputEl.addEventListener('focus', renderRoleTagDropdown);
+  inputEl.addEventListener('input', renderRoleTagDropdown);
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const v = inputEl.value.trim();
+      if (v) { addOrToggleRoleTag(v); inputEl.value = ''; renderRoleTagDropdown(); }
+    } else if (e.key === 'Escape') {
+      dropdownEl.classList.remove('open');
+    }
+  });
+  dropdownEl.addEventListener('mousedown', (e) => {
+    const opt = e.target.closest('.combo-option');
+    if (!opt) return;
+    e.preventDefault();
+    const t = opt.dataset.newtag !== undefined ? opt.dataset.newtag : opt.dataset.tag;
+    addOrToggleRoleTag(t);
+    inputEl.value = '';
+    renderRoleTagDropdown();
+    inputEl.focus();
+  });
+  document.addEventListener('click', (e) => {
+    if (e.target !== inputEl && !dropdownEl.contains(e.target)) dropdownEl.classList.remove('open');
+  });
+})();
 document.getElementById('role-tags-chips').addEventListener('click', (e) => {
   const btn = e.target.closest('.rm-chip-btn');
   if (!btn) return;
@@ -1064,6 +1143,8 @@ async function loadMasterData() {
   cache.creationTypes = creationTypes.data || [];
 
   updateGenreOptions();
+  updateCountryOptions();
+  updateRoleTagOptions();
 
   fillCombo('show-troupe', cache.troupes, 'id', 'name');
   fillCombo('show-venue', cache.venues, 'id', 'name');
@@ -1406,7 +1487,6 @@ function renderAllLists() {
     {label:'단체명', key:'name', editable:true},
     {label:'조직형태', render: r => (r.org_type||[]).join(', ')},
     {label:'구성원기반', key:'member_base', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'학생',label:'학생'},{value:'직장인',label:'직장인'},{value:'일반',label:'일반'}]},
-    {label:'수준', key:'level', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'아마추어',label:'아마추어'},{value:'프로',label:'프로'}]},
   ];
   const troupeGroupBy = document.getElementById('group-troupe')?.value || '';
   const troupeGroupFn = troupeGroupBy === 'orgtype' ? (r => (r.org_type && r.org_type.length) ? r.org_type : ['(미분류)'])
@@ -1757,6 +1837,7 @@ wireSingleCombo('creation-work');
 wireSingleCombo('creation-type');
 wireSingleCombo('workcreator-person');
 wireSingleCombo('workcreator-type');
+wireTextCombo('work-country');
 (async () => {
   await ensureAuth();
   await reloadAll();
