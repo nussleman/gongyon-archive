@@ -425,6 +425,14 @@
               <button type="button" class="btn secondary" style="margin-top:0;" onclick="addWorkCreatorRow()">+ 추가</button>
             </div>
           </div>
+          <div style="margin-top:12px;">
+            <label>작품 태그 (클릭해서 선택, 여러 개 가능 — 예: 코미디, 감동, 실험적, 창작극)</label>
+            <div class="combo-chips" id="work-tags-chips"></div>
+            <div class="combo-field">
+              <input type="text" id="work-tag-input" placeholder="태그 검색 또는 새 태그 입력 후 Enter" autocomplete="off">
+              <div class="combo-dropdown" id="ddl-work-tag"></div>
+            </div>
+          </div>
           <div class="photo-widget">
             <label>포스터</label>
             <div class="photo-thumbs" id="photos-work"></div>
@@ -977,6 +985,47 @@ document.getElementById('role-tags-chips').addEventListener('click', (e) => {
   renderRoleTagsChips();
 });
 
+// ---------- 작품 태그 위젯 (클릭으로 다중 선택 + 새 태그는 입력 후 Enter) ----------
+let workTagsState = [];
+let WORK_TAG_OPTIONS = ['코미디','감동','스릴러','로맨스','실험적','고전','창작극','번역극','다크','옴니버스','가족','풍자'];
+function updateWorkTagOptions() {
+  const existing = new Set();
+  (cache.works || []).forEach(w => (w.tags || []).forEach(t => existing.add(t)));
+  const extra = [...existing].filter(t => !WORK_TAG_OPTIONS.includes(t)).sort();
+  WORK_TAG_OPTIONS = [...new Set([...WORK_TAG_OPTIONS, ...extra])];
+}
+function renderWorkTagsChips() {
+  const box = document.getElementById('work-tags-chips');
+  box.innerHTML = workTagsState.map((t, i) =>
+    `<span class="combo-chip">${t.replace(/</g,'&lt;')}<button type="button" class="rm-chip-btn" data-idx="${i}">×</button></span>`
+  ).join('');
+}
+function resetWorkTags(tags) {
+  workTagsState = tags ? [...tags] : [];
+  renderWorkTagsChips();
+  const inp = document.getElementById('work-tag-input');
+  if (inp) inp.value = '';
+}
+document.getElementById('work-tags-chips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.rm-chip-btn');
+  if (!btn) return;
+  workTagsState.splice(Number(btn.dataset.idx), 1);
+  renderWorkTagsChips();
+});
+attachMultiSelectDropdown(
+  document.getElementById('work-tag-input'),
+  document.getElementById('ddl-work-tag'),
+  () => WORK_TAG_OPTIONS,
+  (v) => workTagsState.includes(v),
+  (v) => {
+    const idx = workTagsState.indexOf(v);
+    if (idx > -1) workTagsState.splice(idx, 1); else workTagsState.push(v);
+    if (!WORK_TAG_OPTIONS.includes(v)) WORK_TAG_OPTIONS.push(v);
+    renderWorkTagsChips();
+  },
+  true
+);
+
 // ---------- 커스텀 검색형 드롭다운 (datalist 대체) ----------
 // 드롭다운이 입력창 바로 아래에 카드 형태로 뜨고, 마우스를 올리면 그 항목 배경색이 바뀐다.
 // 단일선택: <input class=combo-input> + <div class=combo-dropdown> + <input type=hidden data-combo=X>
@@ -1224,6 +1273,7 @@ async function loadMasterData() {
   updateGenreOptions();
   updateCountryOptions();
   updateRoleTagOptions();
+  updateWorkTagOptions();
 
   fillCombo('show-troupe', cache.troupes, 'id', 'name');
   fillCombo('show-venue', cache.venues, 'id', 'name');
@@ -1605,10 +1655,11 @@ function renderAllLists() {
     {label:'창작자', render: r => creatorsFor(r.id) || '<span class="warn-badge">⚠ 입력 필요</span>'},
     {label:'구분', key:'genre', editable:true, editType:'select', editOptions: genreEditOptions()},
     {label:'국가', key:'country', editable:true, editType:'multiselect', multiCache:'works', render: r => (r.country||[]).join(', ')},
+    {label:'태그', render: r => tagsHtml(r.tags) || ''},
   ];
   const workGroupBy = document.getElementById('group-work')?.value || '';
   const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(구분 미입력)') : null;
-  renderGroupable('list-work', 'count-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, (r.country||[]).join(' '))), workColumns, 'works', workGroupFn);
+  renderGroupable('list-work', 'count-work', cache.works.filter(r => matches(tWork, r.title, r.title_en, r.genre, (r.country||[]).join(' '), (r.tags||[]).join(' '))), workColumns, 'works', workGroupFn);
 
   const tRole = searchVal('role');
   const roleColumns = [
@@ -1700,6 +1751,7 @@ window.showNewForm = function(key) {
   if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
   if (key === 'work') resetWorkCreatorWidget([]);
   if (key === 'work') resetWorkCountries([]);
+  if (key === 'work') resetWorkTags([]);
   if (key === 'role') resetRoleTags([]);
   if (key === 'participation') {
     document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
@@ -1775,6 +1827,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
     if (key === 'work') resetWorkCreatorWidget([]);
     if (key === 'work') resetWorkCountries([]);
+    if (key === 'work') resetWorkTags([]);
     if (key === 'role') resetRoleTags([]);
       if (key === 'participation') {
       document.getElementById('participation-roles-list').innerHTML = '<span class="empty">공연을 먼저 선택하세요</span>';
@@ -1821,6 +1874,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     resetPhotoWidget('work', row.poster_urls);
     resetWorkCreatorWidget(cache.creationRows.filter(c => c.work_id === id));
     resetWorkCountries(row.country || []);
+    resetWorkTags(row.tags || []);
     editState['works'] = id;
     setEditMode('form-work', 'works', true);
     moveCardToRow('work', btn.closest('tr'));
@@ -1942,6 +1996,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
     }
     if (tableName === 'works') {
       payload.country = workCountriesState.length ? workCountriesState : null;
+      payload.tags = workTagsState.length ? workTagsState : null;
     }
     const editId = editState[tableName];
     let savedId = editId;
@@ -1960,6 +2015,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
     if (tableName === 'people') resetLinkWidget('person', []);
     if (tableName === 'works') resetWorkCreatorWidget([]);
     if (tableName === 'works') resetWorkCountries([]);
+    if (tableName === 'works') resetWorkTags([]);
     if (tableName === 'roles') resetRoleTags([]);
     setEditMode(formId, tableName, false);
     document.getElementById(formId.replace('form-','formcard-')).style.display = 'none';
