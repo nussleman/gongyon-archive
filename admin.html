@@ -1247,10 +1247,17 @@ async function loadMasterData() {
 }
 
 async function loadShowsForParticipation() {
-  const { data } = await supabase.from('shows').select('id,title,show_date,work_id').order('show_date', {ascending: false, nullsFirst: false});
+  const { data } = await supabase.from('shows').select('id,title,show_date,work_id,troupe_id').order('show_date', {ascending: false, nullsFirst: false});
   cache.shows = data || [];
-  fillCombo('participation-show', cache.shows, 'id', s => s.title + (s.show_date ? ' (' + s.show_date + ')' : ''));
-  fillCombo('entity-show', cache.shows, 'id', s => s.title + (s.show_date ? ' (' + s.show_date + ')' : ''));
+  const showLabel = s => {
+    const troupeName = cache.troupes.find(t => t.id === s.troupe_id)?.name;
+    const parts = [s.title];
+    if (troupeName) parts.push(troupeName);
+    if (s.show_date) parts.push(s.show_date);
+    return parts[0] + (parts.length > 1 ? ' (' + parts.slice(1).join(' · ') + ')' : '');
+  };
+  fillCombo('participation-show', cache.shows, 'id', showLabel);
+  fillCombo('entity-show', cache.shows, 'id', showLabel);
 }
 
 async function rolesForShow(showId) {
@@ -1505,11 +1512,14 @@ async function reloadAll() {
   // 80건 제한 없이 전체 참여이력 로드
   const { data: parts } = await supabase.from('participation_history').select('*').order('created_at', {ascending:false});
   cache.participationRows = parts || [];
-  const partIds = cache.participationRows.map(p=>p.id);
-  const [{data: rlRows}, {data: srRows}] = await Promise.all([
-    partIds.length ? supabase.from('participation_roles').select('participation_id,role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
-    partIds.length ? supabase.from('participation_staff_roles').select('participation_id,staff_role_id').in('participation_id', partIds) : Promise.resolve({data:[]}),
+  // .in()으로 participation_id를 수백 개씩 나열하면 URL이 너무 길어져 요청이 실패할 수 있어서,
+  // 필터 없이 두 연결 테이블 전체를 가져와 JS에서 매칭한다.
+  const [{data: rlRows, error: rlErr}, {data: srRows, error: srErr}] = await Promise.all([
+    supabase.from('participation_roles').select('participation_id,role_id'),
+    supabase.from('participation_staff_roles').select('participation_id,staff_role_id'),
   ]);
+  if (rlErr) console.error('participation_roles 로드 실패:', rlErr);
+  if (srErr) console.error('participation_staff_roles 로드 실패:', srErr);
   cache.participationRoleLinks = rlRows || [];
   cache.participationStaffLinks = srRows || [];
 
