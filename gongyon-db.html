@@ -415,22 +415,36 @@ var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={},PERSON_PHOTO={};
 
 function $(i){return document.getElementById(i);}
 function sb(h){$('sb').innerHTML=h;}
+var _imgClickTimer=null;
 function mn(h){
   $('mn').innerHTML=h;
   // 이벤트 위임: data-action 속성으로 클릭 처리
+  // 이미지는 싱글클릭=이동, 더블클릭=확대를 구분해야 해서 살짝 기다렸다가 처리한다
+  // (더블클릭의 첫 클릭에서 바로 페이지가 이동해버리면 두번째 클릭을 받을 대상이 사라지기 때문)
   $('mn').onclick=function(e){
-    var img=e.target.closest('img');
-    if(img&&img.src){openLightbox(img.src);return;}
     var el=e.target.closest('[data-action]');
-    if(!el)return;
-    var action=el.dataset.action;
-    var id=el.dataset.id;
-    if(action==='show')showShow(id);
-    else if(action==='person')showPerson(id);
-    else if(action==='work')showWork(id);
-    else if(action==='role')showRole(id);
-    else if(action==='venue')showVenue(id);
-    else if(action==='troupe')showTroupe(id);
+    var img=e.target.closest('img');
+    function navigate(){
+      if(!el)return;
+      var action=el.dataset.action,id=el.dataset.id;
+      if(action==='show')showShow(id);
+      else if(action==='person')showPerson(id);
+      else if(action==='work')showWork(id);
+      else if(action==='role')showRole(id);
+      else if(action==='venue')showVenue(id);
+      else if(action==='troupe')showTroupe(id);
+    }
+    if(img&&img.src){
+      if(_imgClickTimer){
+        clearTimeout(_imgClickTimer);
+        _imgClickTimer=null;
+        openLightbox(img.src);
+        return;
+      }
+      _imgClickTimer=setTimeout(function(){_imgClickTimer=null;navigate();},280);
+      return;
+    }
+    navigate();
   };
 }
 function openLightbox(src){
