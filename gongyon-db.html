@@ -493,7 +493,7 @@ function groupBy(rows,key){
 
 async function load(){
   var raw=await Promise.all([
-    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls,audience_count,is_sold_out,has_rerun'),
+    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls,audience_count,is_sold_out,has_rerun,is_licensed'),
     rest('people','select=id,name,photo_urls,social_links'),
     rest('participation_history','select=id,person_id,show_id,photo_urls'),
     rest('participation_roles','select=participation_id,role_id'),
@@ -503,9 +503,14 @@ async function load(){
     rest('works','select=id,title,title_en,genre,country,premiere_year,tags'),
     rest('troupes','select=id,name,org_type,member_base,level,photo_urls,status,region,founded_year,recruiting_info,social_links'),
     rest('venues','select=id,name,seat_count,seat_count_max,photo_urls,rental_fee,rental_available,contact,parking_available,transit_info'),
+    rest('app_settings','select=key,value'),
   ]);
   var shows=raw[0],people=raw[1],partHist=raw[2],partRoles=raw[3],
-      partStaff=raw[4],roles=raw[5],staffRoles=raw[6],works=raw[7],troupes=raw[8],venues=raw[9];
+      partStaff=raw[4],roles=raw[5],staffRoles=raw[6],works=raw[7],troupes=raw[8],venues=raw[9],appSettings=raw[10];
+
+  var settingsMap={};
+  (appSettings||[]).forEach(function(s){settingsMap[s.key]=s.value;});
+  var showUnlicensed=settingsMap.show_unlicensed_content!=='false'; // 기본값: 켜짐(표시)
 
   var roleIdsByPart=groupBy(partRoles,'participation_id');
   var staffIdsByPart=groupBy(partStaff,'participation_id');
@@ -529,8 +534,17 @@ async function load(){
     '극단':s.troupe_id?[s.troupe_id]:[],'극장':s.venue_id?[s.venue_id]:[],
     '작품':s.work_id?[s.work_id]:[],
     '포스터':photoField(s.poster_urls),
-    '관객수':s.audience_count,'매진여부':s.is_sold_out,'재공연여부':s.has_rerun
+    '관객수':s.audience_count,'매진여부':s.is_sold_out,'재공연여부':s.has_rerun,
+    '라이선스상태':s.is_licensed
   }};});
+  // 라이선스 미확보(N)로 표시된 공연은, 설정이 꺼져 있으면 사이트 전체에서 숨김
+  // (창작/완료/미상은 설정과 무관하게 항상 노출)
+  if(!showUnlicensed){
+    DB.shows=DB.shows.filter(function(s){return fld(s,'라이선스상태')!=='N';});
+  }
+  var visibleShowIds={};
+  DB.shows.forEach(function(s){visibleShowIds[s.id]=true;});
+  partHist=partHist.filter(function(ph){return visibleShowIds[ph.show_id];});
 
   // 참여이력 한 행이 배역+스텝을 동시에 가질 수 있으므로(겸직),
   // 기존 화면 코드(역할타입=배우/스텝 단일값 기대)에 맞춰 겸직 시 두 행으로 나눠 합성한다.
