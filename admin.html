@@ -251,6 +251,7 @@
     <button data-tab="staffrole">스텝역할</button>
     <button data-tab="person">사람</button>
     <button data-tab="creation">창작이력</button>
+    <button data-tab="settings">설정</button>
   </nav>
 
   <main>
@@ -283,8 +284,13 @@
                 <button type="button" class="btn secondary" style="margin-top:0; padding:6px 10px;" onclick="quickAdd('venues', '새 극장 이름을 입력하세요', n=>({name:n}), id=>{ setCombo('show-venue', id); })">+</button>
               </div>
             </div>
-            <div><label>라이선스 여부</label>
-              <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
+            <div><label>라이선스 상태</label>
+              <select name="is_licensed">
+                <option value="">선택 안 함(미상)</option>
+                <option value="창작">창작 (자체창작, 라이선스 불필요)</option>
+                <option value="Y">라이선스 완료</option>
+                <option value="N">라이선스 미확보</option>
+              </select>
             </div>
             <div><label>관객수</label><input type="number" name="audience_count" min="0"></div>
             <div><label>매진 여부</label>
@@ -715,6 +721,21 @@
         <h3>등록된 창작이력 <span class="count-tag" id="count-creation"></span></h3>
         <input type="text" id="search-creation" placeholder="검색..." style="margin-bottom:12px;" oninput="window.__applyFilters()">
         <div id="list-creation"></div>
+      </div>
+    </section>
+
+    <!-- ================= 설정 ================= -->
+    <section class="tab-panel" id="tab-settings">
+      <h2>설정</h2>
+      <p class="sub">사이트 전체에 적용되는 설정이에요.</p>
+      <div class="card">
+        <h3>라이선스 미확보 공연 노출</h3>
+        <p class="sub">꺼두면 라이선스가 <b>미확보(무단)</b>로 표시된 공연·참여이력이 메인사이트에서 전체 숨김 처리돼요. 라이선스 상태가 "창작"이거나 "완료"거나 아직 입력 안 된(미상) 공연은 이 설정과 무관하게 항상 보여요.</p>
+        <label style="display:flex; align-items:center; gap:10px; margin-top:12px; cursor:pointer;">
+          <input type="checkbox" id="setting-show-unlicensed" style="width:18px; height:18px;">
+          <span id="setting-show-unlicensed-label">불러오는 중...</span>
+        </label>
+        <div class="msg" id="msg-settings"></div>
       </div>
     </section>
 
@@ -1635,7 +1656,7 @@ function renderAllLists() {
       render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
     {label:'극장', key:'venue_id', editable:true, editType:'fk', fkEntity:'venue',
       render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
-    {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'Y',label:'Y'},{value:'N',label:'N'}]},
+    {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(미상)'},{value:'창작',label:'창작'},{value:'Y',label:'완료'},{value:'N',label:'미확보'}]},
     {label:'관객수', key:'audience_count', editable:true, editType:'number'},
     {label:'매진', key:'is_sold_out', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'매진'},{value:'false',label:'미매진'}], render: r => r.is_sold_out==null?'':(r.is_sold_out?'매진':'미매진')},
     {label:'재공연', key:'has_rerun', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'있음'},{value:'false',label:'없음'}], render: r => r.has_rerun==null?'':(r.has_rerun?'있음':'없음')},
@@ -2082,9 +2103,25 @@ wireSingleCombo('creation-work');
 wireSingleCombo('creation-type');
 wireSingleCombo('workcreator-person');
 wireSingleCombo('workcreator-type');
+// ---------- 설정: 라이선스 미확보 공연 노출 토글 ----------
+async function loadSettings() {
+  const { data } = await supabase.from('app_settings').select('value').eq('key', 'show_unlicensed_content').maybeSingle();
+  const on = data ? data.value === 'true' : true;
+  const cb = document.getElementById('setting-show-unlicensed');
+  cb.checked = on;
+  document.getElementById('setting-show-unlicensed-label').textContent = on ? '켜짐 — 라이선스 미확보 공연도 노출됨' : '꺼짐 — 라이선스 미확보 공연은 숨김';
+}
+document.getElementById('setting-show-unlicensed').addEventListener('change', async (e) => {
+  const on = e.target.checked;
+  document.getElementById('setting-show-unlicensed-label').textContent = on ? '켜짐 — 라이선스 미확보 공연도 노출됨' : '꺼짐 — 라이선스 미확보 공연은 숨김';
+  const { error } = await supabase.from('app_settings').upsert({ key: 'show_unlicensed_content', value: String(on) });
+  showMsg('msg-settings', !error, error ? '저장 실패: ' + error.message : '저장됐어요.');
+});
+
 (async () => {
   await ensureAuth();
   await reloadAll();
+  await loadSettings();
 })();
 </script>
 </body>
