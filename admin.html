@@ -286,6 +286,13 @@
             <div><label>라이선스 여부</label>
               <select name="is_licensed"><option value="">선택 안 함</option><option value="Y">Y</option><option value="N">N</option></select>
             </div>
+            <div><label>관객수</label><input type="number" name="audience_count" min="0"></div>
+            <div><label>매진 여부</label>
+              <select name="is_sold_out"><option value="">선택 안 함</option><option value="true">매진</option><option value="false">미매진</option></select>
+            </div>
+            <div><label>재공연 여부</label>
+              <select name="has_rerun"><option value="">선택 안 함</option><option value="true">재공연 있음</option><option value="false">재공연 없음</option></select>
+            </div>
           </div>
           <div style="margin-top:12px;">
             <label>연결 작품</label>
@@ -529,8 +536,18 @@
                 <option value="직장인">직장인</option><option value="일반">일반</option>
               </select>
             </div>
-            <div><label>상태</label><input type="text" name="status"></div>
+            <div><label>운영상태</label>
+              <select name="status"><option value="">선택 안 함</option><option value="활동중">활동중</option><option value="휴면">휴면</option><option value="해체">해체</option></select>
+            </div>
+            <div><label>활동지역/거점</label><input type="text" name="region" placeholder="예: 서울 마포구"></div>
+            <div><label>창단연도</label><input type="number" name="founded_year" min="1900" max="2100"></div>
+            <div><label>단원 모집</label><input type="text" name="recruiting_info" placeholder="예: 모집중 - 인스타 DM"></div>
             <div><label>메모</label><input type="text" name="memo"></div>
+          </div>
+          <div class="photo-widget">
+            <label>주요 링크</label>
+            <div id="links-troupe"></div>
+            <button type="button" class="btn secondary" id="add-link-troupe" style="margin-top:0;">+ 링크 추가</button>
           </div>
           <div class="photo-widget">
             <label>사진</label>
@@ -569,6 +586,15 @@
             <div><label>최소 좌석수</label><input type="number" name="seat_count"></div>
             <div><label>최대 좌석수</label><input type="number" name="seat_count_max"></div>
             <div><label>주소</label><input type="text" name="address"></div>
+            <div><label>대관료</label><input type="text" name="rental_fee" placeholder="예: 평일 20만원, 주말 30만원"></div>
+            <div><label>대관 가능여부</label>
+              <select name="rental_available"><option value="">선택 안 함</option><option value="true">가능</option><option value="false">불가</option></select>
+            </div>
+            <div><label>연락처</label><input type="text" name="contact"></div>
+            <div><label>주차 가능여부</label>
+              <select name="parking_available"><option value="">선택 안 함</option><option value="true">가능</option><option value="false">불가</option></select>
+            </div>
+            <div><label>대중교통 안내</label><input type="text" name="transit_info" placeholder="예: 2호선 OO역 3번 출구 도보 5분"></div>
           </div>
           <div class="photo-widget">
             <label>사진</label>
@@ -1230,6 +1256,7 @@ function collectLinks(key) {
     .filter(l => l.url);
 }
 document.getElementById('add-link-person').addEventListener('click', () => addLinkRow('person'));
+document.getElementById('add-link-troupe').addEventListener('click', () => addLinkRow('troupe'));
 document.querySelector('main').addEventListener('click', (e) => {
   const rm = e.target.closest('.rm-link-btn');
   if (!rm) return;
@@ -1609,6 +1636,9 @@ function renderAllLists() {
     {label:'극장', key:'venue_id', editable:true, editType:'fk', fkEntity:'venue',
       render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
     {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'Y',label:'Y'},{value:'N',label:'N'}]},
+    {label:'관객수', key:'audience_count', editable:true, editType:'number'},
+    {label:'매진', key:'is_sold_out', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'매진'},{value:'false',label:'미매진'}], render: r => r.is_sold_out==null?'':(r.is_sold_out?'매진':'미매진')},
+    {label:'재공연', key:'has_rerun', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'있음'},{value:'false',label:'없음'}], render: r => r.has_rerun==null?'':(r.has_rerun?'있음':'없음')},
   ], 'shows', 'count-show', true);
 
   const tPart = searchVal('participation');
@@ -1681,6 +1711,8 @@ function renderAllLists() {
     {label:'단체명', key:'name', editable:true},
     {label:'조직형태', render: r => (r.org_type||[]).join(', ')},
     {label:'구성원기반', key:'member_base', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'학생',label:'학생'},{value:'직장인',label:'직장인'},{value:'일반',label:'일반'}]},
+    {label:'운영상태', key:'status', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'활동중',label:'활동중'},{value:'휴면',label:'휴면'},{value:'해체',label:'해체'}]},
+    {label:'활동지역', key:'region', editable:true},
   ];
   const troupeGroupBy = document.getElementById('group-troupe')?.value || '';
   const troupeGroupFn = troupeGroupBy === 'orgtype' ? (r => (r.org_type && r.org_type.length) ? r.org_type : ['(미분류)'])
@@ -1696,6 +1728,10 @@ function renderAllLists() {
     {label:'최소좌석', key:'seat_count', editable:true, editType:'number'},
     {label:'최대좌석', key:'seat_count_max', editable:true, editType:'number'},
     {label:'주소', key:'address', editable:true},
+    {label:'대관료', key:'rental_fee', editable:true},
+    {label:'대관가능', key:'rental_available', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'가능'},{value:'false',label:'불가'}], render: r => r.rental_available==null?'':(r.rental_available?'가능':'불가')},
+    {label:'주차', key:'parking_available', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'가능'},{value:'false',label:'불가'}], render: r => r.parking_available==null?'':(r.parking_available?'가능':'불가')},
+    {label:'연락처', key:'contact', editable:true},
   ], 'venues', 'count-venue', true);
 
   const tStaffrole = searchVal('staffrole');
@@ -1824,7 +1860,7 @@ document.querySelectorAll('.cancel-edit-btn').forEach(btn => {
     moveCardHome(key);
     if (photoState[key]) resetPhotoWidget(key, []);
     if (key === 'person') resetLinkWidget('person', []);
-    if (key === 'troupe') document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false);
+    if (key === 'troupe') { resetLinkWidget('troupe', []); document.querySelectorAll('#troupe-org-type-list input:checked').forEach(c=>c.checked=false); }
     if (key === 'work') resetWorkCreatorWidget([]);
     if (key === 'work') resetWorkCountries([]);
     if (key === 'work') resetWorkTags([]);
@@ -1899,6 +1935,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
     fillFormFields(document.getElementById(formId), row);
     if (table === 'troupes') {
       resetPhotoWidget('troupe', row.photo_urls);
+      resetLinkWidget('troupe', row.social_links);
       const orgVals = row.org_type || [];
       document.querySelectorAll('#troupe-org-type-list input[name=org_type_vals]').forEach(c => c.checked = orgVals.includes(c.value));
     }
@@ -1990,6 +2027,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
     if (tableName === 'troupes') {
       const orgVals = [...form.querySelectorAll('input[name=org_type_vals]:checked')].map(c => c.value);
       payload.org_type = orgVals.length ? orgVals : null;
+      payload.social_links = collectLinks('troupe');
     }
     if (tableName === 'roles') {
       payload.tags = roleTagsState.length ? roleTagsState : null;
@@ -2013,6 +2051,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
     form.reset();
     if (photoKey) resetPhotoWidget(photoKey, []);
     if (tableName === 'people') resetLinkWidget('person', []);
+    if (tableName === 'troupes') resetLinkWidget('troupe', []);
     if (tableName === 'works') resetWorkCreatorWidget([]);
     if (tableName === 'works') resetWorkCountries([]);
     if (tableName === 'works') resetWorkTags([]);
