@@ -1265,6 +1265,8 @@ function showShow(sid,push){
   var audience=fld(show,'관객수');
   var soldOut=fld(show,'매진여부');
   var rerun=fld(show,'재공연여부');
+  var licenseStatus=fld(show,'라이선스상태');
+  var licenseLabel=licenseStatus==='창작'?'✍️ 창작':(licenseStatus==='Y'?'✅ 라이선스 완료':(licenseStatus==='N'?'⚠️ 라이선스 미확보':''));
   var outcomeH='';
   if(audience!=null||soldOut||rerun){
     outcomeH='<div class="detail-meta">'
@@ -1281,6 +1283,7 @@ function showShow(sid,push){
     +(trid?'<span>🏢 <span class="link" data-action="troupe" data-id="'+trid+'">'+nm(trid)+'</span></span>':'')
     +(vid?'<span>📍 <span class="link" data-action="venue" data-id="'+vid+'">'+nm(vid)+'</span></span>':'')
     +(dateLabel?'<span>📅 '+dateLabel+'</span>':'')
+    +(licenseLabel?'<span>'+licenseLabel+'</span>':'')
     +'</div>'+outcomeH+'</div></div></div>';
   if(actors.length){
     var sortedActors=actors.slice().sort(function(a,b){var ra=ids(fld(a,'배역'))[0]||'',rb=ids(fld(b,'배역'))[0]||'';var oa=ROLE_ORDER[ra],ob=ROLE_ORDER[rb];if(oa==null&&ob==null)return 0;if(oa==null)return 1;if(ob==null)return -1;return oa-ob;});
