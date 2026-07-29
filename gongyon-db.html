@@ -243,6 +243,9 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .detail-header{margin-bottom:2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--line)}
 .sec{margin-bottom:2rem}
 .sec-label{font-size:0.68rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.8rem}
+.info-rows{display:flex;flex-direction:column;gap:0.5rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:0.9rem 1.1rem}
+.info-row{display:flex;gap:0.8rem;font-size:0.84rem;line-height:1.5}
+.info-row-label{color:var(--muted);min-width:96px;flex-shrink:0}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--line)}
 .poster-wrap{display:flex;gap:2rem;margin-bottom:2rem;align-items:flex-start}
 .poster-img{width:180px;flex-shrink:0;border-radius:8px;object-fit:cover;aspect-ratio:2/3;display:block}
@@ -310,6 +313,13 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .cast-card-tag{font-size:0.6rem;padding:0.12rem 0.45rem;border-radius:2px;display:inline-block;margin-top:0.25rem}
 .cast-card-tag-actor{background:var(--actor-bg);color:var(--actor)}
 .cast-card-tag-staff{background:var(--staff-bg);color:var(--staff)}
+
+/* ── 오류 제보 버튼 (우하단 고정) ── */
+.report-fab{position:fixed;right:1.2rem;bottom:1.2rem;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:500;transition:transform .15s,background .15s}
+.report-fab:hover{background:var(--bg3);transform:scale(1.06)}
+@media(max-width:768px){
+  .report-fab{bottom:calc(56px + 0.8rem);right:0.9rem;width:40px;height:40px;font-size:1rem}
+}
 
 /* ── 이미지 라이트박스 (클릭해서 크게 보기) ── */
 .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:10000;cursor:zoom-out;padding:3rem;box-sizing:border-box}
@@ -384,6 +394,7 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
       <button id="nav-roles" onclick="goRoles()">배역</button>
       <button id="nav-venues" onclick="goVenues()">극장</button>
       <button id="nav-troupes" onclick="goTroupes()">단체</button>
+      <button id="nav-content" onclick="goContent()">콘텐츠</button>
     </nav>
   </nav>
 
@@ -397,6 +408,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   <img id="lightbox-img" src="" alt="">
 </div>
 
+<a class="report-fab" href="mailto:gksxowns@gmail.com?subject=%5B%EA%B3%B5%EC%97%B0%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%5D%20%EC%98%A4%EB%A5%98%20%EC%A0%9C%EB%B3%B4&amp;body=%EC%96%B4%EB%96%A4%20%ED%8E%98%EC%9D%B4%EC%A7%80%EC%97%90%EC%84%9C%20%EB%AC%B4%EC%8A%A8%20%EC%A0%95%EB%B3%B4%EA%B0%80%20%EC%9E%98%EB%AA%BB%EB%90%98%EC%97%88%EB%82%98%EC%9A%94%3F%0A%0A(%EA%B3%B5%EC%97%B0%2F%EC%9E%91%ED%92%88%2F%EC%82%AC%EB%9E%8C%20%EC%9D%B4%EB%A6%84%20%EB%93%B1%EC%9D%84%20%EC%A0%81%EC%96%B4%EC%A3%BC%EC%84%B8%EC%9A%94)" title="오류 제보하기">⚠</a>
+
 <nav class="mobile-tab-bar" id="mob-nav">
   <button class="mob-tab active" id="mobt-home" onclick="goHome()"><span class="mob-icon">🏠</span>홈</button>
   <button class="mob-tab" id="mobt-shows" onclick="goShows()"><span class="mob-icon">🎭</span>공연</button>
@@ -405,6 +418,7 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   <button class="mob-tab" id="mobt-roles" onclick="goRoles()"><span class="mob-icon">🎬</span>배역</button>
   <button class="mob-tab" id="mobt-venues" onclick="goVenues()"><span class="mob-icon">📍</span>극장</button>
   <button class="mob-tab" id="mobt-troupes" onclick="goTroupes()"><span class="mob-icon">🏢</span>단체</button>
+  <button class="mob-tab" id="mobt-content" onclick="goContent()"><span class="mob-icon">📰</span>콘텐츠</button>
 </nav>
 
 <script>
@@ -479,7 +493,7 @@ function groupBy(rows,key){
 
 async function load(){
   var raw=await Promise.all([
-    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls'),
+    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls,audience_count,is_sold_out,has_rerun'),
     rest('people','select=id,name,photo_urls,social_links'),
     rest('participation_history','select=id,person_id,show_id,photo_urls'),
     rest('participation_roles','select=participation_id,role_id'),
@@ -487,8 +501,8 @@ async function load(){
     rest('roles','select=id,name,order_num,gender,work_id,tags'),
     rest('staff_roles','select=id,name,order_num'),
     rest('works','select=id,title,title_en,genre,country,premiere_year,tags'),
-    rest('troupes','select=id,name,org_type,member_base,level,photo_urls'),
-    rest('venues','select=id,name,seat_count,seat_count_max,photo_urls'),
+    rest('troupes','select=id,name,org_type,member_base,level,photo_urls,status,region,founded_year,recruiting_info,social_links'),
+    rest('venues','select=id,name,seat_count,seat_count_max,photo_urls,rental_fee,rental_available,contact,parking_available,transit_info'),
   ]);
   var shows=raw[0],people=raw[1],partHist=raw[2],partRoles=raw[3],
       partStaff=raw[4],roles=raw[5],staffRoles=raw[6],works=raw[7],troupes=raw[8],venues=raw[9];
@@ -503,14 +517,19 @@ async function load(){
     '배역명':r.name,'순서':r.order_num,'성별':r.gender,'작품':r.work_id?[r.work_id]:[],'태그':r.tags||[]
   }};});
   DB.staffRoles=staffRoles.map(function(s){return{id:s.id,fields:{'Name':s.name,'순서':s.order_num}};});
-  DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name,'조직형태':t.org_type,'구성원기반':t.member_base,'수준':t.level,'사진':photoField(t.photo_urls)}};});
-  DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count,'좌석수_최대':v.seat_count_max,'사진':photoField(v.photo_urls)}};});
+  DB.troupes=troupes.map(function(t){return{id:t.id,fields:{'극단명':t.name,'조직형태':t.org_type,'구성원기반':t.member_base,'수준':t.level,'사진':photoField(t.photo_urls),
+    '운영상태':t.status,'활동지역':t.region,'창단연도':t.founded_year,'모집정보':t.recruiting_info,'주요링크':t.social_links||[]
+  }};});
+  DB.venues=venues.map(function(v){return{id:v.id,fields:{'극장명':v.name,'좌석수':v.seat_count,'좌석수_최대':v.seat_count_max,'사진':photoField(v.photo_urls),
+    '대관료':v.rental_fee,'대관가능여부':v.rental_available,'연락처':v.contact,'주차가능여부':v.parking_available,'대중교통정보':v.transit_info
+  }};});
   DB.people=people.map(function(p){return{id:p.id,fields:{'이름':p.name,'사진':photoField(p.photo_urls),'홍보링크':p.social_links||[]}};});
   DB.shows=shows.map(function(s){return{id:s.id,fields:{
     '공연명':s.title,'공연 날짜':s.show_date,'종료일':s.end_date,
     '극단':s.troupe_id?[s.troupe_id]:[],'극장':s.venue_id?[s.venue_id]:[],
     '작품':s.work_id?[s.work_id]:[],
-    '포스터':photoField(s.poster_urls)
+    '포스터':photoField(s.poster_urls),
+    '관객수':s.audience_count,'매진여부':s.is_sold_out,'재공연여부':s.has_rerun
   }};});
 
   // 참여이력 한 행이 배역+스텝을 동시에 가질 수 있으므로(겸직),
@@ -654,7 +673,7 @@ function injectBackBtn(label,fn){
   m.insertBefore(btn,m.firstChild);
 }
 function setNav(v){
-  ['home','shows','people','works','roles','venues','troupes'].forEach(function(n){
+  ['home','shows','people','works','roles','venues','troupes','content'].forEach(function(n){
     var el=$('nav-'+n);if(el)el.classList.toggle('active',n===v);
     var mel=$('mobt-'+n);if(mel)mel.classList.toggle('active',n===v);
   });
@@ -667,6 +686,16 @@ function actorCard(rec){
   return '<div class="cast-card" data-action="person" data-id="' + pid + '">'+imgH+'<div class="cast-name">'+nm(pid)+'</div>'+(nm(rid)?'<div class="cast-role">'+nm(rid)+'</div>':'')+'</div>';
 }
 function setIndexMode(on){/* aside removed, no-op */}
+
+/* ══ 콘텐츠 (준비중) ══ */
+function goContent(push){
+  if(push!==false)history.pushState({view:'content'},'','#content');
+  setNav('content');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">📰</div>'
+    +'<div style="font-size:0.95rem;margin-bottom:0.4rem">콘텐츠 메뉴는 준비 중입니다</div>'
+    +'<div style="font-size:0.8rem;color:var(--muted)">공지, 아티클, 큐레이션 등을 담을 공간이 곧 열릴 예정이에요.</div>'
+    +'</div></div>');
+}
 
 /* ══ 홈 ══ */
 var _homeView='grid';
@@ -1219,6 +1248,17 @@ function showShow(sid,push){
   var dateLabel=date?(endDate&&endDate!==date?date+' ~ '+endDate:date):'';
   var poster=POSTER[sid]||'';
   var pH=poster?'<img class="poster-img" src="'+poster+'" alt="'+fld(show,'공연명')+'">':'<div class="poster-placeholder">🎭</div>';
+  var audience=fld(show,'관객수');
+  var soldOut=fld(show,'매진여부');
+  var rerun=fld(show,'재공연여부');
+  var outcomeH='';
+  if(audience!=null||soldOut||rerun){
+    outcomeH='<div class="detail-meta">'
+      +(audience!=null?'<span>👥 관객 '+audience+'명</span>':'')
+      +(soldOut?'<span>🎟 매진</span>':'')
+      +(rerun?'<span>🔁 재공연</span>':'')
+      +'</div>';
+  }
   var h='<div class="detail-header"><div class="poster-wrap">'+pH
     +'<div class="poster-info">'
     +'<div class="eyebrow">'+(wid?'<span class="link" data-action="work" data-id="'+wid+'">'+nm(wid)+'</span>':'공연')+'</div>'
@@ -1227,7 +1267,7 @@ function showShow(sid,push){
     +(trid?'<span>🏢 <span class="link" data-action="troupe" data-id="'+trid+'">'+nm(trid)+'</span></span>':'')
     +(vid?'<span>📍 <span class="link" data-action="venue" data-id="'+vid+'">'+nm(vid)+'</span></span>':'')
     +(dateLabel?'<span>📅 '+dateLabel+'</span>':'')
-    +'</div></div></div></div>';
+    +'</div>'+outcomeH+'</div></div></div>';
   if(actors.length){
     var sortedActors=actors.slice().sort(function(a,b){var ra=ids(fld(a,'배역'))[0]||'',rb=ids(fld(b,'배역'))[0]||'';var oa=ROLE_ORDER[ra],ob=ROLE_ORDER[rb];if(oa==null&&ob==null)return 0;if(oa==null)return 1;if(ob==null)return -1;return oa-ob;});
     h+='<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">';
@@ -1547,7 +1587,22 @@ function showTroupe(tid,push){
   if(troupePhotos.length){
     galleryH='<div class="mini-gallery">'+troupePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
   }
-  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+'</div>'+galleryH+'</div>';
+  var tStatus=fld(troupe,'운영상태');
+  var tRegion=fld(troupe,'활동지역');
+  var tLinksH='';
+  var tLinks=(fld(troupe,'주요링크')||[]).filter(function(l){return l&&l.url;});
+  if(tLinks.length){
+    tLinksH='<div class="person-links-inline">'+tLinks.map(function(l){return '<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';}).join('')+'</div>';
+  }
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+galleryH+'</div>';
+  var tFoundedYear=fld(troupe,'창단연도');
+  var tRecruiting=fld(troupe,'모집정보');
+  var tInfoRows=[];
+  if(tFoundedYear)tInfoRows.push('<div class="info-row"><span class="info-row-label">창단연도</span><span>'+tFoundedYear+'년</span></div>');
+  if(tRecruiting)tInfoRows.push('<div class="info-row"><span class="info-row-label">단원 모집</span><span>'+tRecruiting+'</span></div>');
+  if(tInfoRows.length){
+    h+='<div class="sec"><div class="sec-label">실전 정보</div><div class="info-rows">'+tInfoRows.join('')+'</div></div>';
+  }
 
   if(topMembers.length){
     h+='<div class="sec"><div class="sec-label">많이 참여한 사람</div><div class="coactor-grid">';
@@ -1598,12 +1653,12 @@ function showTroupe(tid,push){
 }
 
 
-var _venueFilter={sizeTier:'',sort:'name'};
+var _venueFilter={sizeTier:'',sort:'name',parkingOnly:false};
 function goVenues(push){
   if(push!==false)history.pushState({view:'venues'},'','#venues');
   setNav('venues');_sbContext='venues';setIndexMode(true);
   _allVenues=DB.venues.filter(function(v){return fld(v,'극장명');});
-  _venueFilter={sizeTier:'',sort:'name'};
+  _venueFilter={sizeTier:'',sort:'name',parkingOnly:false};
   renderVenueIndex();
 }
 function venueSeats(v){
@@ -1631,7 +1686,7 @@ function venueSizeTier(seats){
   if(seats<300)return '중극장';
   return '대극장';
 }
-function clearVenueFilter(){_venueFilter={sizeTier:'',sort:'name'};renderVenueIndex();}
+function clearVenueFilter(){_venueFilter={sizeTier:'',sort:'name',parkingOnly:false};renderVenueIndex();}
 function renderVenueIndex(){
   var all=_allVenues;
   if(!all.length){mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">📍</div>극장 데이터가 없습니다.</div></div>');return;}
@@ -1644,6 +1699,7 @@ function renderVenueIndex(){
 
   var filtered=all.filter(function(v){
     if(_venueFilter.sizeTier&&venueSizeTier(seatMap[v.id])!==_venueFilter.sizeTier)return false;
+    if(_venueFilter.parkingOnly&&!fld(v,'주차가능여부'))return false;
     return true;
   });
 
@@ -1655,13 +1711,16 @@ function renderVenueIndex(){
     filtered=filtered.slice().sort(function(a,b){return(fld(a,'극장명')||'').localeCompare(fld(b,'극장명')||'');});
   }
 
-  var hasFilter=!!_venueFilter.sizeTier||_venueFilter.sort!=='name';
+  var hasFilter=!!_venueFilter.sizeTier||_venueFilter.sort!=='name'||_venueFilter.parkingOnly;
   var filterH='<div class="filter-panel"><div class="filter-panel-top"><span class="filter-panel-title">필터 / 정렬</span>'
     +(hasFilter?'<button class="filter-clear-btn" onclick="clearVenueFilter()">전체 초기화</button>':'')
     +'</div><div class="filter-rows">'
     +'<div class="filter-row"><span class="filter-row-label">규모</span><div class="filter-chips">'
     +'<button class="fchip'+(!_venueFilter.sizeTier?' on':'')+'" onclick="_venueFilter.sizeTier=\'\';renderVenueIndex()">전체</button>'
     +['소극장','중극장','대극장'].map(function(t){return '<button class="fchip'+(_venueFilter.sizeTier===t?' on':'')+'" onclick="_venueFilter.sizeTier=\''+t+'\';renderVenueIndex()">'+t+'</button>';}).join('')
+    +'</div></div>'
+    +'<div class="filter-row"><span class="filter-row-label">접근성</span><div class="filter-chips">'
+    +'<button class="fchip'+(_venueFilter.parkingOnly?' on':'')+'" onclick="_venueFilter.parkingOnly=!_venueFilter.parkingOnly;renderVenueIndex()">🚗 주차 가능만</button>'
     +'</div></div>'
     +'<div class="filter-row"><span class="filter-row-label">정렬</span><div class="filter-chips">'
     +'<button class="fchip'+(_venueFilter.sort==='name'?' on':'')+'" onclick="_venueFilter.sort=\'name\';renderVenueIndex()">이름순</button>'
@@ -1697,6 +1756,20 @@ function showVenue(vid,push){
     vGalleryH='<div class="mini-gallery">'+venuePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
   }
   var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seatsLabel?'<span>💺 좌석 '+seatsLabel+'</span>':'')+'</div>'+vGalleryH+'</div>';
+  var vRentalFee=fld(venue,'대관료');
+  var vRentalAvail=fld(venue,'대관가능여부');
+  var vContact=fld(venue,'연락처');
+  var vParking=fld(venue,'주차가능여부');
+  var vTransit=fld(venue,'대중교통정보');
+  var vInfoRows=[];
+  if(vRentalAvail!=null)vInfoRows.push('<div class="info-row"><span class="info-row-label">대관 가능여부</span><span>'+(vRentalAvail?'가능':'불가')+'</span></div>');
+  if(vRentalFee)vInfoRows.push('<div class="info-row"><span class="info-row-label">대관료</span><span>'+vRentalFee+'</span></div>');
+  if(vContact)vInfoRows.push('<div class="info-row"><span class="info-row-label">연락처</span><span>'+vContact+'</span></div>');
+  if(vParking!=null)vInfoRows.push('<div class="info-row"><span class="info-row-label">주차</span><span>'+(vParking?'가능':'불가')+'</span></div>');
+  if(vTransit)vInfoRows.push('<div class="info-row"><span class="info-row-label">대중교통</span><span>'+vTransit+'</span></div>');
+  if(vInfoRows.length){
+    h+='<div class="sec"><div class="sec-label">실전 정보</div><div class="info-rows">'+vInfoRows.join('')+'</div></div>';
+  }
   if(shows.length){
     var vYearCntMap={};shows.forEach(function(s){var y=yearOf(fld(s,'공연 날짜')||'')||'연도 미상';vYearCntMap[y]=(vYearCntMap[y]||0)+1;});
     var vYears=Object.keys(vYearCntMap).sort().reverse();
@@ -1733,15 +1806,15 @@ function showVenue(vid,push){
   injectBackBtn('← 극장',function(){goVenues();});
 }
 
-var _troupeFilter={orgType:'',memberBase:'',sort:'name'};
+var _troupeFilter={orgType:'',memberBase:'',region:'',status:'',sort:'name'};
 function goTroupes(push){
   if(push!==false)history.pushState({view:'troupes'},'','#troupes');
   setNav('troupes');_sbContext='troupes';setIndexMode(true);
   _allTroupes=DB.troupes.filter(function(t){return fld(t,'극단명');});
-  _troupeFilter={orgType:'',memberBase:'',sort:'name'};
+  _troupeFilter={orgType:'',memberBase:'',region:'',status:'',sort:'name'};
   renderTroupeIndex();
 }
-function clearTroupeFilter(){_troupeFilter={orgType:'',memberBase:'',sort:'name'};renderTroupeIndex();}
+function clearTroupeFilter(){_troupeFilter={orgType:'',memberBase:'',region:'',status:'',sort:'name'};renderTroupeIndex();}
 
 function renderTroupeIndex(){
   var all=_allTroupes;
@@ -1759,14 +1832,18 @@ function renderTroupeIndex(){
     memberCntMap[t.id]=Object.keys(memberSet).length;
   });
 
-  var orgTypeSet={},memberBaseSet={};
-  all.forEach(function(t){var o=fld(t,'조직형태')||[];(Array.isArray(o)?o:[o]).forEach(function(v){if(v)orgTypeSet[v]=true;});var m=fld(t,'구성원기반');if(m)memberBaseSet[m]=true;});
+  var orgTypeSet={},memberBaseSet={},regionSet={},statusSet={};
+  all.forEach(function(t){var o=fld(t,'조직형태')||[];(Array.isArray(o)?o:[o]).forEach(function(v){if(v)orgTypeSet[v]=true;});var m=fld(t,'구성원기반');if(m)memberBaseSet[m]=true;var r=fld(t,'활동지역');if(r)regionSet[r]=true;var s=fld(t,'운영상태');if(s)statusSet[s]=true;});
   var orgTypes=Object.keys(orgTypeSet).sort();
   var memberBases=Object.keys(memberBaseSet).sort();
+  var regions=Object.keys(regionSet).sort();
+  var statuses=Object.keys(statusSet).sort();
 
   var filtered=all.filter(function(t){
     if(_troupeFilter.orgType&&(fld(t,'조직형태')||[]).indexOf(_troupeFilter.orgType)===-1)return false;
     if(_troupeFilter.memberBase&&fld(t,'구성원기반')!==_troupeFilter.memberBase)return false;
+    if(_troupeFilter.region&&fld(t,'활동지역')!==_troupeFilter.region)return false;
+    if(_troupeFilter.status&&fld(t,'운영상태')!==_troupeFilter.status)return false;
     return true;
   });
 
@@ -1778,7 +1855,7 @@ function renderTroupeIndex(){
     filtered=filtered.slice().sort(function(a,b){return(fld(a,'극단명')||'').localeCompare(fld(b,'극단명')||'');});
   }
 
-  var hasFilter=!!_troupeFilter.orgType||!!_troupeFilter.memberBase||_troupeFilter.sort!=='name';
+  var hasFilter=!!_troupeFilter.orgType||!!_troupeFilter.memberBase||!!_troupeFilter.region||!!_troupeFilter.status||_troupeFilter.sort!=='name';
   var filterH='<div class="filter-panel"><div class="filter-panel-top"><span class="filter-panel-title">필터 / 정렬</span>'
     +(hasFilter?'<button class="filter-clear-btn" onclick="clearTroupeFilter()">전체 초기화</button>':'')
     +'</div><div class="filter-rows">';
@@ -1793,6 +1870,18 @@ function renderTroupeIndex(){
     filterH+='<div class="filter-row"><span class="filter-row-label">구성원기반</span><div class="filter-chips">'
       +'<button class="fchip'+(!_troupeFilter.memberBase?' on':'')+'" onclick="_troupeFilter.memberBase=\'\';renderTroupeIndex()">전체</button>'
       +memberBases.map(function(m){return '<button class="fchip'+(_troupeFilter.memberBase===m?' on':'')+'" onclick="_troupeFilter.memberBase=\''+m+'\';renderTroupeIndex()">'+m+'</button>';}).join('')
+      +'</div></div>';
+  }
+  if(regions.length){
+    filterH+='<div class="filter-row"><span class="filter-row-label">활동지역</span><div class="filter-chips">'
+      +'<button class="fchip'+(!_troupeFilter.region?' on':'')+'" onclick="_troupeFilter.region=\'\';renderTroupeIndex()">전체</button>'
+      +regions.map(function(r){return '<button class="fchip'+(_troupeFilter.region===r?' on':'')+'" onclick="_troupeFilter.region=\''+r+'\';renderTroupeIndex()">'+r+'</button>';}).join('')
+      +'</div></div>';
+  }
+  if(statuses.length){
+    filterH+='<div class="filter-row"><span class="filter-row-label">운영상태</span><div class="filter-chips">'
+      +'<button class="fchip'+(!_troupeFilter.status?' on':'')+'" onclick="_troupeFilter.status=\'\';renderTroupeIndex()">전체</button>'
+      +statuses.map(function(s){return '<button class="fchip'+(_troupeFilter.status===s?' on':'')+'" onclick="_troupeFilter.status=\''+s+'\';renderTroupeIndex()">'+s+'</button>';}).join('')
       +'</div></div>';
   }
   filterH+='<div class="filter-row"><span class="filter-row-label">정렬</span><div class="filter-chips">'
@@ -1833,6 +1922,7 @@ function routeFromHash(hash){
   if(h==='#roles'){goRoles(false);return;}
   if(h==='#venues'){goVenues(false);return;}
   if(h==='#troupes'){goTroupes(false);return;}
+  if(h==='#content'){goContent(false);return;}
   var m;
   if(m=h.match(/^#show-(.+)$/)){showShow(m[1],false);return;}
   if(m=h.match(/^#person-(.+)$/)){showPerson(m[1],false);return;}
