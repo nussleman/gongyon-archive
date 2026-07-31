@@ -106,7 +106,9 @@ aside{display:none !important}
 main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:block}
 
 /* ── 홈: 검색창 하나만 있는 랜딩 화면 ── */
-.home-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 4rem);text-align:center;gap:2.4rem}
+.home-hero{display:grid;grid-template-rows:1fr auto 1fr;grid-template-columns:100%;justify-items:center;min-height:calc(100vh - 4rem);text-align:center}
+.home-hero-top{align-self:end;padding-bottom:2.4rem}
+.home-hero-bottom{align-self:start;padding-top:2.4rem}
 .home-hero-tagline{font-size:0.78rem;letter-spacing:0.34em;color:var(--muted);text-transform:uppercase}
 .home-hero-title{display:flex;flex-direction:row;align-items:center;gap:0.85rem;font-family:'Noto Serif KR',serif;font-weight:300;font-size:3.4rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
 .home-hero-title .logo-mark{width:64px;height:64px}
@@ -326,7 +328,9 @@ body.is-home .home-nav-dock{display:block}
   .coactor-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
   .poster-wrap{flex-direction:column;gap:1rem}
   .poster-img,.poster-placeholder{width:120px}
-  .home-hero{min-height:calc(100vh - 3rem);gap:1.7rem}
+  .home-hero{min-height:calc(100vh - 3rem)}
+  .home-hero-top{padding-bottom:1.6rem}
+  .home-hero-bottom{padding-top:1.6rem}
   .home-hero-title .logo-mark{width:48px;height:48px}
   .home-hero-title{font-size:3rem}
   .home-hero-tagline{font-size:0.68rem;letter-spacing:0.26em}
@@ -727,9 +731,9 @@ function renderHome(){
   var people=DB.people.filter(function(p){return fld(p,'이름');});
   var histCnt=DB.history.filter(isValidH).length;
   var heroH='<div class="home-hero">'
-    +'<div><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title"><svg class="logo-mark"><use href="#duck-logo"></use></svg>오리</div></div>'
+    +'<div class="home-hero-top"><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title"><svg class="logo-mark"><use href="#duck-logo"></use></svg>오리</div></div>'
     +'<div class="home-hero-search" id="home-search-slot"></div>'
-    +'<div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div>'
+    +'<div class="home-hero-bottom"><div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div></div>'
     +'</div>';
   mn(heroH);
   // 검색창을 사이드바/상단바가 아닌 홈 히어로 한가운데로 옮긴다
