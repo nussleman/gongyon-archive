@@ -56,7 +56,7 @@ header{display:none}
 .top-bar .global-search{max-width:440px;margin:0 auto}
 body.is-home .top-bar{display:none}
 body.is-home .left-nav{display:none}
-body.is-home .content-area{margin-left:0;margin-top:0;min-height:100vh}
+body.is-home .content-area{margin-left:0;margin-top:0;min-height:100vh;width:100%}
 
 /* ── 전역 검색창 ── */
 .global-search{position:relative;max-width:440px;width:100%;justify-self:center;}
@@ -108,7 +108,7 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 /* ── 홈: 검색창 하나만 있는 랜딩 화면 ── */
 .home-hero{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:calc(100vh - 4rem);text-align:center;gap:1.4rem;padding-top:14vh}
 .home-hero-tagline{font-size:0.78rem;letter-spacing:0.34em;color:var(--muted);text-transform:uppercase}
-.home-hero-title{display:flex;flex-direction:column;align-items:center;gap:0.6rem;font-family:'Noto Serif KR',serif;font-weight:300;font-size:3.4rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
+.home-hero-title{display:flex;flex-direction:row;align-items:center;gap:0.85rem;font-family:'Noto Serif KR',serif;font-weight:300;font-size:3.4rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
 .home-hero-title .logo-mark{width:64px;height:64px}
 .home-hero-search{width:100%;max-width:480px}
 .home-hero-search .global-search{max-width:none}
@@ -132,7 +132,18 @@ body.is-home .home-nav-dock{display:block}
 .tab-index{width:100%;max-width:none}
 
 /* 필터 패널 */
-.filter-panel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1.8rem;box-sizing:border-box}
+.filter-panel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1.8rem;box-sizing:border-box;position:sticky;top:64px;z-index:120;box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+
+/* ── 상세페이지 보조 상단바 (전역 상단바 바로 아래에 고정, 핵심 정보 요약) ── */
+.detail-subbar{position:sticky;top:64px;z-index:120;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:0.65rem 1.2rem;margin-bottom:1.6rem;display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+.detail-subbar-name{font-family:'Noto Serif KR',serif;font-size:0.95rem;color:var(--text);flex-shrink:0}
+.detail-subbar-stats{font-size:0.76rem;color:var(--muted);flex-shrink:0}
+.detail-subbar-links{display:flex;gap:0.6rem;flex-wrap:wrap;margin-left:auto}
+.detail-subbar-links a{color:var(--accent);text-decoration:none;font-size:0.74rem;white-space:nowrap}
+.detail-subbar-links a:hover{text-decoration:underline}
+@media(max-width:768px){
+  .detail-subbar-links{margin-left:0}
+}
 .filter-panel-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .filter-panel-title{font-size:0.65rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase}
 .filter-clear-btn{background:none;border:none;font-family:'Noto Sans KR',sans-serif;font-size:0.72rem;color:var(--muted);cursor:pointer;padding:0;transition:color .15s}
@@ -1477,7 +1488,12 @@ function showPerson(pid,push){
     validLinks.forEach(function(l){linksH+='<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';});
     linksH+='</div>';
   }
-  var h='<div class="detail-header"><div class="person-header">'
+  var subbarH='<div class="detail-subbar">'
+    +'<span class="detail-subbar-name">'+fld(person,'이름')+'</span>'
+    +'<span class="detail-subbar-stats">공연 '+showIds.length+' · 배우 '+actors.length+' · 스텝 '+staff.length+'</span>'
+    +(validLinks.length?'<span class="detail-subbar-links">'+validLinks.map(function(l){return '<a href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';}).join('')+'</span>':'')
+    +'</div>';
+  var h=subbarH+'<div class="detail-header"><div class="person-header">'
     +'<div class="person-photo-col">'+photoH+'</div>'
     +'<div class="person-info-col">'
     +'<div class="person-name-block"><div class="eyebrow">사람</div><div class="detail-title">'+fld(person,'이름')+'</div>'+(spanLabel?'<div class="detail-meta"><span>'+spanLabel+'</span></div>':'')+linksH+'</div>'
