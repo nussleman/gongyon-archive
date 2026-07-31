@@ -448,7 +448,7 @@ async function load(){
     rest('roles','select=id,name,order_num,gender,work_id,tags'),
     rest('staff_roles','select=id,name,order_num'),
     rest('works','select=id,title,title_en,genre,country,premiere_year,tags'),
-    rest('troupes','select=id,name,org_type,member_base,level,photo_urls,status,region,founded_year,recruiting_info,social_links'),
+    rest('troupes','select=id,name,org_type,member_base,photo_urls,status,region,founded_year,recruiting_info,social_links'),
     rest('venues','select=id,name,seat_count,seat_count_max,photo_urls,rental_fee,rental_available,contact,parking_available,transit_info'),
     rest('app_settings','select=key,value'),
   ]);
