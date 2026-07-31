@@ -18,9 +18,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 /* ── 레이아웃: 좌측 고정 nav + 우측 콘텐츠 ── */
 .page-wrap{display:flex;min-height:100vh}
 
-/* 좌측 고정 nav */
+/* 좌측 고정 nav (상단바 아래부터 시작 — 상단바가 화면 맨 위를 갖는다) */
 .left-nav{
-  position:fixed;top:0;left:0;width:200px;height:100vh;
+  position:fixed;top:64px;left:0;width:200px;height:calc(100vh - 64px);
   background:var(--bg2);border-right:1px solid var(--line);
   display:flex;flex-direction:column;
   padding:1.6rem 0 1rem;
@@ -44,16 +44,19 @@ nav button.active{color:var(--text);border-left-color:var(--accent);background:r
 /* 검색창은 이제 상단바(비-홈) / 홈 히어로 중 한 곳에 위치한다 (아래 .top-bar, .home-hero 참고) */
 
 /* 우측 콘텐츠 영역 */
-.content-area{margin-left:200px;min-height:100vh;display:block;width:calc(100% - 200px);box-sizing:border-box}
+.content-area{margin-left:200px;margin-top:64px;min-height:calc(100vh - 64px);display:block;width:calc(100% - 200px);box-sizing:border-box}
 
 /* 헤더(기존 aside 역할 제거, 상단 바 제거) */
 header{display:none}
 
-/* ── 상단바: 홈이 아닌 화면에서 로고+검색창이 머무는 자리 ── */
-.top-bar{display:flex;align-items:center;gap:1.4rem;padding:1rem 2rem;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:150}
-.top-bar-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.4rem;letter-spacing:0.02em;cursor:pointer;white-space:nowrap;flex-shrink:0;color:var(--text)}
+/* ── 상단바: 화면 맨 위를 차지하는 고정 바. 사이드바보다 z-index가 높아 항상 위에 온다 ── */
+.top-bar{position:fixed;top:0;left:0;right:0;height:64px;box-sizing:border-box;display:flex;align-items:center;gap:1.4rem;padding:0 2rem;border-bottom:1px solid var(--line);background:var(--bg);z-index:300}
+.top-bar-title{display:flex;align-items:center;gap:0.5rem;font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.3rem;letter-spacing:0.02em;cursor:pointer;white-space:nowrap;flex-shrink:0;color:var(--text)}
+.top-bar-title .logo-mark{width:24px;height:24px;flex-shrink:0}
 .top-bar .global-search{max-width:440px;margin:0 auto}
 body.is-home .top-bar{display:none}
+body.is-home .left-nav{display:none}
+body.is-home .content-area{margin-left:0;margin-top:0;min-height:100vh}
 
 /* ── 전역 검색창 ── */
 .global-search{position:relative;max-width:440px;width:100%;justify-self:center;}
@@ -103,15 +106,25 @@ aside{display:none !important}
 main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:block}
 
 /* ── 홈: 검색창 하나만 있는 랜딩 화면 ── */
-.home-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 4rem);text-align:center;gap:1.5rem}
+.home-hero{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:calc(100vh - 4rem);text-align:center;gap:1.4rem;padding-top:14vh}
 .home-hero-tagline{font-size:0.78rem;letter-spacing:0.34em;color:var(--muted);text-transform:uppercase}
-.home-hero-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:5rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
+.home-hero-title{display:flex;flex-direction:column;align-items:center;gap:0.6rem;font-family:'Noto Serif KR',serif;font-weight:300;font-size:3.4rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
+.home-hero-title .logo-mark{width:64px;height:64px}
 .home-hero-search{width:100%;max-width:480px}
 .home-hero-search .global-search{max-width:none}
 .home-hero-search .global-search input{padding:0.85rem 1.1rem 0.85rem 3rem;font-size:1rem;border-radius:10px}
 .home-hero-search .gs-icon{left:1.15rem;font-size:1.05rem}
 .home-hero-stats{font-size:0.76rem;color:var(--muted);letter-spacing:0.03em}
 .home-hero-stats em{color:var(--accent);font-style:normal;font-weight:500}
+
+/* ── 홈 전용 플로팅 메뉴 컨트롤러 (좌측, 세로 가운데 정렬, 떠있는 느낌) ── */
+.home-nav-dock{display:none;position:fixed;left:1.3rem;top:50%;transform:translateY(-50%);background:rgba(23,23,26,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:0.55rem;box-shadow:0 14px 44px rgba(0,0,0,0.5);z-index:200}
+body.is-home .home-nav-dock{display:block}
+.home-nav-dock nav{display:flex;flex-direction:column;gap:0.1rem;padding:0}
+.home-nav-dock nav button{background:none;border:none;border-left:none;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;letter-spacing:0.04em;padding:0.55rem 1.1rem;cursor:pointer;border-radius:10px;transition:color .15s,background .15s;text-align:left;white-space:nowrap}
+.home-nav-dock nav button:hover{color:var(--text);background:rgba(255,255,255,0.06)}
+.home-nav-dock nav button.active{color:var(--accent);background:rgba(200,169,110,0.1)}
+@media(max-width:768px){.home-nav-dock{display:none !important}}
 
 /* ══════════════════════════
    탭 인덱스 화면 (공연/작품 첫 화면)
@@ -302,7 +315,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   .coactor-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
   .poster-wrap{flex-direction:column;gap:1rem}
   .poster-img,.poster-placeholder{width:120px}
-  .home-hero{min-height:calc(100vh - 3rem);gap:1.1rem}
+  .home-hero{min-height:calc(100vh - 3rem);gap:1.1rem;padding-top:9vh}
+  .home-hero-title .logo-mark{width:48px;height:48px}
   .home-hero-title{font-size:3rem}
   .home-hero-tagline{font-size:0.68rem;letter-spacing:0.26em}
   .sec{margin-bottom:1.4rem}
@@ -316,10 +330,19 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 
 <header></header>
 
+<!-- 재사용되는 오리 로고 마크 (심볼로 한 번만 정의) -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="duck-logo" viewBox="0 0 120 100">
+    <ellipse cx="52" cy="68" rx="38" ry="25" fill="var(--accent)"/>
+    <circle cx="78" cy="40" r="20" fill="var(--accent)"/>
+    <path d="M94,34 Q118,28 119,38 Q118,48 94,44 Z" fill="var(--accent)"/>
+    <circle cx="84" cy="34" r="3.2" fill="var(--bg)"/>
+  </symbol>
+</svg>
+
 <div class="page-wrap">
   <nav class="left-nav">
     <nav id="main-nav">
-      <button id="nav-home" class="active" onclick="goHome()">홈</button>
       <button id="nav-shows" onclick="goShows()">공연</button>
       <button id="nav-people" onclick="goPeople()">사람</button>
       <button id="nav-works" onclick="goWorks()">작품</button>
@@ -330,9 +353,22 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
     </nav>
   </nav>
 
+  <!-- 홈 화면 전용: 좌측 세로 가운데에 떠있는 메뉴 컨트롤러 (제목이 곧 홈 버튼이라 '홈' 항목은 없음) -->
+  <div class="home-nav-dock" id="home-nav-dock">
+    <nav id="home-dock-nav">
+      <button id="hdock-shows" onclick="goShows()">공연</button>
+      <button id="hdock-people" onclick="goPeople()">사람</button>
+      <button id="hdock-works" onclick="goWorks()">작품</button>
+      <button id="hdock-roles" onclick="goRoles()">배역</button>
+      <button id="hdock-venues" onclick="goVenues()">극장</button>
+      <button id="hdock-troupes" onclick="goTroupes()">단체</button>
+      <button id="hdock-content" onclick="goContent()">콘텐츠</button>
+    </nav>
+  </div>
+
   <div class="content-area">
     <div class="top-bar" id="top-bar">
-      <div class="top-bar-title" onclick="goHome()">오리</div>
+      <div class="top-bar-title" onclick="goHome()"><svg class="logo-mark"><use href="#duck-logo"></use></svg>오리</div>
       <div class="global-search" id="gs-wrap">
         <span class="gs-icon">🔍</span>
         <input id="gs-input" type="text" placeholder="검색…" autocomplete="off"
@@ -356,7 +392,6 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 <a class="report-fab" href="mailto:gksxowns@gmail.com?subject=%5B%EA%B3%B5%EC%97%B0%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%5D%20%EC%98%A4%EB%A5%98%20%EC%A0%9C%EB%B3%B4&amp;body=%EC%96%B4%EB%96%A4%20%ED%8E%98%EC%9D%B4%EC%A7%80%EC%97%90%EC%84%9C%20%EB%AC%B4%EC%8A%A8%20%EC%A0%95%EB%B3%B4%EA%B0%80%20%EC%9E%98%EB%AA%BB%EB%90%98%EC%97%88%EB%82%98%EC%9A%94%3F%0A%0A(%EA%B3%B5%EC%97%B0%2F%EC%9E%91%ED%92%88%2F%EC%82%AC%EB%9E%8C%20%EC%9D%B4%EB%A6%84%20%EB%93%B1%EC%9D%84%20%EC%A0%81%EC%96%B4%EC%A3%BC%EC%84%B8%EC%9A%94)" title="오류 제보하기">⚠</a>
 
 <nav class="mobile-tab-bar" id="mob-nav">
-  <button class="mob-tab active" id="mobt-home" onclick="goHome()"><span class="mob-icon">🏠</span>홈</button>
   <button class="mob-tab" id="mobt-shows" onclick="goShows()"><span class="mob-icon">🎭</span>공연</button>
   <button class="mob-tab" id="mobt-people" onclick="goPeople()"><span class="mob-icon">👤</span>사람</button>
   <button class="mob-tab" id="mobt-works" onclick="goWorks()"><span class="mob-icon">📖</span>작품</button>
@@ -632,9 +667,10 @@ function injectBackBtn(label,fn){
   m.insertBefore(btn,m.firstChild);
 }
 function setNav(v){
-  ['home','shows','people','works','roles','venues','troupes','content'].forEach(function(n){
+  ['shows','people','works','roles','venues','troupes','content'].forEach(function(n){
     var el=$('nav-'+n);if(el)el.classList.toggle('active',n===v);
     var mel=$('mobt-'+n);if(mel)mel.classList.toggle('active',n===v);
+    var hel=$('hdock-'+n);if(hel)hel.classList.toggle('active',n===v);
   });
   document.body.classList.toggle('is-home', v==='home');
   // 홈이 아닌 화면에서는 검색창이 상단바(top-bar)에 머문다.
@@ -680,7 +716,7 @@ function renderHome(){
   var people=DB.people.filter(function(p){return fld(p,'이름');});
   var histCnt=DB.history.filter(isValidH).length;
   var heroH='<div class="home-hero">'
-    +'<div><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title">오리</div></div>'
+    +'<div><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title"><svg class="logo-mark"><use href="#duck-logo"></use></svg>오리</div></div>'
     +'<div class="home-hero-search" id="home-search-slot"></div>'
     +'<div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div>'
     +'</div>';
