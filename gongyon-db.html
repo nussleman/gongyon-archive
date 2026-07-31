@@ -29,11 +29,11 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 }
 .site-title{
   font-family:'Noto Serif KR',serif;font-weight:300;
-  font-size:1.1rem;letter-spacing:0.06em;cursor:pointer;
+  font-size:1.7rem;letter-spacing:0.02em;cursor:pointer;
   padding:0 1.4rem 1.4rem;border-bottom:1px solid var(--line);
-  margin-bottom:0.6rem;
+  margin-bottom:0.6rem;line-height:1;
 }
-.site-title span{display:block;font-size:0.55em;letter-spacing:0.28em;color:var(--muted);margin-bottom:0.3rem;font-family:'Noto Sans KR',sans-serif}
+.site-title span{display:block;font-size:0.32em;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.4rem;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;line-height:1.3}
 
 /* 좌측 nav 메뉴 아이템 */
 nav{display:flex;flex-direction:column;gap:0;padding:0.6rem 0 0.4rem}
@@ -48,66 +48,18 @@ nav button{
 nav button:hover{color:var(--text);background:rgba(255,255,255,0.03)}
 nav button.active{color:var(--text);border-left-color:var(--accent);background:rgba(200,169,110,0.06)}
 
-/* 검색창을 nav 하단에 */
-.left-nav .global-search{
-  padding:0.7rem 1rem 0.8rem;
-  margin-top:0;
-  display:block;
-  position:relative;
-}
-.left-nav .global-search input{
-  font-size:0.78rem;
-  padding:0.42rem 1.8rem 0.42rem 2rem;
-  width:100%;
-  background:var(--bg3);
-  border:1px solid var(--line);
-  border-radius:6px;
-  color:var(--text);
-  font-family:'Noto Sans KR',sans-serif;
-  outline:none;
-  transition:border-color .2s;
-}
-.left-nav .global-search input:focus{border-color:rgba(200,169,110,0.4);}
-.left-nav .global-search input::placeholder{color:var(--muted)}
-.left-nav .global-search .gs-icon{
-  position:absolute;
-  left:1.55rem;
-  top:50%;
-  transform:translateY(-50%);
-  color:var(--muted);
-  font-size:0.72rem;
-  pointer-events:none;
-  line-height:1;
-}
-.left-nav .global-search .gs-clear{
-  position:absolute;
-  right:1.4rem;
-  top:50%;
-  transform:translateY(-50%);
-}
-.left-nav .gs-dropdown{
-  position:fixed;
-  left:204px;
-  top:4rem;
-  width:300px;
-  background:var(--bg2);
-  border:1px solid var(--line);
-  border-radius:8px;
-  overflow:hidden;
-  z-index:9999;
-  box-shadow:0 8px 32px rgba(0,0,0,0.6);
-  display:none;
-  max-height:480px;
-  overflow-y:auto;
-  pointer-events:auto;
-}
-.left-nav .gs-dropdown.open{display:block}
+/* 검색창은 이제 상단바(비-홈) / 홈 히어로 중 한 곳에 위치한다 (아래 .top-bar, .home-hero 참고) */
 
 /* 우측 콘텐츠 영역 */
 .content-area{margin-left:200px;min-height:100vh;display:block;width:calc(100% - 200px);box-sizing:border-box}
 
 /* 헤더(기존 aside 역할 제거, 상단 바 제거) */
 header{display:none}
+
+/* ── 상단바: 홈이 아닌 화면에서 검색창이 머무는 자리 ── */
+.top-bar{display:flex;justify-content:center;align-items:center;padding:0.85rem 2rem;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:0;z-index:150}
+.top-bar .global-search{max-width:420px}
+body.is-home .top-bar{display:none}
 
 /* ── 전역 검색창 ── */
 .global-search{position:relative;max-width:420px;width:100%;justify-self:center;}
@@ -155,31 +107,14 @@ aside{display:none !important}
 
 main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:block}
 
-/* ── 홈 ── */
-.home-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.7rem;margin-bottom:2.2rem}
-.stat-card{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:1rem 1.1rem;cursor:pointer;transition:background .15s,border-color .15s}
-.stat-card:hover{background:var(--bg3);border-color:rgba(200,169,110,0.3)}
-.stat-num{font-family:'Noto Serif KR',serif;font-size:1.7rem;font-weight:300;color:var(--accent);line-height:1;margin-bottom:0.25rem}
-.stat-label{font-size:0.7rem;color:var(--muted);letter-spacing:0.08em}
-.home-poster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.7rem;margin-bottom:2rem}
-.home-poster-card{border-radius:7px;overflow:hidden;cursor:pointer;background:var(--bg2);border:1px solid var(--line);transition:transform .18s,border-color .18s;position:relative}
-.home-poster-card:hover{transform:translateY(-3px);border-color:rgba(200,169,110,0.35)}
-.home-poster-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
-.home-poster-ph{width:100%;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--muted)}
-.home-poster-info{padding:0.55rem 0.65rem}
-.home-poster-title{font-size:0.78rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.home-poster-sub{font-size:0.65rem;color:var(--muted);margin-top:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.home-list{display:flex;flex-direction:column}
-.home-row{display:flex;align-items:center;gap:0.8rem;padding:0.75rem 0;border-bottom:1px solid var(--line);cursor:pointer}
-.home-row:hover .home-row-title{color:var(--accent)}
-.home-row-num{font-size:0.68rem;color:var(--muted);width:1.6rem;text-align:right;flex-shrink:0;font-feature-settings:"tnum"}
-.home-row-title{font-size:0.9rem;flex:1;transition:color .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.home-row-meta{display:flex;align-items:center;gap:0.5rem;flex-shrink:0}
-.home-row-sub{font-size:0.72rem;color:var(--muted)}
-.home-row-date{font-size:0.68rem;color:var(--muted);opacity:0.7}
-.home-view-toggle{display:flex;gap:0.35rem;margin-bottom:0.8rem;align-items:center}
-.hv-btn{background:none;border:1px solid var(--line);border-radius:4px;padding:0.22rem 0.6rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.7rem;cursor:pointer;transition:all .15s}
-.hv-btn.active{background:var(--bg3);color:var(--accent);border-color:var(--accent)}
+/* ── 홈: 검색창 하나만 있는 랜딩 화면 ── */
+.home-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 4rem);text-align:center;gap:1.5rem}
+.home-hero-tagline{font-size:0.78rem;letter-spacing:0.34em;color:var(--muted);text-transform:uppercase}
+.home-hero-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:5rem;color:var(--text);letter-spacing:0.03em;line-height:1;margin-top:0.5rem}
+.home-hero-search{width:100%;max-width:480px}
+.home-hero-search .global-search{max-width:none}
+.home-hero-stats{font-size:0.76rem;color:var(--muted);letter-spacing:0.03em}
+.home-hero-stats em{color:var(--accent);font-style:normal;font-weight:500}
 
 /* ══════════════════════════
    탭 인덱스 화면 (공연/작품 첫 화면)
@@ -321,6 +256,13 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   .report-fab{bottom:calc(56px + 0.8rem);right:0.9rem;width:40px;height:40px;font-size:1rem}
 }
 
+/* ── 프로필/계정 버튼 (우상단 고정) ── */
+.profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--text);font-family:'Noto Sans KR',sans-serif}
+.profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
+@media(max-width:768px){
+  .profile-fab{top:0.6rem;right:0.7rem;width:34px;height:34px;font-size:0.9rem}
+}
+
 /* ── 이미지 라이트박스 (클릭해서 크게 보기) ── */
 .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:10000;cursor:zoom-out;padding:3rem;box-sizing:border-box}
 .lightbox-overlay.open{display:flex}
@@ -340,8 +282,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   .app{display:block;min-height:100vh}
   .content-area{margin-left:0}
   .left-nav{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:0.8rem 0.8rem 0;border-right:none;border-bottom:1px solid var(--line)}
-  .left-nav .global-search{width:100%;margin-top:0.5rem;padding:0 0 0.8rem}
-  .site-title{border-bottom:none;padding:0 0.8rem 0;margin-bottom:0;font-size:1rem}
+  .site-title{border-bottom:none;padding:0 0.8rem 0;margin-bottom:0;font-size:1.3rem}
+  .top-bar{padding:0.6rem 1rem}
   nav{flex-direction:row;flex-wrap:wrap;padding:0.3rem 0}
   nav button{padding:0.3rem 0.7rem;border-left:none;border-bottom:2px solid transparent;font-size:0.76rem}
   nav button.active{border-left-color:transparent;border-bottom-color:var(--accent);background:none}
@@ -363,8 +305,9 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   .coactor-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
   .poster-wrap{flex-direction:column;gap:1rem}
   .poster-img,.poster-placeholder{width:120px}
-  .home-stats{grid-template-columns:repeat(2,1fr)}
-  .home-poster-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+  .home-hero{min-height:calc(100vh - 3rem);gap:1.1rem}
+  .home-hero-title{font-size:3rem}
+  .home-hero-tagline{font-size:0.68rem;letter-spacing:0.26em}
   .sec{margin-bottom:1.4rem}
   .result-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.55rem}
   .filter-row{flex-direction:column;gap:0.4rem}
@@ -378,14 +321,7 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 
 <div class="page-wrap">
   <nav class="left-nav">
-    <div class="site-title" onclick="goHome()"><span>PERFORMANCE ARCHIVE</span>공연 아카이브</div>
-    <div class="global-search" id="gs-wrap">
-      <span class="gs-icon">🔍</span>
-      <input id="gs-input" type="text" placeholder="검색…" autocomplete="off"
-        oninput="gsInput()" onkeydown="gsKeydown(event)" onfocus="gsOpen()">
-      <button class="gs-clear" id="gs-clear" onclick="gsClear()">✕</button>
-      <div class="gs-dropdown" id="gs-dropdown"></div>
-    </div>
+    <div class="site-title" onclick="goHome()"><span>연극·뮤지컬 아카이브</span>오리</div>
     <nav id="main-nav">
       <button id="nav-home" class="active" onclick="goHome()">홈</button>
       <button id="nav-shows" onclick="goShows()">공연</button>
@@ -399,10 +335,21 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
   </nav>
 
   <div class="content-area">
+    <div class="top-bar" id="top-bar">
+      <div class="global-search" id="gs-wrap">
+        <span class="gs-icon">🔍</span>
+        <input id="gs-input" type="text" placeholder="검색…" autocomplete="off"
+          oninput="gsInput()" onkeydown="gsKeydown(event)" onfocus="gsOpen()">
+        <button class="gs-clear" id="gs-clear" onclick="gsClear()">✕</button>
+        <div class="gs-dropdown" id="gs-dropdown"></div>
+      </div>
+    </div>
     <main id="mn"></main>
   </div>
   <div id="sb" style="display:none"></div>
 </div>
+
+<button class="profile-fab" onclick="showProfileTodo()" title="마이페이지">👤</button>
 
 <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="">
@@ -691,6 +638,16 @@ function setNav(v){
     var el=$('nav-'+n);if(el)el.classList.toggle('active',n===v);
     var mel=$('mobt-'+n);if(mel)mel.classList.toggle('active',n===v);
   });
+  document.body.classList.toggle('is-home', v==='home');
+  // 홈이 아닌 화면에서는 검색창이 상단바(top-bar)에 머문다.
+  // 홈 화면일 때는 renderHome()이 렌더링 직후 홈 히어로 쪽으로 옮긴다.
+  if(v!=='home'){
+    var wrap=$('gs-wrap'),bar=$('top-bar');
+    if(wrap&&bar&&wrap.parentNode!==bar)bar.appendChild(wrap);
+  }
+}
+function showProfileTodo(){
+  alert('마이페이지 기능은 준비 중이에요.\n로그인 도입 이후 내 참여이력·창작이력을 확인할 수 있게 열릴 예정입니다.');
 }
 function actorCard(rec){
   var pid=ids(fld(rec,'참여자'))[0]||'';
@@ -711,8 +668,7 @@ function goContent(push){
     +'</div></div>');
 }
 
-/* ══ 홈 ══ */
-var _homeView='grid';
+/* ══ 홈: 한가운데 검색창만 있는 랜딩 화면 ══ */
 function goHome(push){
   if(push!==false)history.pushState({view:'home'},'','#home');
   setNav('home');sb('');_sbContext='';setIndexMode(false);
@@ -721,32 +677,16 @@ function goHome(push){
 function renderHome(){
   var shows=DB.shows.filter(function(s){return fld(s,'공연명');});
   var people=DB.people.filter(function(p){return fld(p,'이름');});
-  var venues=DB.venues.filter(function(v){return fld(v,'극장명');});
-  var troupes=DB.troupes.filter(function(t){return fld(t,'극단명');});
-  var works=DB.works.filter(function(w){return fld(w,'작품명');});
-  var statsH='<div class="home-stats">'
-    +'<div class="stat-card" onclick="goShows()"><div class="stat-num">'+shows.length+'</div><div class="stat-label">공연</div></div>'
-    +'<div class="stat-card" onclick="goPeople()"><div class="stat-num">'+people.length+'</div><div class="stat-label">사람</div></div>'
-    +'<div class="stat-card" onclick="goWorks()"><div class="stat-num">'+works.length+'</div><div class="stat-label">작품</div></div>'
-    +'<div class="stat-card" onclick="goVenues()"><div class="stat-num">'+venues.length+'</div><div class="stat-label">극장</div></div>'
-    +'<div class="stat-card" onclick="goTroupes()"><div class="stat-num">'+troupes.length+'</div><div class="stat-label">단체</div></div>'
+  var histCnt=DB.history.filter(isValidH).length;
+  var heroH='<div class="home-hero">'
+    +'<div><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title">오리</div></div>'
+    +'<div class="home-hero-search" id="home-search-slot"></div>'
+    +'<div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div>'
     +'</div>';
-  var sorted=sortShows(shows);var recent=sorted.slice(0,12);
-  var toggleH='<div class="home-view-toggle"><span style="font-size:0.65rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-right:0.3rem">최근 공연</span>'
-    +'<button id="hv-grid" class="hv-btn'+(_homeView==='grid'?' active':'')+'" onclick="_homeView=&apos;grid&apos;;renderHome()">▦ 그리드</button>'
-    +'<button id="hv-list" class="hv-btn'+(_homeView==='list'?' active':'')+'" onclick="_homeView=&apos;list&apos;;renderHome()">≡ 목록</button></div>';
-  var contentH='';
-  if(_homeView==='grid'){
-    contentH='<div class="home-poster-grid">';
-    recent.forEach(function(s){var wid=ids(fld(s,'작품'))[0]||'';var p=POSTER[s.id]||'';contentH+='<div class="home-poster-card" data-action="show" data-id="'+s.id+'">'+( p?'<img src="'+p+'" alt="'+fld(s,'공연명')+'">':'<div class="home-poster-ph">🎭</div>')+'<div class="home-poster-info"><div class="home-poster-title">'+fld(s,'공연명')+'</div>'+(nm(wid)?'<div class="home-poster-sub">'+nm(wid)+'</div>':'')+'</div></div>';});
-    contentH+='</div>';
-    if(sorted.length>12)contentH+='<div style="text-align:center;padding:0.5rem 0 1rem"><span class="link" onclick="goShows()" style="font-size:0.8rem">전체 공연 보기 ('+sorted.length+'개) →</span></div>';
-  } else {
-    contentH='<div class="home-list">';
-    sorted.forEach(function(s,i){var wid=ids(fld(s,'작품'))[0]||'';var date=fld(s,'공연 날짜')||'';contentH+='<div class="home-row" data-action="show" data-id="'+s.id+'">'+'<span class="home-row-num">'+String(i+1).padStart(2,'0')+'</span>'+'<span class="home-row-title">'+fld(s,'공연명')+'</span>'+'<span class="home-row-meta">'+(nm(wid)?'<span class="home-row-sub">'+nm(wid)+'</span>':'')+(date?'<span class="home-row-date">'+ym(date)+'</span>':'')+'</span></div>';});
-    contentH+='</div>';
-  }
-  mn(statsH+toggleH+contentH);
+  mn(heroH);
+  // 검색창을 사이드바/상단바가 아닌 홈 히어로 한가운데로 옮긴다
+  var wrap=$('gs-wrap'),slot=$('home-search-slot');
+  if(wrap&&slot&&wrap.parentNode!==slot)slot.appendChild(wrap);
 }
 
 /* ══════════════════════════════════════
