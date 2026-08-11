@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>공연 아카이브</title>
+<title>연극·뮤지컬 아카이브 '오리'</title>
+<meta property="og:title" content="연극·뮤지컬 아카이브 '오리'">
+<meta property="og:description" content="비슷한 조건에서 공연을 성사시킨 사례를 보여주는, 아마추어·세미프로 연극/뮤지컬 커뮤니티를 위한 공연 아카이브">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nussleman.github.io/gongyon-archive/gongyon-db.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="연극·뮤지컬 아카이브 '오리'">
+<meta name="twitter:description" content="비슷한 조건에서 공연을 성사시킨 사례를 보여주는, 아마추어·세미프로 연극/뮤지컬 커뮤니티를 위한 공연 아카이브">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -301,6 +308,11 @@ body.is-home .home-nav-dock{display:block}
 .person-sticky-text{min-width:0}
 .person-sticky-name{font-family:'Noto Serif KR',serif;font-size:1.05rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .person-sticky-blurb{font-size:0.76rem;color:var(--muted);margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.claim-btn{background:none;border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:0.76rem;padding:0.4rem 1rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.claim-btn:hover{background:var(--accent);color:var(--bg)}
+.claim-badge{font-size:0.72rem;padding:0.35rem 0.8rem;border-radius:20px;white-space:nowrap}
+.claim-badge-linked{background:rgba(200,169,110,0.15);color:var(--accent)}
+.claim-badge-pending{background:var(--bg3);color:var(--muted)}
 .person-sticky-spacer{height:92px}
 .person-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-bottom:2rem}
 .person-side-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
@@ -557,8 +569,8 @@ function renderProfileFab(){
 }
 async function loadUserProfile(){
   try{
-    var r=await sbClient.from('user_profiles').select('nickname').eq('id',CURRENT_USER.id).maybeSingle();
-    if(r.data)CURRENT_USER.nickname=r.data.nickname;
+    var r=await sbClient.from('user_profiles').select('nickname,person_id').eq('id',CURRENT_USER.id).maybeSingle();
+    if(r.data){CURRENT_USER.nickname=r.data.nickname;CURRENT_USER.personId=r.data.person_id;}
   }catch(e){}
 }
 async function loadFavorites(){
@@ -688,6 +700,38 @@ function refreshFavoriteButtons(){
     b.classList.toggle('on',on);
     b.textContent=on?'★':'☆';
   });
+}
+
+/* ── 사람 레코드 클레임 ("이거 나예요") — 자동승인 없이 전부 관리자 승인을 거침 ── */
+async function renderClaimWidget(pid){
+  var el=$('claim-widget');if(!el)return;
+  if(!CURRENT_USER){el.innerHTML='';return;}
+  if(CURRENT_USER.personId===pid){
+    el.innerHTML='<span class="claim-badge claim-badge-linked">✓ 내 프로필</span>';
+    return;
+  }
+  if(CURRENT_USER.personId){el.innerHTML='';return;} // 이미 다른 사람과 연결됨 - 클레임 불가
+  try{
+    var r=await sbClient.rpc('person_claim_status',{p_person_id:pid});
+    var status=r.data||{};
+    if(status.my_pending){
+      el.innerHTML='<span class="claim-badge claim-badge-pending">승인 대기 중</span>';
+    }else if(status.claimed){
+      el.innerHTML='';
+    }else{
+      el.innerHTML='<button class="claim-btn" onclick="submitClaim(\''+pid+'\')">이거 나예요</button>';
+    }
+  }catch(e){el.innerHTML='';}
+}
+async function submitClaim(pid){
+  if(!CURRENT_USER)return;
+  var el=$('claim-widget');
+  try{
+    await sbClient.from('person_claims').insert({user_id:CURRENT_USER.id,person_id:pid});
+    if(el)el.innerHTML='<span class="claim-badge claim-badge-pending">승인 대기 중</span>';
+  }catch(e){
+    alert('요청 중 문제가 생겼어요. 이미 요청했을 수도 있어요.');
+  }
 }
 
 function $(i){return document.getElementById(i);}
@@ -976,11 +1020,24 @@ function myCardHtml(type,id){
 }
 async function renderMyPage(){
   await loadFavorites();
+  await loadUserProfile(); // person 연결 상태를 최신으로 갱신
   var byType={};
   FAVORITES_LIST.forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
   var order=['show','work','troupe','venue','person'];
   var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'내 즐겨찾기')+'</div>'
     +'<div class="detail-meta"><span>즐겨찾기 '+FAVORITES_LIST.length+'건</span></div></div>';
+
+  // 연결된 프로필(people 레코드) 상태
+  h+='<div class="sec"><div class="sec-label">내 프로필 연결</div>';
+  if(CURRENT_USER.personId){
+    var pname=nm(CURRENT_USER.personId)||'(이름없음)';
+    h+='<div class="cast-grid">'+myCardHtml('person',CURRENT_USER.personId)+'</div>'
+      +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">'+pname+'님으로 연결되어 있어요. 클릭하면 내 참여이력을 볼 수 있어요.</div>';
+  }else{
+    h+='<div style="font-size:0.82rem;color:var(--muted);line-height:1.6">아직 연결된 프로필이 없어요. 참여했던 공연에서 본인 이름을 찾아 그 사람 페이지에서 "이거 나예요"를 눌러보세요. 관리자 승인 후 연결돼요.</div>';
+  }
+  h+='</div>';
+
   var any=false;
   order.forEach(function(type){
     var ids2=byType[type];if(!ids2||!ids2.length)return;
@@ -2027,7 +2084,8 @@ function showPerson(pid,push){
   var primaryPhotoUrl=personPhotos.length?personPhotos[0].url:'';
   var stickyPhotoH=primaryPhotoUrl?'<img class="person-sticky-photo" src="'+primaryPhotoUrl+'" alt="'+fld(person,'이름')+'">':'<div class="person-sticky-photo-ph">🎭</div>';
   var stickyH='<div class="person-sticky-header">'+stickyPhotoH
-    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div></div>';
+    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div>'
+    +'<span id="claim-widget" style="margin-left:auto"></span></div>';
 
   var galleryH='';
   if(personPhotos.length>1){
@@ -2177,6 +2235,7 @@ function showPerson(pid,push){
   if(!hist.length)h+='<div class="empty">참여 이력이 없습니다.</div>';
   mn(h);
   if(window._renderPersonGrid)_renderPersonGrid('all');
+  renderClaimWidget(pid);
   injectBackBtn('← 사람',function(){goPeople();});
 }
 function togglePersonGallery(btn){

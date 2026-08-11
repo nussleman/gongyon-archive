@@ -251,6 +251,8 @@
     <button data-tab="staffrole">스텝역할</button>
     <button data-tab="person">사람</button>
     <button data-tab="creation">창작이력</button>
+    <button data-tab="claims">클레임 승인</button>
+    <button data-tab="admins">관리자 목록</button>
     <button data-tab="settings">설정</button>
   </nav>
 
@@ -750,6 +752,25 @@
     </section>
 
     <!-- ================= 설정 ================= -->
+    <section class="tab-panel" id="tab-claims">
+      <h2>클레임 승인</h2>
+      <p class="sub">유저가 "이거 나예요"로 요청한 사람(people) 레코드 연결이에요. 자동승인은 없고, 여기서 직접 승인/거절해야 반영돼요.</p>
+      <div id="claims-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-admins">
+      <h2>관리자 목록</h2>
+      <p class="sub">여기 등록된 이메일로 구글 로그인하면 관리자 권한을 가져요. 이미 가입된 계정이면 바로 반영되고, 아직 가입 전이면 나중에 그 이메일로 처음 로그인하는 순간 자동으로 관리자가 돼요.</p>
+      <div class="card">
+        <div style="display:flex; gap:8px;">
+          <input type="email" id="new-admin-email" placeholder="이메일 주소" style="flex:1;">
+          <button type="button" class="btn" onclick="addAdminEmail()">추가</button>
+        </div>
+        <div class="msg" id="msg-admins"></div>
+      </div>
+      <div id="admins-list">불러오는 중...</div>
+    </section>
+
     <section class="tab-panel" id="tab-settings">
       <h2>설정</h2>
       <p class="sub">사이트 전체에 적용되는 설정이에요.</p>
@@ -2476,12 +2497,76 @@ document.getElementById('setting-show-unlicensed').addEventListener('change', as
   showMsg('msg-settings', !error, error ? '저장 실패: ' + error.message : '저장됐어요.');
 });
 
+// ---------- 클레임 승인 ----------
+async function loadClaims() {
+  const el = document.getElementById('claims-list');
+  const { data, error } = await supabase.rpc('list_pending_claims');
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
+  el.innerHTML = data.map(c => `
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <b>${c.person_name}</b> 님으로 연결 요청
+        <div class="sub">요청자: ${c.requester_email} · ${new Date(c.created_at).toLocaleString('ko-KR')}</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button type="button" class="btn" onclick="approveClaim('${c.claim_id}')">승인</button>
+        <button type="button" class="btn secondary" onclick="rejectClaim('${c.claim_id}')">거절</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function approveClaim(claimId) {
+  const { error } = await supabase.rpc('approve_person_claim', { claim_id: claimId });
+  if (error) { alert('승인 실패: ' + error.message); return; }
+  loadClaims();
+}
+async function rejectClaim(claimId) {
+  const { error } = await supabase.rpc('reject_person_claim', { claim_id: claimId });
+  if (error) { alert('거절 실패: ' + error.message); return; }
+  loadClaims();
+}
+window.approveClaim = approveClaim;
+window.rejectClaim = rejectClaim;
+
+// ---------- 관리자 목록 ----------
+async function loadAdmins() {
+  const el = document.getElementById('admins-list');
+  const { data, error } = await supabase.from('admin_emails').select('email').order('email');
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">등록된 관리자가 없어요.</p>'; return; }
+  el.innerHTML = data.map(a => `
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between;">
+      <span>${a.email}</span>
+      <button type="button" class="btn secondary" onclick="removeAdminEmail('${a.email}')">제거</button>
+    </div>
+  `).join('');
+}
+async function addAdminEmail() {
+  const input = document.getElementById('new-admin-email');
+  const email = input.value.trim();
+  if (!email) return;
+  const { error } = await supabase.rpc('grant_admin', { target_email: email });
+  showMsg('msg-admins', !error, error ? '추가 실패: ' + error.message : '추가됐어요.');
+  if (!error) { input.value = ''; loadAdmins(); }
+}
+async function removeAdminEmail(email) {
+  if (!confirm(email + ' 을(를) 관리자에서 제거할까요?')) return;
+  const { error } = await supabase.rpc('revoke_admin', { target_email: email });
+  if (error) { alert('제거 실패: ' + error.message); return; }
+  loadAdmins();
+}
+window.addAdminEmail = addAdminEmail;
+window.removeAdminEmail = removeAdminEmail;
+
 (async () => {
   await ensureAuth();
   await loadOptionListRows();
   await loadOptionLists();
   await reloadAll();
   await loadSettings();
+  await loadClaims();
+  await loadAdmins();
   renderOptionManager();
 })();
 </script>
