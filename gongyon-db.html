@@ -341,19 +341,31 @@ body.is-home .home-nav-dock{display:block}
 .cast-card-tag-staff{background:var(--staff-bg);color:var(--staff)}
 
 /* ── 오류 제보 버튼 (우하단 고정) ── */
-.report-fab{position:fixed;right:1.2rem;bottom:1.2rem;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:500;transition:transform .15s,background .15s}
+.report-fab{position:fixed;right:1.2rem;bottom:1.2rem;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:500;transition:transform .15s,background .15s;cursor:pointer;color:var(--text);font-family:inherit}
 .report-fab:hover{background:var(--bg3);transform:scale(1.06)}
 @media(max-width:768px){
   .report-fab{bottom:calc(56px + 0.8rem);right:0.9rem;width:40px;height:40px;font-size:1rem}
 }
 
+/* ── 수정요청 모달 ── */
+.edit-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:4000;padding:1.5rem}
+.edit-modal-overlay.open{display:flex}
+.edit-modal{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:1.6rem;width:100%;max-width:420px;max-height:88vh;overflow-y:auto}
+.edit-modal-title{font-family:'Noto Serif KR',serif;font-size:1.15rem;color:var(--text);margin-bottom:0.4rem}
+.edit-modal-sub{font-size:0.78rem;color:var(--muted);margin-bottom:1.3rem;line-height:1.5}
+.edit-modal-field{margin-bottom:1rem}
+.edit-modal-field label{display:block;font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem;letter-spacing:0.03em}
+.edit-modal-field select,.edit-modal-field input,.edit-modal-field textarea{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;padding:0.55rem 0.7rem;box-sizing:border-box;outline:none;resize:vertical}
+.edit-modal-field select:focus,.edit-modal-field input:focus,.edit-modal-field textarea:focus{border-color:var(--accent)}
+.edit-modal-actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.2rem}
+
 /* ── 프로필/계정 버튼 (우상단 고정) ── */
 .profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--text);font-family:'Noto Sans KR',sans-serif}
 .profile-fab.logged-in{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.25),0 0 0 2px rgba(200,169,110,0.25)}
-.fav-btn{background:none;border:none;cursor:pointer;padding:0.15rem;line-height:1;transition:transform .1s;display:inline-flex;align-items:center}
-.fav-btn:hover{transform:scale(1.15)}
-.fav-btn svg{width:14px;height:14px;fill:var(--muted)}
-.fav-btn.on svg{fill:var(--accent)}
+.fav-btn{background:none;border:none;cursor:pointer;padding:0.15rem;line-height:1;transition:transform .1s,color .15s,opacity .15s;display:inline-flex;align-items:center;color:var(--muted);opacity:0.55}
+.fav-btn:hover{transform:scale(1.15);opacity:0.85}
+.fav-btn svg{width:14px;height:14px}
+.fav-btn.on{color:var(--accent);opacity:1}
 .fav-btn-inline{vertical-align:middle;margin-left:0.4rem}
 .cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
@@ -482,6 +494,7 @@ body.is-home .home-nav-dock{display:block}
       <button id="nav-troupes" onclick="goTroupes()">단체</button>
       <button id="nav-content" onclick="goContent()">콘텐츠</button>
       <div class="nav-divider"></div>
+      <button id="nav-projects" onclick="goProjectBrowse()">프로젝트</button>
       <button id="nav-dashboard" onclick="goDashboard()">대시보드</button>
     </nav>
     <div class="sidebar-credit">오리는 태준이 혼자 만들고 있어요</div>
@@ -498,6 +511,7 @@ body.is-home .home-nav-dock{display:block}
       <button id="hdock-troupes" onclick="goTroupes()">단체</button>
       <button id="hdock-content" onclick="goContent()">콘텐츠</button>
       <div class="nav-divider"></div>
+      <button id="hdock-projects" onclick="goProjectBrowse()">프로젝트</button>
       <button id="hdock-dashboard" onclick="goDashboard()">대시보드</button>
     </nav>
   </div>
@@ -525,7 +539,48 @@ body.is-home .home-nav-dock{display:block}
   <img id="lightbox-img" src="" alt="">
 </div>
 
-<a class="report-fab" href="mailto:gksxowns@gmail.com?subject=%5B%EA%B3%B5%EC%97%B0%EC%95%84%EC%B9%B4%EC%9D%B4%EB%B8%8C%5D%20%EC%98%A4%EB%A5%98%20%EC%A0%9C%EB%B3%B4&amp;body=%EC%96%B4%EB%96%A4%20%ED%8E%98%EC%9D%B4%EC%A7%80%EC%97%90%EC%84%9C%20%EB%AC%B4%EC%8A%A8%20%EC%A0%95%EB%B3%B4%EA%B0%80%20%EC%9E%98%EB%AA%BB%EB%90%98%EC%97%88%EB%82%98%EC%9A%94%3F%0A%0A(%EA%B3%B5%EC%97%B0%2F%EC%9E%91%ED%92%88%2F%EC%82%AC%EB%9E%8C%20%EC%9D%B4%EB%A6%84%20%EB%93%B1%EC%9D%84%20%EC%A0%81%EC%96%B4%EC%A3%BC%EC%84%B8%EC%9A%94)" title="오류 제보하기">⚠</a>
+<button class="report-fab" onclick="openEditModal()" title="정보 제보 / 수정 요청">⚠</button>
+
+<div class="edit-modal-overlay" id="edit-modal-overlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal">
+    <div class="edit-modal-title">정보 제보 · 수정 요청</div>
+    <div class="edit-modal-sub">잘못된 정보를 봤거나, 새로 추가하고 싶은 게 있으면 알려주세요. 관리자가 확인 후 반영해요.</div>
+    <div class="edit-modal-field">
+      <label>무엇에 대한 건가요?</label>
+      <select id="edit-target-type">
+        <option value="show">공연</option>
+        <option value="work">작품</option>
+        <option value="troupe">단체</option>
+        <option value="venue">극장</option>
+        <option value="person">사람</option>
+        <option value="role">배역</option>
+        <option value="other">기타 / 새로운 항목 추가</option>
+      </select>
+    </div>
+    <div class="edit-modal-field">
+      <label>어떤 요청인가요?</label>
+      <select id="edit-request-type">
+        <option value="edit">기존 정보 수정</option>
+        <option value="create">새로 추가</option>
+        <option value="delete">삭제 요청</option>
+      </select>
+    </div>
+    <div class="edit-modal-field">
+      <label>한 줄 요약</label>
+      <input type="text" id="edit-summary" placeholder="예: '이슬 이야기' 공연 날짜가 잘못됐어요">
+    </div>
+    <div class="edit-modal-field">
+      <label>자세한 내용 (선택)</label>
+      <textarea id="edit-details" rows="3" placeholder="구체적으로 어떻게 바뀌어야 하는지 알려주세요"></textarea>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="pf-btn" onclick="closeEditModal()">취소</button>
+      <button class="pf-btn pf-active" onclick="submitEditRequest()">보내기</button>
+    </div>
+    <div id="edit-modal-msg" style="font-size:0.76rem;color:var(--muted);margin-top:0.6rem"></div>
+  </div>
+</div>
+
 
 <nav class="mobile-tab-bar" id="mob-nav">
   <button class="mob-tab" id="mobt-shows" onclick="goShows()"><span class="mob-icon">🎭</span>공연</button>
@@ -535,6 +590,7 @@ body.is-home .home-nav-dock{display:block}
   <button class="mob-tab" id="mobt-venues" onclick="goVenues()"><span class="mob-icon">📍</span>극장</button>
   <button class="mob-tab" id="mobt-troupes" onclick="goTroupes()"><span class="mob-icon">🏢</span>단체</button>
   <button class="mob-tab" id="mobt-content" onclick="goContent()"><span class="mob-icon">📰</span>콘텐츠</button>
+  <button class="mob-tab" id="mobt-projects" onclick="goProjectBrowse()"><span class="mob-icon">🎪</span>프로젝트</button>
   <button class="mob-tab" id="mobt-dashboard" onclick="goDashboard()"><span class="mob-icon">📊</span>대시보드</button>
 </nav>
 
@@ -673,7 +729,7 @@ async function initAuth(){
   sbClient.auth.onAuthStateChange(function(event,session){handleAuthSession(session);});
 }
 
-var FAV_ICON_SVG='<svg viewBox="0 0 120 100"><use href="#duck-logo"></use></svg>';
+var FAV_ICON_SVG='<svg viewBox="0 0 120 100" fill="currentColor"><ellipse cx="52" cy="68" rx="38" ry="25"/><circle cx="78" cy="40" r="20"/><path d="M94,34 Q118,28 119,38 Q118,48 94,44 Z"/></svg>';
 function favBtnHtml(type,id){
   var key=type+':'+id;var on=FAVORITES_SET.has(key);
   return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+FAV_ICON_SVG+'</button>';
@@ -735,6 +791,37 @@ async function submitClaim(pid){
     if(el)el.innerHTML='<span class="claim-badge claim-badge-pending">승인 대기 중</span>';
   }catch(e){
     alert('요청 중 문제가 생겼어요. 이미 요청했을 수도 있어요.');
+  }
+}
+
+/* ── 수정요청 모달 ── */
+var _editModalTarget=null; // {type,id} 프리셋 (상세페이지에서 열었을 때)
+function openEditModal(targetType,targetId){
+  if(!CURRENT_USER){loginWithGoogle();return;}
+  _editModalTarget=targetId?{type:targetType,id:targetId}:null;
+  $('edit-summary').value='';$('edit-details').value='';$('edit-modal-msg').textContent='';
+  if(targetType)$('edit-target-type').value=targetType;
+  $('edit-request-type').value=targetId?'edit':'create';
+  $('edit-modal-overlay').classList.add('open');
+}
+function closeEditModal(){$('edit-modal-overlay').classList.remove('open');}
+async function submitEditRequest(){
+  var summary=$('edit-summary').value.trim();
+  if(!summary){$('edit-modal-msg').textContent='한 줄 요약은 꼭 적어주세요.';return;}
+  var row={
+    user_id:CURRENT_USER.id,
+    request_type:$('edit-request-type').value,
+    target_type:$('edit-target-type').value,
+    target_id:_editModalTarget?_editModalTarget.id:null,
+    summary:summary,
+    details:$('edit-details').value.trim()||null
+  };
+  try{
+    await sbClient.from('edit_requests').insert(row);
+    $('edit-modal-msg').textContent='보냈어요! 확인 후 반영할게요.';
+    setTimeout(closeEditModal,1200);
+  }catch(e){
+    $('edit-modal-msg').textContent='전송 중 문제가 생겼어요: '+e.message;
   }
 }
 
@@ -1001,7 +1088,7 @@ function injectBackBtn(label,fn){
   m.insertBefore(btn,m.firstChild);
 }
 function setNav(v){
-  ['shows','people','works','roles','venues','troupes','content','dashboard'].forEach(function(n){
+  ['shows','people','works','roles','venues','troupes','content','dashboard','projects'].forEach(function(n){
     var el=$('nav-'+n);if(el)el.classList.toggle('active',n===v);
     var mel=$('mobt-'+n);if(mel)mel.classList.toggle('active',n===v);
     var hel=$('hdock-'+n);if(hel)hel.classList.toggle('active',n===v);
@@ -1028,32 +1115,30 @@ async function renderMyPage(){
   var byType={};
   FAVORITES_LIST.forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
   var order=['show','work','troupe','venue','person'];
-  var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'내 즐겨찾기')+'</div>'
+  var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'마이페이지')+'</div>'
     +'<div class="detail-meta"><span>즐겨찾기 '+FAVORITES_LIST.length+'건</span></div></div>';
 
-  // 연결된 프로필(people 레코드) 상태
-  h+='<div class="sec"><div class="sec-label">내 프로필 연결</div>';
+  // 상단 오버뷰 카드 2개: 프로필 연결 + 공연 프로젝트 (같은 톤의 카드로 나란히)
+  h+='<div class="person-overview-grid" style="margin-bottom:2rem">';
+  h+='<div class="person-side-card"><div class="person-side-title">내 프로필 연결</div>';
   if(CURRENT_USER.personId){
     var pname=nm(CURRENT_USER.personId)||'(이름없음)';
-    h+='<div class="cast-grid">'+myCardHtml('person',CURRENT_USER.personId)+'</div>'
-      +'<div style="font-size:0.78rem;color:var(--muted);margin-top:0.6rem">'+pname+'님으로 연결되어 있어요. 클릭하면 내 참여이력을 볼 수 있어요.</div>';
+    h+='<div class="cast-grid" style="margin-bottom:0.6rem">'+myCardHtml('person',CURRENT_USER.personId)+'</div>'
+      +'<div style="font-size:0.76rem;color:var(--muted)">'+pname+'님으로 연결됨</div>';
   }else{
-    h+='<div style="font-size:0.82rem;color:var(--muted);line-height:1.6">아직 연결된 프로필이 없어요. 참여했던 공연에서 본인 이름을 찾아 그 사람 페이지에서 "이거 나예요"를 눌러보세요. 관리자 승인 후 연결돼요.</div>';
+    h+='<div style="font-size:0.8rem;color:var(--muted);line-height:1.6">아직 연결 안 됨. 사람 페이지에서 "이거 나예요"를 눌러보세요.</div>';
   }
   h+='</div>';
-
-  // 내 프로젝트
-  h+='<div class="sec"><div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:wrap">'
-    +'<span class="sec-label" style="margin-bottom:0">공연 프로젝트</span>'
-    +'<div style="flex:1;height:1px;background:var(--line);min-width:1rem"></div>'
-    +'<button class="pf-btn" onclick="startNewProject()">+ 공연 프로젝트 시작하기</button>'
-    +'</div><div id="my-projects-list">불러오는 중…</div></div>';
+  h+='<div class="person-side-card"><div class="person-side-title">공연 프로젝트</div>'
+    +'<button class="pf-btn" style="margin-bottom:0.8rem" onclick="startNewProject()">+ 새 프로젝트 시작하기</button>'
+    +'<div id="my-projects-list">불러오는 중…</div></div>';
+  h+='</div>';
 
   var any=false;
   order.forEach(function(type){
     var ids2=byType[type];if(!ids2||!ids2.length)return;
     any=true;
-    h+='<div class="sec"><div class="sec-label">'+FAV_TYPE_LABEL[type]+'</div><div class="cast-grid">';
+    h+='<div class="person-side-card" style="margin-bottom:1.3rem"><div class="person-side-title">'+FAV_TYPE_LABEL[type]+'</div><div class="cast-grid" style="margin-bottom:0">';
     ids2.forEach(function(id){h+=myCardHtml(type,id);});
     h+='</div></div>';
   });
@@ -1126,15 +1211,117 @@ async function goProject(pid,push){
         +'</div><div id="staff-role-picker" style="margin-top:0.8rem"></div></div>';
     }else{
       var roleLabel=myPosition.position_label||(myPosition.position_type==='actor'?'배우':'참여자');
-      h+='<div class="sec"><div class="sec-label">내 역할</div><div style="font-size:0.9rem">'+roleLabel+'</div></div>'
-        +'<div class="sec"><div class="sec-label">다음 단계</div><div style="font-size:0.82rem;color:var(--muted)">극장·단체·작품·날짜를 정하는 다음 질문들은 곧 이어질 예정이에요. 지금은 여기까지예요.</div></div>';
+      h+='<div class="sec"><div class="sec-label">내 역할</div><div style="font-size:0.9rem">'+roleLabel+'</div></div>';
+
+      h+='<div class="sec"><div class="sec-label">참여 현황</div>';
+      if(positions.length){
+        h+='<div style="display:flex;flex-direction:column;gap:0.4rem">'+positions.map(function(p){
+          var member=members.find(function(m){return m.id===p.assigned_member_id;});
+          var who=member?(member.user_id===CURRENT_USER.id?'나':'참여자'):'';
+          return '<div style="display:flex;justify-content:space-between;font-size:0.82rem;padding:0.5rem 0.7rem;background:var(--bg2);border:1px solid var(--line);border-radius:6px">'
+            +'<span>'+(p.position_label||p.position_type)+'</span>'
+            +'<span style="color:var(--muted)">'+(p.status==='filled'?who:'빈 자리')+'</span></div>';
+        }).join('')+'</div>';
+      }
+      h+='<div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap">'
+        +'<button class="pf-btn" onclick="showAddPositionForm(\''+pid+'\')">+ 빈 자리 추가</button>'
+        +'</div><div id="add-position-form" style="margin-top:0.6rem"></div></div>';
+
+      h+='<div class="sec"><div class="sec-label">모집 공개</div>'
+        +'<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.82rem">'
+        +'<input type="checkbox" id="recruiting-toggle" '+(pr.data.is_recruiting?'checked':'')+' onchange="toggleRecruiting(\''+pid+'\',this.checked)">'
+        +'켜두면 빈 자리가 "프로젝트" 메뉴에 공개돼서 다른 사람이 신청할 수 있어요</label></div>';
+
+      h+='<div class="sec"><div class="sec-label">참여 요청</div><div id="join-requests-list">불러오는 중…</div></div>';
+
+      h+='<div class="sec"><div class="sec-label">다음 단계</div><div style="font-size:0.82rem;color:var(--muted)">극장·단체·작품·날짜를 정하는 질문들은 곧 이어질 예정이에요.</div></div>';
     }
     mn(h);
     injectBackBtn('← 마이페이지',function(){goMyPage();});
+    if(myPosition)loadJoinRequests(pid);
   }catch(e){
     mn('<div class="tab-index"><div class="result-empty">프로젝트를 불러올 수 없어요. 접근 권한이 없거나 삭제되었을 수 있어요.</div></div>');
   }
 }
+function showAddPositionForm(pid){
+  var el=$('add-position-form');if(!el)return;
+  var options=DB.staffRoles.filter(function(s){return fld(s,'Name');});
+  el.innerHTML='<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">'
+    +'<select id="add-pos-type" class="pf-btn" style="padding:0.35rem 0.6rem" onchange="document.getElementById(\'add-pos-staffwrap\').style.display=this.value===\'staff\'?\'inline\':\'none\'">'
+    +'<option value="actor">배우 자리</option><option value="staff">스태프 자리</option><option value="other">기타</option></select>'
+    +'<span id="add-pos-staffwrap" style="display:none"><select id="add-pos-staffrole" class="pf-btn" style="padding:0.35rem 0.6rem">'
+    +options.map(function(s){return '<option value="'+s.id+'">'+fld(s,'Name')+'</option>';}).join('')+'</select></span>'
+    +'<input type="text" id="add-pos-label" class="pf-btn" style="padding:0.35rem 0.6rem" placeholder="자리 이름 (예: 조연출)">'
+    +'<button class="pf-btn pf-active" onclick="submitAddPosition(\''+pid+'\')">추가</button></div>';
+}
+async function submitAddPosition(pid){
+  var type=$('add-pos-type').value;
+  var label=$('add-pos-label').value.trim();
+  var row={project_id:pid,position_type:type,status:'open',position_label:label||null};
+  if(type==='staff'){
+    var srid=$('add-pos-staffrole').value;
+    row.staff_role_id=srid;
+    if(!label)row.position_label=nm(srid);
+  }
+  if(!row.position_label)row.position_label=type==='actor'?'배우':'스태프';
+  try{
+    await sbClient.from('project_positions').insert(row);
+    goProject(pid);
+  }catch(e){alert('추가 중 문제가 생겼어요: '+e.message);}
+}
+async function toggleRecruiting(pid,on){
+  try{await sbClient.from('projects').update({is_recruiting:on}).eq('id',pid);}
+  catch(e){alert('변경 중 문제가 생겼어요: '+e.message);}
+}
+async function loadJoinRequests(pid){
+  var el=$('join-requests-list');if(!el)return;
+  try{
+    var r=await sbClient.rpc('list_project_join_requests',{p_project_id:pid});
+    var rows=r.data||[];
+    if(!rows.length){el.innerHTML='<div style="font-size:0.8rem;color:var(--muted)">대기 중인 요청이 없어요.</div>';return;}
+    el.innerHTML=rows.map(function(req){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;background:var(--bg2);border:1px solid var(--line);border-radius:6px;margin-bottom:0.4rem;flex-wrap:wrap">'
+        +'<div><div style="font-size:0.82rem">'+(req.position_label||'자리 미지정')+' · '+req.requester_email+'</div>'+(req.message?'<div style="font-size:0.74rem;color:var(--muted);margin-top:0.2rem">'+req.message+'</div>':'')+'</div>'
+        +'<div style="display:flex;gap:0.4rem;flex-shrink:0"><button class="pf-btn" onclick="approveJoinReq(\''+req.request_id+'\',\''+pid+'\')">승인</button><button class="pf-btn" onclick="rejectJoinReq(\''+req.request_id+'\',\''+pid+'\')">거절</button></div></div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div style="font-size:0.8rem;color:var(--muted)">불러오기 실패</div>';}
+}
+async function approveJoinReq(reqId,pid){
+  try{await sbClient.rpc('approve_join_request',{request_id:reqId});goProject(pid);}
+  catch(e){alert('승인 실패: '+e.message);}
+}
+async function rejectJoinReq(reqId,pid){
+  try{await sbClient.rpc('reject_join_request',{request_id:reqId});loadJoinRequests(pid);}
+  catch(e){alert('거절 실패: '+e.message);}
+}
+
+/* ── 프로젝트 둘러보기 (모집중인 빈 자리) ── */
+async function goProjectBrowse(push){
+  if(push!==false)history.pushState({view:'projects'},'','#projects');
+  setNav('projects');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  if(!CURRENT_USER){mn('<div class="tab-index"><div class="result-empty">로그인이 필요해요</div></div>');return;}
+  mn('<div class="tab-index"><div class="detail-header"><div class="eyebrow">둘러보기</div><div class="detail-title">모집 중인 자리</div></div><div id="browse-positions-list">불러오는 중…</div></div>');
+  try{
+    var r=await sbClient.rpc('browse_recruiting_positions');
+    var rows=r.data||[];
+    var el=$('browse-positions-list');
+    if(!rows.length){el.innerHTML='<div class="result-empty">지금은 모집 중인 자리가 없어요.</div>';return;}
+    el.innerHTML='<div class="item-grid">'+rows.map(function(p){
+      return '<div class="item-card"><div class="item-card-title">'+(p.position_label||p.position_type)+'</div>'
+        +'<div style="font-size:0.78rem;color:var(--muted);margin:0.3rem 0 0.8rem">'+p.project_title+'</div>'
+        +'<button class="pf-btn" onclick="requestJoinPosition(\''+p.project_id+'\',\''+p.position_id+'\')">참여 요청하기</button></div>';
+    }).join('')+'</div>';
+  }catch(e){$('browse-positions-list').innerHTML='<div class="result-empty">불러오지 못했어요.</div>';}
+}
+async function requestJoinPosition(projectId,positionId){
+  var msg=prompt('간단한 소개나 하고 싶은 말을 남겨주세요 (선택)');
+  if(msg===null)return;
+  try{
+    await sbClient.from('project_join_requests').insert({project_id:projectId,position_id:positionId,user_id:CURRENT_USER.id,message:msg||null});
+    alert('요청 보냈어요! 프로젝트 관리자가 확인하면 연락드릴 거예요.');
+  }catch(e){alert('요청 중 문제가 생겼어요: '+e.message);}
+}
+
 function showStaffRolePicker(pid,memberId){
   var el=$('staff-role-picker');if(!el)return;
   var options=DB.staffRoles.filter(function(s){return fld(s,'Name');});
@@ -2709,6 +2896,7 @@ function routeFromHash(hash){
   if(h==='#content'){goContent(false);return;}
   if(h==='#dashboard'){goDashboard(false);return;}
   if(h==='#mypage'){goMyPage(false);return;}
+  if(h==='#projects'){goProjectBrowse(false);return;}
   var m;
   if(m=h.match(/^#show-(.+)$/)){showShow(m[1],false);return;}
   if(m=h.match(/^#person-(.+)$/)){showPerson(m[1],false);return;}

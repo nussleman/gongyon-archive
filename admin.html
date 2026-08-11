@@ -63,8 +63,9 @@
   }
   nav button:hover { background: var(--accent-soft); }
   nav button.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
-  .nav-section-label { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-soft); opacity: 0.55; text-transform: uppercase; padding: 14px 20px 6px; }
-  .nav-section-label:first-child { padding-top: 4px; }
+  .nav-section { margin: 0 10px 14px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .nav-section-label { font-size: 10.5px; letter-spacing: 0.09em; color: var(--ink-soft); text-transform: uppercase; padding: 8px 14px; background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+  .nav-section button { padding: 9px 14px; }
 
   main { flex: 1; padding: 24px 32px; margin-left: 180px; max-width: none; }
   .tab-panel { display: none; }
@@ -244,25 +245,31 @@
 
 <div class="layout">
   <nav id="navTabs">
-    <div class="nav-section-label">공연 데이터</div>
-    <button data-tab="show">공연</button>
-    <button data-tab="participation">참여이력</button>
-    <button data-tab="work">작품</button>
-    <button data-tab="role">배역</button>
-    <button data-tab="staffrole">스텝역할</button>
-    <button data-tab="creation">창작이력</button>
-
-    <div class="nav-section-label">장소·단체</div>
-    <button data-tab="troupe">단체</button>
-    <button data-tab="venue">극장</button>
-
-    <div class="nav-section-label">사람·계정</div>
-    <button data-tab="person">사람</button>
-    <button data-tab="claims">클레임 승인</button>
-    <button data-tab="admins">관리자 목록</button>
-
-    <div class="nav-section-label">기타</div>
-    <button data-tab="settings">설정</button>
+    <div class="nav-section">
+      <div class="nav-section-label">공연 데이터</div>
+      <button data-tab="show">공연</button>
+      <button data-tab="participation">참여이력</button>
+      <button data-tab="work">작품</button>
+      <button data-tab="role">배역</button>
+      <button data-tab="staffrole">스텝역할</button>
+      <button data-tab="creation">창작이력</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">장소·단체</div>
+      <button data-tab="troupe">단체</button>
+      <button data-tab="venue">극장</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">사람·계정</div>
+      <button data-tab="person">사람</button>
+      <button data-tab="claims">클레임 승인</button>
+      <button data-tab="edits">수정요청</button>
+      <button data-tab="admins">관리자 목록</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">기타</div>
+      <button data-tab="settings">설정</button>
+    </div>
   </nav>
 
   <main>
@@ -765,6 +772,12 @@
       <h2>클레임 승인</h2>
       <p class="sub">유저가 "이거 나예요"로 요청한 사람(people) 레코드 연결이에요. 자동승인은 없고, 여기서 직접 승인/거절해야 반영돼요.</p>
       <div id="claims-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-edits">
+      <h2>수정요청</h2>
+      <p class="sub">유저가 사이트에서 보낸 정보 수정·추가·삭제 요청이에요. 여기서 직접 데이터를 바꾸는 게 아니라, 각 탭(공연/작품 등)에서 직접 반영한 뒤 "처리완료"로 표시해주세요.</p>
+      <div id="edits-list">불러오는 중...</div>
     </section>
 
     <section class="tab-panel" id="tab-admins">
@@ -2538,6 +2551,34 @@ async function rejectClaim(claimId) {
 window.approveClaim = approveClaim;
 window.rejectClaim = rejectClaim;
 
+// ---------- 수정요청 ----------
+const EDIT_TYPE_LABEL = { show:'공연', work:'작품', troupe:'단체', venue:'극장', person:'사람', role:'배역', other:'기타' };
+const EDIT_REQ_LABEL = { edit:'수정', create:'추가', delete:'삭제' };
+async function loadEdits() {
+  const el = document.getElementById('edits-list');
+  const { data, error } = await supabase.from('edit_requests').select('*').eq('status','pending').order('created_at',{ascending:true});
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
+  el.innerHTML = data.map(r => `
+    <div class="card">
+      <div><b>[${EDIT_REQ_LABEL[r.request_type]||r.request_type} · ${EDIT_TYPE_LABEL[r.target_type]||r.target_type}]</b> ${r.summary}</div>
+      ${r.details ? `<div class="sub" style="margin-top:6px; white-space:pre-wrap;">${r.details}</div>` : ''}
+      ${r.target_id ? `<div class="sub" style="margin-top:6px;">대상 id: ${r.target_id}</div>` : ''}
+      <div class="sub" style="margin-top:6px;">${new Date(r.created_at).toLocaleString('ko-KR')}</div>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn" onclick="resolveEdit('${r.id}','done')">처리완료</button>
+        <button type="button" class="btn secondary" onclick="resolveEdit('${r.id}','rejected')">반려</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function resolveEdit(id, status) {
+  const { error } = await supabase.from('edit_requests').update({ status, reviewed_by: (await supabase.auth.getUser()).data.user.id, reviewed_at: new Date().toISOString() }).eq('id', id);
+  if (error) { alert('처리 실패: ' + error.message); return; }
+  loadEdits();
+}
+window.resolveEdit = resolveEdit;
+
 // ---------- 관리자 목록 ----------
 async function loadAdmins() {
   const el = document.getElementById('admins-list');
@@ -2575,6 +2616,7 @@ window.removeAdminEmail = removeAdminEmail;
   await reloadAll();
   await loadSettings();
   await loadClaims();
+  await loadEdits();
   await loadAdmins();
   renderOptionManager();
 })();
