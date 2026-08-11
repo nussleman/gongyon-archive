@@ -125,6 +125,8 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .home-hero-search .gs-icon{left:1.15rem;font-size:1.05rem}
 .home-hero-stats{font-size:0.76rem;color:var(--muted);letter-spacing:0.03em}
 .home-hero-stats em{color:var(--accent);font-style:normal;font-weight:500}
+.home-credit{font-size:0.62rem;color:var(--muted);opacity:0.45;margin-top:0.7rem;letter-spacing:0.02em}
+.sidebar-credit{position:absolute;bottom:1rem;left:0;right:0;text-align:center;font-size:0.6rem;color:var(--muted);opacity:0.4;padding:0 0.8rem;letter-spacing:0.02em}
 
 /* ── 홈 전용 플로팅 메뉴 컨트롤러 (좌측, 세로 가운데 정렬, 떠있는 느낌) ── */
 .home-nav-dock{display:none;position:fixed;left:1.3rem;top:50%;transform:translateY(-50%);background:rgba(23,23,26,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:0.55rem;box-shadow:0 14px 44px rgba(0,0,0,0.5);z-index:200}
@@ -317,9 +319,9 @@ body.is-home .home-nav-dock{display:block}
 .person-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-bottom:2rem}
 .person-side-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
 .person-side-title{font-size:0.64rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:0.75rem}
-.person-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem}
-.person-gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;border:1px solid var(--line);cursor:zoom-in}
-.person-gallery-more-btn{width:100%;margin-top:0.5rem;background:none;border:1px solid var(--line);border-radius:5px;padding:0.4rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.72rem;cursor:pointer;transition:all .15s}
+.person-gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem}
+.person-gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid var(--line);cursor:zoom-in}
+.person-gallery-more-btn{width:100%;margin-top:0.4rem;background:none;border:1px solid var(--line);border-radius:5px;padding:0.3rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.68rem;cursor:pointer;transition:all .15s}
 .person-gallery-more-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
 .gallery-extra-hidden{display:none}
 .person-gallery-grid.gallery-expanded img.gallery-extra-hidden{display:block}
@@ -348,11 +350,12 @@ body.is-home .home-nav-dock{display:block}
 /* ── 프로필/계정 버튼 (우상단 고정) ── */
 .profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--text);font-family:'Noto Sans KR',sans-serif}
 .profile-fab.logged-in{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.25),0 0 0 2px rgba(200,169,110,0.25)}
-.fav-btn{background:none;border:none;cursor:pointer;font-size:1.15rem;color:var(--muted);padding:0.15rem;line-height:1;transition:color .15s,transform .1s}
+.fav-btn{background:none;border:none;cursor:pointer;padding:0.15rem;line-height:1;transition:transform .1s;display:inline-flex;align-items:center}
 .fav-btn:hover{transform:scale(1.15)}
-.fav-btn.on{color:var(--accent)}
-.fav-btn-inline{vertical-align:middle;margin-left:0.5rem}
-.cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem}
+.fav-btn svg{width:14px;height:14px;fill:var(--muted)}
+.fav-btn.on svg{fill:var(--accent)}
+.fav-btn-inline{vertical-align:middle;margin-left:0.4rem}
+.cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
 @media(max-width:768px){
   .profile-fab{top:0.6rem;right:0.7rem;width:34px;height:34px;font-size:0.9rem}
@@ -481,6 +484,7 @@ body.is-home .home-nav-dock{display:block}
       <div class="nav-divider"></div>
       <button id="nav-dashboard" onclick="goDashboard()">대시보드</button>
     </nav>
+    <div class="sidebar-credit">오리는 태준이 혼자 만들고 있어요</div>
   </nav>
 
   <!-- 홈 화면 전용: 좌측 세로 가운데에 떠있는 메뉴 컨트롤러 (제목이 곧 홈 버튼이라 '홈' 항목은 없음) -->
@@ -669,9 +673,10 @@ async function initAuth(){
   sbClient.auth.onAuthStateChange(function(event,session){handleAuthSession(session);});
 }
 
+var FAV_ICON_SVG='<svg viewBox="0 0 120 100"><use href="#duck-logo"></use></svg>';
 function favBtnHtml(type,id){
   var key=type+':'+id;var on=FAVORITES_SET.has(key);
-  return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+(on?'★':'☆')+'</button>';
+  return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+FAV_ICON_SVG+'</button>';
 }
 async function toggleFavorite(btn){
   if(!CURRENT_USER){loginWithGoogle();return;}
@@ -698,7 +703,6 @@ function refreshFavoriteButtons(){
     var key=b.dataset.favType+':'+b.dataset.favId;
     var on=FAVORITES_SET.has(key);
     b.classList.toggle('on',on);
-    b.textContent=on?'★':'☆';
   });
 }
 
@@ -1046,7 +1050,7 @@ async function renderMyPage(){
     ids2.forEach(function(id){h+=myCardHtml(type,id);});
     h+='</div></div>';
   });
-  if(!any)h+='<div class="result-empty"><div class="result-empty-icon">☆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 ☆ 버튼을 눌러보세요.</div></div>';
+  if(!any)h+='<div class="result-empty"><div class="result-empty-icon">🦆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 오리 아이콘을 눌러보세요.</div></div>';
   h+='</div>';
   mn(h);
 }
@@ -1321,7 +1325,7 @@ function renderHome(){
   var heroH='<div class="home-hero">'
     +'<div class="home-hero-top"><div class="home-hero-tagline">연극·뮤지컬 아카이브</div><div class="home-hero-title"><svg class="logo-mark"><use href="#duck-logo"></use></svg>오리</div></div>'
     +'<div class="home-hero-search" id="home-search-slot"></div>'
-    +'<div class="home-hero-bottom"><div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div></div>'
+    +'<div class="home-hero-bottom"><div class="home-hero-stats">공연 <em>'+shows.length+'</em>건 · 참여자 <em>'+people.length+'</em>명 · 참여이력 <em>'+histCnt+'</em>건</div><div class="home-credit">오리는 태준이 혼자 만들고 있어요</div></div>'
     +'</div>';
   mn(heroH);
   // 검색창을 사이드바/상단바가 아닌 홈 히어로 한가운데로 옮긴다
@@ -2089,7 +2093,7 @@ function showPerson(pid,push){
 
   var galleryH='';
   if(personPhotos.length>1){
-    var GALLERY_INITIAL=6;
+    var GALLERY_INITIAL=8;
     galleryH='<div class="person-side-card"><div class="person-side-title">사진 ('+personPhotos.length+')</div><div class="person-gallery-grid">';
     personPhotos.forEach(function(p,i){
       galleryH+='<img src="'+p.url+'" alt="'+fld(person,'이름')+'"'+(i>=GALLERY_INITIAL?' class="gallery-extra-hidden"':'')+'>';

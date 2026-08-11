@@ -63,6 +63,8 @@
   }
   nav button:hover { background: var(--accent-soft); }
   nav button.active { color: var(--accent); font-weight: 600; background: var(--accent-soft); }
+  .nav-section-label { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-soft); opacity: 0.55; text-transform: uppercase; padding: 14px 20px 6px; }
+  .nav-section-label:first-child { padding-top: 4px; }
 
   main { flex: 1; padding: 24px 32px; margin-left: 180px; max-width: none; }
   .tab-panel { display: none; }
@@ -242,17 +244,24 @@
 
 <div class="layout">
   <nav id="navTabs">
+    <div class="nav-section-label">공연 데이터</div>
     <button data-tab="show">공연</button>
     <button data-tab="participation">참여이력</button>
     <button data-tab="work">작품</button>
     <button data-tab="role">배역</button>
+    <button data-tab="staffrole">스텝역할</button>
+    <button data-tab="creation">창작이력</button>
+
+    <div class="nav-section-label">장소·단체</div>
     <button data-tab="troupe">단체</button>
     <button data-tab="venue">극장</button>
-    <button data-tab="staffrole">스텝역할</button>
+
+    <div class="nav-section-label">사람·계정</div>
     <button data-tab="person">사람</button>
-    <button data-tab="creation">창작이력</button>
     <button data-tab="claims">클레임 승인</button>
     <button data-tab="admins">관리자 목록</button>
+
+    <div class="nav-section-label">기타</div>
     <button data-tab="settings">설정</button>
   </nav>
 
