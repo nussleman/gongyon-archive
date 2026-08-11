@@ -362,7 +362,8 @@ body.is-home .home-nav-dock{display:block}
 .oath-gate.closing{animation:oathFadeOut .6s ease forwards}
 @keyframes oathFadeOut{to{opacity:0}}
 .oath-box{max-width:560px;text-align:center}
-.oath-text{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.25rem;line-height:2.1;color:var(--accent);letter-spacing:0.02em;word-break:keep-all;overflow-wrap:normal}
+.oath-text{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.25rem;line-height:2.1;color:var(--accent);letter-spacing:0.02em}
+.oath-word{display:inline-block}
 .oath-char{display:inline-block;opacity:0;filter:blur(3px);transform:translateY(6px);animation:oathRise .6s ease forwards}
 @keyframes oathRise{to{opacity:1;filter:blur(0);transform:translateY(0)}}
 .oath-input-wrap{margin-top:2.4rem;opacity:0;transition:opacity .8s ease}
@@ -440,7 +441,7 @@ body.is-home .home-nav-dock{display:block}
   <div class="oath-box">
     <div class="oath-text" id="oath-text"></div>
     <div class="oath-input-wrap" id="oath-input-wrap">
-      <button class="oath-confirm-btn" onclick="confirmOath()">네!! 선언합니다</button>
+      <button class="oath-confirm-btn" onclick="confirmOath()">선언합니다!</button>
     </div>
   </div>
 </div>
@@ -581,15 +582,26 @@ function playOathRitual(){
     hideAuthGate();
     var gate=$('oath-gate');gate.classList.remove('closing');gate.classList.add('open');
     var textEl=$('oath-text');textEl.innerHTML='';
-    var chars=OATH_PHRASE.split('');
-    chars.forEach(function(ch,i){
-      var span=document.createElement('span');
-      span.className='oath-char';
-      span.style.animationDelay=(i*32)+'ms';
-      span.textContent=ch; // 공백은 그대로 둬야 단어(공백) 단위로만 줄바꿈된다
-      textEl.appendChild(span);
+    var words=OATH_PHRASE.split(' ');
+    var gi=0;
+    words.forEach(function(word,wi){
+      var wordSpan=document.createElement('span');
+      wordSpan.className='oath-word';
+      word.split('').forEach(function(ch){
+        var span=document.createElement('span');
+        span.className='oath-char';
+        span.style.animationDelay=(gi*32)+'ms';
+        span.textContent=ch;
+        wordSpan.appendChild(span);
+        gi++;
+      });
+      textEl.appendChild(wordSpan);
+      if(wi<words.length-1){
+        textEl.appendChild(document.createTextNode(' ')); // 실제 띄어쓰기라야 여기서만 줄바꿈된다
+        gi++;
+      }
     });
-    var totalMs=chars.length*32+700;
+    var totalMs=gi*32+700;
     var inputWrap=$('oath-input-wrap');
     setTimeout(function(){
       inputWrap.classList.add('show');
