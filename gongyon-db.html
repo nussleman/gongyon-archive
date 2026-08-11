@@ -532,10 +532,10 @@ async function load(){
     '관객수':s.audience_count,'매진여부':s.is_sold_out,'재공연여부':s.has_rerun,
     '라이선스상태':s.is_licensed
   }};});
-  // 라이선스 미확보(N)로 표시된 공연은, 설정이 꺼져 있으면 사이트 전체에서 숨김
+  // 라이선스 미확보로 표시된 공연은, 설정이 꺼져 있으면 사이트 전체에서 숨김
   // (창작/완료/미상은 설정과 무관하게 항상 노출)
   if(!showUnlicensed){
-    DB.shows=DB.shows.filter(function(s){return fld(s,'라이선스상태')!=='N';});
+    DB.shows=DB.shows.filter(function(s){return fld(s,'라이선스상태')!=='미확보';});
   }
   var visibleShowIds={};
   DB.shows.forEach(function(s){visibleShowIds[s.id]=true;});
@@ -1258,7 +1258,7 @@ function showShow(sid,push){
   var soldOut=fld(show,'매진여부');
   var rerun=fld(show,'재공연여부');
   var licenseStatus=fld(show,'라이선스상태');
-  var licenseLabel=licenseStatus==='창작'?'✍️ 창작':(licenseStatus==='Y'?'✅ 라이선스 완료':(licenseStatus==='N'?'⚠️ 라이선스 미확보':''));
+  var licenseLabel=licenseStatus==='창작'?'✍️ 창작':(licenseStatus==='완료'?'✅ 라이선스 완료':(licenseStatus==='미확보'?'⚠️ 라이선스 미확보':''));
   var outcomeH='';
   if(audience!=null||soldOut||rerun){
     outcomeH='<div class="detail-meta">'

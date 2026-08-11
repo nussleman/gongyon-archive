@@ -288,8 +288,8 @@
               <select name="is_licensed">
                 <option value="">선택 안 함(미상)</option>
                 <option value="창작">창작 (자체창작, 라이선스 불필요)</option>
-                <option value="Y">라이선스 완료</option>
-                <option value="N">라이선스 미확보</option>
+                <option value="완료">라이선스 완료</option>
+                <option value="미확보">라이선스 미확보</option>
               </select>
             </div>
             <div><label>관객수</label><input type="number" name="audience_count" min="0"></div>
@@ -1921,8 +1921,10 @@ function renderAllLists() {
       render: r => cache.troupes.find(t=>t.id===r.troupe_id)?.name || ''},
     {label:'극장', key:'venue_id', editable:true, editType:'fk', fkEntity:'venue',
       render: r => cache.venues.find(v=>v.id===r.venue_id)?.name || ''},
-    {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(미상)'},{value:'창작',label:'창작'},{value:'Y',label:'완료'},{value:'N',label:'미확보'}],
-      render: r => ({'창작':'창작','Y':'완료','N':'미확보'}[r.is_licensed]) || '<span class="warn-badge">⚠ 라이선스 미입력</span>'},
+    {label:'라이선스', key:'is_licensed', editable:true, editType:'select', editOptions:[{value:'',label:'(미상)'},{value:'창작',label:'창작'},{value:'완료',label:'완료'},{value:'미확보',label:'미확보'}],
+      render: r => !r.is_licensed ? '<span class="warn-badge">⚠ 라이선스 미입력</span>'
+        : r.is_licensed === '미확보' ? '<span class="warn-badge">⚠ 라이선스 미확보</span>'
+        : r.is_licensed},
     {label:'관객수', key:'audience_count', editable:true, editType:'number'},
     {label:'매진', key:'is_sold_out', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'매진'},{value:'false',label:'미매진'}], render: r => r.is_sold_out==null?'':(r.is_sold_out?'매진':'미매진')},
     {label:'재공연', key:'has_rerun', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'있음'},{value:'false',label:'없음'}], render: r => r.has_rerun==null?'':(r.has_rerun?'있음':'없음')},
