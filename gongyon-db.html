@@ -347,6 +347,30 @@ body.is-home .home-nav-dock{display:block}
 }
 
 /* ── 이미지 라이트박스 (클릭해서 크게 보기) ── */
+/* ── 접근 게이트: 로그인 요구 화면 ── */
+.auth-gate{position:fixed;inset:0;background:var(--bg);z-index:5000;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:2rem}
+.auth-gate.open{display:flex}
+.auth-gate .logo-mark{width:56px;height:56px;margin-bottom:1.4rem}
+.auth-gate-title{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.7rem;color:var(--text);letter-spacing:0.03em;margin-bottom:0.7rem}
+.auth-gate-sub{font-size:0.85rem;color:var(--muted);margin-bottom:2.2rem;line-height:1.7}
+.auth-gate-btn{display:inline-flex;align-items:center;gap:0.6rem;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:0.75rem 1.6rem;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;cursor:pointer;transition:all .15s}
+.auth-gate-btn:hover{background:var(--bg3);border-color:var(--accent)}
+
+/* ── 선언 의식: 호그와트 비밀지도 느낌으로 문구가 스르르 떠오르고, "선언합니다"를 적으면 입장 ── */
+.oath-gate{position:fixed;inset:0;background:var(--bg);z-index:5000;display:none;align-items:center;justify-content:center;padding:2rem}
+.oath-gate.open{display:flex}
+.oath-gate.closing{animation:oathFadeOut .6s ease forwards}
+@keyframes oathFadeOut{to{opacity:0}}
+.oath-box{max-width:560px;text-align:center}
+.oath-text{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.25rem;line-height:2.1;color:var(--accent);letter-spacing:0.02em}
+.oath-char{display:inline-block;opacity:0;filter:blur(3px);transform:translateY(6px);animation:oathRise .6s ease forwards}
+@keyframes oathRise{to{opacity:1;filter:blur(0);transform:translateY(0)}}
+.oath-input-wrap{margin-top:2.4rem;opacity:0;transition:opacity .8s ease}
+.oath-input-wrap.show{opacity:1}
+.oath-input{background:none;border:none;border-bottom:1px solid var(--line);color:var(--text);font-family:'Noto Serif KR',serif;font-size:1.1rem;text-align:center;padding:0.4rem 0.2rem;outline:none;width:220px;letter-spacing:0.1em}
+.oath-input:focus{border-bottom-color:var(--accent)}
+.oath-hint{font-size:0.68rem;color:var(--muted);letter-spacing:0.15em;margin-top:0.8rem;text-transform:uppercase;opacity:0.7}
+
 .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:10000;cursor:zoom-out;padding:3rem;box-sizing:border-box}
 .lightbox-overlay.open{display:flex}
 .lightbox-overlay img{max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.6);cursor:default}
@@ -402,6 +426,25 @@ body.is-home .home-nav-dock{display:block}
 <body>
 
 <header></header>
+
+<!-- 로그인 게이트: 로그인 안 하면 이것만 보이고 나머지는 렌더링 자체를 안 함 -->
+<div class="auth-gate" id="auth-gate">
+  <svg class="logo-mark" viewBox="0 0 120 100"><use href="#duck-logo"></use></svg>
+  <div class="auth-gate-title">오리</div>
+  <div class="auth-gate-sub">이 안의 이야기를 보려면<br>구글 계정으로 먼저 들어와야 해요.</div>
+  <button class="auth-gate-btn" onclick="loginWithGoogle()">구글로 로그인</button>
+</div>
+
+<!-- 선언 의식: 로그인 직후, 진짜 입장하기 전에 한 번 거치는 화면 -->
+<div class="oath-gate" id="oath-gate">
+  <div class="oath-box">
+    <div class="oath-text" id="oath-text"></div>
+    <div class="oath-input-wrap" id="oath-input-wrap">
+      <input type="text" class="oath-input" id="oath-input" autocomplete="off" placeholder="　" onkeydown="if(event.key==='Enter')checkOath()">
+      <div class="oath-hint">마지막 문장을 그대로 적어주세요</div>
+    </div>
+  </div>
+</div>
 
 <!-- 재사용되는 오리 로고 마크 (심볼로 한 번만 정의) -->
 <svg width="0" height="0" style="position:absolute">
@@ -486,28 +529,32 @@ var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[],creationHistory:[]};
 var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={},PERSON_PHOTO={};
 
-/* ══ 인증 (Google 로그인) + 즐겨찾기 ══
+/* ══ 인증 (Google 로그인 필수) + 선언 의식 + 즐겨찾기 ══
    PKCE flow를 명시: 콜백 토큰이 URL 해시(#)가 아니라 쿼리스트링(?code=)으로 오게 만들어서
-   이 앱의 해시 기반 라우팅(#shows, #person-xxx 등)과 절대 충돌하지 않게 한다. */
+   이 앱의 해시 기반 라우팅(#shows, #person-xxx 등)과 절대 충돌하지 않게 한다.
+   이 사이트는 로그인 없이는 데이터를 아예 안 보여준다 — DB 쪽 SELECT 정책도 authenticated 전용으로 잠가둠. */
 var sbClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{flowType:'pkce'}});
 var CURRENT_USER=null; // {id, email, nickname}
+var CURRENT_SESSION=null; // access_token 등 실제 세션 (rest() 호출용)
 var FAVORITES_LIST=[]; // [{target_type,target_id},...]
 var FAVORITES_SET=new Set(); // "type:id" 빠른 조회용
+var OATH_PHRASE='나는 천하의 멍텅구리지만 우리들의 정직하고 행복한 공연 생활에 진심으로 임할 것을 엄숙히 선언합니다.';
+var OATH_CONFIRM='선언합니다';
 
 function loginWithGoogle(){
-  try{localStorage.setItem('oridb_return_hash',location.hash||'#home');}catch(e){}
   sbClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
 }
 function logout(){
+  try{sessionStorage.removeItem('oridb_declared');}catch(e){}
   sbClient.auth.signOut().then(function(){location.reload();});
 }
 function handleProfileFabClick(){
-  if(CURRENT_USER)goMyPage();else loginWithGoogle();
+  if(CURRENT_USER)goMyPage();
 }
 function renderProfileFab(){
   var btn=$('profile-fab');if(!btn)return;
   if(CURRENT_USER){btn.title=CURRENT_USER.nickname?CURRENT_USER.nickname+' · 마이페이지':'마이페이지';btn.classList.add('logged-in');}
-  else{btn.title='로그인';btn.classList.remove('logged-in');}
+  else{btn.title='';btn.classList.remove('logged-in');}
 }
 async function loadUserProfile(){
   try{
@@ -523,30 +570,84 @@ async function loadFavorites(){
     FAVORITES_SET=new Set(FAVORITES_LIST.map(function(f){return f.target_type+':'+f.target_id;}));
   }catch(e){FAVORITES_LIST=[];FAVORITES_SET=new Set();}
 }
+
+/* ── 게이트 표시 제어 ── */
+function showAuthGate(){$('auth-gate').classList.add('open');$('oath-gate').classList.remove('open');}
+function hideAuthGate(){$('auth-gate').classList.remove('open');}
+function hasDeclaredThisSession(){try{return sessionStorage.getItem('oridb_declared')==='1';}catch(e){return false;}}
+function markDeclared(){try{sessionStorage.setItem('oridb_declared','1');}catch(e){}}
+
+/* ── 선언 의식: 문구를 한 글자씩 스르르 띄운 뒤, "선언합니다"를 입력하면 입장 ── */
+function playOathRitual(){
+  return new Promise(function(resolve){
+    hideAuthGate();
+    var gate=$('oath-gate');gate.classList.remove('closing');gate.classList.add('open');
+    var textEl=$('oath-text');textEl.innerHTML='';
+    var chars=OATH_PHRASE.split('');
+    chars.forEach(function(ch,i){
+      var span=document.createElement('span');
+      span.className='oath-char';
+      span.style.animationDelay=(i*32)+'ms';
+      span.textContent=ch===' '?'\u00A0':ch;
+      textEl.appendChild(span);
+    });
+    var totalMs=chars.length*32+700;
+    var inputWrap=$('oath-input-wrap'),input=$('oath-input');
+    input.value='';
+    setTimeout(function(){
+      inputWrap.classList.add('show');
+      input.focus();
+    },totalMs);
+    window._resolveOath=function(){
+      gate.classList.add('closing');
+      setTimeout(function(){gate.classList.remove('open','closing');resolve();},600);
+    };
+  });
+}
+function checkOath(){
+  var input=$('oath-input');
+  if(input.value.trim()===OATH_CONFIRM){
+    markDeclared();
+    if(window._resolveOath)window._resolveOath();
+  }else{
+    input.style.color='#e06c6c';
+    setTimeout(function(){input.style.color='';},500);
+  }
+}
+
+/* ── 인증 상태에 따라 전체 진입 흐름을 제어 ── */
+var _entered=false;
 async function handleAuthSession(session){
+  CURRENT_SESSION=session||null;
   if(session&&session.user){
     CURRENT_USER={id:session.user.id,email:session.user.email};
     await loadUserProfile();
     await loadFavorites();
+    renderProfileFab();
+    refreshFavoriteButtons();
+    if(!_entered){
+      if(!hasDeclaredThisSession())await playOathRitual();
+      _entered=true;
+      await enterSite();
+    }
   }else{
     CURRENT_USER=null;FAVORITES_LIST=[];FAVORITES_SET=new Set();
+    _entered=false;
+    renderProfileFab();
+    showAuthGate();
   }
-  renderProfileFab();
-  refreshFavoriteButtons();
+}
+async function enterSite(){
+  hideAuthGate();
+  try{await load();routeFromHash(location.hash);}
+  catch(e){$('mn').innerHTML='<div style="color:#e06c6c;padding:2rem">연결 실패: '+e.message+'</div>';}
 }
 async function initAuth(){
   var got=await sbClient.auth.getSession();
   await handleAuthSession(got.data.session);
   sbClient.auth.onAuthStateChange(function(event,session){handleAuthSession(session);});
-  // OAuth 로그인 복귀 시, 로그인 누르기 전에 있던 화면(hash)로 되돌려준다
-  try{
-    var back=localStorage.getItem('oridb_return_hash');
-    if(back){
-      localStorage.removeItem('oridb_return_hash');
-      if(back!==location.hash){location.hash=back;routeFromHash(back);}
-    }
-  }catch(e){}
 }
+
 function favBtnHtml(type,id){
   var key=type+':'+id;var on=FAVORITES_SET.has(key);
   return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+(on?'★':'☆')+'</button>';
@@ -632,8 +733,9 @@ function iurl(imgs){if(!imgs||!imgs[0])return '';return(imgs[0].thumbnails&&imgs
    Airtable 레코드 모양({id, fields:{한글필드명:값}})으로 그대로 변환한다.
    이렇게 하면 이 블록 밖의 1000줄 넘는 화면 코드는 전혀 손댈 필요가 없다. */
 async function rest(table, query){
+  var token=(CURRENT_SESSION&&CURRENT_SESSION.access_token)||SUPABASE_ANON_KEY;
   var url=SUPABASE_URL+'/rest/v1/'+table+'?'+(query||'select=*')+'&limit=5000';
-  var r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
+  var r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token}});
   if(!r.ok)throw new Error(table+' 로드 실패: '+r.status);
   return await r.json();
 }
@@ -2450,9 +2552,7 @@ function routeFromHash(hash){
 window.addEventListener('popstate',function(){routeFromHash(location.hash);});
 
 (async function(){
-  try{await load();routeFromHash(location.hash);}
-  catch(e){$('mn').innerHTML='<div style="color:#e06c6c;padding:2rem">연결 실패: '+e.message+'</div>';}
-  initAuth();
+  await initAuth();
 })();
 </script>
 </body>
