@@ -777,21 +777,61 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://lezwarruqgccnecrmpga.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlendhcnJ1cWdjY25lY3JtcGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODEzNjAsImV4cCI6MjEwMDQ1NzM2MH0.ERJBOwjc41Z0lzz8ocMqVeyqfXKZ3RHY3jZHCOCqMXk';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce' } });
 
 const authStatusEl = document.getElementById('authStatus');
 
+function loginWithGoogle() {
+  supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+}
+window.loginWithGoogle = loginWithGoogle;
+
+function logout() {
+  supabase.auth.signOut().then(() => location.reload());
+}
+window.logout = logout;
+
+function showLoginGate() {
+  if (document.getElementById('loginGate')) return;
+  const gate = document.createElement('div');
+  gate.id = 'loginGate';
+  gate.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  gate.innerHTML = '<div style="background:#17171a;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:2.2rem 2.6rem;text-align:center;font-family:sans-serif;color:#eee">'
+    + '<div style="margin-bottom:1.2rem;font-size:0.95rem">관리자 로그인이 필요해요</div>'
+    + '<button onclick="loginWithGoogle()" style="padding:0.6rem 1.3rem;cursor:pointer;border-radius:6px;border:1px solid #555;background:#222;color:#eee;font-size:0.9rem">구글로 로그인</button>'
+    + '</div>';
+  document.body.appendChild(gate);
+}
+function hideLoginGate() {
+  document.getElementById('loginGate')?.remove();
+}
+
+async function checkIsAdmin() {
+  const { data } = await supabase.from('user_profiles').select('is_admin,nickname').maybeSingle();
+  if (data && data.is_admin) {
+    authStatusEl.textContent = '관리자로 로그인됨 (' + (data.nickname || '') + ')';
+    authStatusEl.className = 'ok';
+  } else {
+    authStatusEl.textContent = '로그인됨 — 관리자 권한 없음 (읽기만 가능)';
+    authStatusEl.className = 'err';
+  }
+}
+
+async function applyAuthState(session) {
+  if (session && session.user) {
+    hideLoginGate();
+    await checkIsAdmin();
+  } else {
+    authStatusEl.textContent = '로그인 필요';
+    authStatusEl.className = 'err';
+    showLoginGate();
+  }
+}
+
 async function ensureAuth() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (session) { authStatusEl.textContent = '인증됨 (임시)'; authStatusEl.className = 'ok'; return; }
-  const { error } = await supabase.auth.signInAnonymously();
-  if (error) {
-    authStatusEl.textContent = '인증 실패: ' + error.message + ' (Anonymous sign-in을 켜야 해요)';
-    authStatusEl.className = 'err';
-  } else {
-    authStatusEl.textContent = '인증됨 (임시)';
-    authStatusEl.className = 'ok';
-  }
+  await applyAuthState(session);
+  supabase.auth.onAuthStateChange((_event, session) => { applyAuthState(session); });
 }
 
 // ---------- 탭 전환 ----------
