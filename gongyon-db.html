@@ -1042,6 +1042,13 @@ async function renderMyPage(){
   }
   h+='</div>';
 
+  // 내 프로젝트
+  h+='<div class="sec"><div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;flex-wrap:wrap">'
+    +'<span class="sec-label" style="margin-bottom:0">공연 프로젝트</span>'
+    +'<div style="flex:1;height:1px;background:var(--line);min-width:1rem"></div>'
+    +'<button class="pf-btn" onclick="startNewProject()">+ 공연 프로젝트 시작하기</button>'
+    +'</div><div id="my-projects-list">불러오는 중…</div></div>';
+
   var any=false;
   order.forEach(function(type){
     var ids2=byType[type];if(!ids2||!ids2.length)return;
@@ -1053,6 +1060,7 @@ async function renderMyPage(){
   if(!any)h+='<div class="result-empty"><div class="result-empty-icon">🦆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 오리 아이콘을 눌러보세요.</div></div>';
   h+='</div>';
   mn(h);
+  loadMyProjects();
 }
 function goMyPage(push){
   if(push!==false)history.pushState({view:'mypage'},'','#mypage');
@@ -1063,6 +1071,95 @@ function goMyPage(push){
   }
   renderMyPage();
 }
+
+/* ══ 공연 프로젝트 (진행중인 준비 과정을 관리하는 비공개 공간) ══ */
+var PROJECT_STATUS_LABEL={draft:'준비 시작',planning:'기획 중',ready:'발행 준비됨',published:'발행됨',cancelled:'취소됨'};
+async function loadMyProjects(){
+  var el=$('my-projects-list');if(!el)return;
+  try{
+    var r=await sbClient.from('projects').select('id,title,status,created_at').order('created_at',{ascending:false});
+    var rows=r.data||[];
+    if(!rows.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">아직 시작한 프로젝트가 없어요. 위 버튼으로 하나 시작해보세요.</div>';return;}
+    el.innerHTML='<div class="item-grid">'+rows.map(function(p){
+      return '<div class="item-card" onclick="goProject(\''+p.id+'\')"><div class="item-card-title">'+(p.title||'새 프로젝트')+'</div>'
+        +'<div style="font-size:0.72rem;color:var(--muted);margin-top:0.3rem">'+(PROJECT_STATUS_LABEL[p.status]||p.status)+'</div></div>';
+    }).join('')+'</div>';
+  }catch(e){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패했어요.</div>';}
+}
+async function startNewProject(){
+  if(!CURRENT_USER)return;
+  try{
+    var pr=await sbClient.from('projects').insert({owner_id:CURRENT_USER.id,title:'새 프로젝트',status:'draft'}).select().single();
+    if(pr.error)throw pr.error;
+    var mr=await sbClient.from('project_members').insert({project_id:pr.data.id,user_id:CURRENT_USER.id,member_role:'owner',invite_status:'confirmed'}).select().single();
+    if(mr.error)throw mr.error;
+    goProject(pr.data.id);
+  }catch(e){alert('프로젝트를 시작하는 중 문제가 생겼어요: '+e.message);}
+}
+async function goProject(pid,push){
+  if(push!==false)history.pushState({view:'project',id:pid},'','#project-'+pid);
+  setNav('mypage');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  mn('<div class="tab-index"><div class="result-empty">불러오는 중…</div></div>');
+  try{
+    var pr=await sbClient.from('projects').select('*').eq('id',pid).single();
+    if(pr.error)throw pr.error;
+    var mr=await sbClient.from('project_members').select('*').eq('project_id',pid);
+    var members=mr.data||[];
+    var myMember=members.find(function(m){return m.user_id===CURRENT_USER.id;});
+    var posr=await sbClient.from('project_positions').select('*').eq('project_id',pid);
+    var positions=posr.data||[];
+    var myPosition=myMember?positions.find(function(p){return p.assigned_member_id===myMember.id;}):null;
+
+    var h='<div class="detail-header"><div class="eyebrow">공연 프로젝트</div><div class="detail-title">'+(pr.data.title||'새 프로젝트')+'</div>'
+      +'<div class="detail-meta"><span>'+(PROJECT_STATUS_LABEL[pr.data.status]||pr.data.status)+'</span></div></div>';
+
+    if(!myPosition){
+      // 1단계: 역할 질문
+      h+='<div class="sec"><div class="sec-label">첫 질문</div>'
+        +'<div style="font-size:0.95rem;margin-bottom:1rem">이 프로젝트에서 당신의 역할은 뭐예요?</div>'
+        +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap">'
+        +'<button class="pf-btn" onclick="submitProjectRole(\''+pid+'\',\''+myMember.id+'\',\'actor\')">배우</button>'
+        +'<button class="pf-btn" onclick="submitProjectRole(\''+pid+'\',\''+myMember.id+'\',\'director\')">연출</button>'
+        +'<button class="pf-btn" onclick="showStaffRolePicker(\''+pid+'\',\''+myMember.id+'\')">그 외 스태프</button>'
+        +'<button class="pf-btn" onclick="submitProjectRole(\''+pid+'\',\''+myMember.id+'\',\'producer\')">제작 · 기획</button>'
+        +'<button class="pf-btn" onclick="submitProjectRole(\''+pid+'\',\''+myMember.id+'\',\'unknown\')">아직 잘 모르겠어요</button>'
+        +'</div><div id="staff-role-picker" style="margin-top:0.8rem"></div></div>';
+    }else{
+      var roleLabel=myPosition.position_label||(myPosition.position_type==='actor'?'배우':'참여자');
+      h+='<div class="sec"><div class="sec-label">내 역할</div><div style="font-size:0.9rem">'+roleLabel+'</div></div>'
+        +'<div class="sec"><div class="sec-label">다음 단계</div><div style="font-size:0.82rem;color:var(--muted)">극장·단체·작품·날짜를 정하는 다음 질문들은 곧 이어질 예정이에요. 지금은 여기까지예요.</div></div>';
+    }
+    mn(h);
+    injectBackBtn('← 마이페이지',function(){goMyPage();});
+  }catch(e){
+    mn('<div class="tab-index"><div class="result-empty">프로젝트를 불러올 수 없어요. 접근 권한이 없거나 삭제되었을 수 있어요.</div></div>');
+  }
+}
+function showStaffRolePicker(pid,memberId){
+  var el=$('staff-role-picker');if(!el)return;
+  var options=DB.staffRoles.filter(function(s){return fld(s,'Name');});
+  var h='<select id="staff-role-select" class="pf-btn" style="padding:0.35rem 0.6rem">'
+    +options.map(function(s){return '<option value="'+s.id+'">'+fld(s,'Name')+'</option>';}).join('')
+    +'</select> <button class="pf-btn" onclick="submitProjectRole(\''+pid+'\',\''+memberId+'\',\'staff\')">확인</button>';
+  el.innerHTML=h;
+}
+async function submitProjectRole(pid,memberId,choice){
+  if(choice==='unknown'){goMyPage();return;}
+  var row={project_id:pid,assigned_member_id:memberId,status:'filled'};
+  if(choice==='actor'){row.position_type='actor';row.position_label='배우';}
+  else if(choice==='director'){row.position_type='staff';row.position_label='연출';}
+  else if(choice==='producer'){row.position_type='other';row.position_label='제작 · 기획';}
+  else if(choice==='staff'){
+    var sel=$('staff-role-select');
+    var srid=sel?sel.value:'';
+    row.position_type='staff';row.staff_role_id=srid||null;row.position_label=srid?nm(srid):'스태프';
+  }
+  try{
+    await sbClient.from('project_positions').insert(row);
+    goProject(pid);
+  }catch(e){alert('저장 중 문제가 생겼어요: '+e.message);}
+}
+
 function actorCard(rec){
   var pid=ids(fld(rec,'참여자'))[0]||'';
   var u=iurl(fld(rec,'사진'));
@@ -2619,6 +2716,7 @@ function routeFromHash(hash){
   if(m=h.match(/^#role-(.+)$/)){showRole(m[1],false);return;}
   if(m=h.match(/^#venue-(.+)$/)){showVenue(m[1],false);return;}
   if(m=h.match(/^#troupe-(.+)$/)){showTroupe(m[1],false);return;}
+  if(m=h.match(/^#project-(.+)$/)){goProject(m[1],false);return;}
   goHome(false);
 }
 window.addEventListener('popstate',function(){routeFromHash(location.hash);});
