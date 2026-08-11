@@ -441,7 +441,7 @@ body.is-home .home-nav-dock{display:block}
     <div class="oath-text" id="oath-text"></div>
     <div class="oath-input-wrap" id="oath-input-wrap">
       <input type="text" class="oath-input" id="oath-input" autocomplete="off" placeholder="　" onkeydown="if(event.key==='Enter')checkOath()">
-      <div class="oath-hint">마지막 문장을 그대로 적어주세요</div>
+      <div class="oath-hint">'선언합니다'라고 적어주세요</div>
     </div>
   </div>
 </div>
@@ -618,6 +618,13 @@ function checkOath(){
 /* ── 인증 상태에 따라 전체 진입 흐름을 제어 ── */
 var _entered=false;
 async function handleAuthSession(session){
+  // admin.html과 이 사이트는 같은 도메인 하위 경로라 브라우저 로그인 세션(localStorage)을 공유한다.
+  // 예전 admin.html의 익명 로그인 잔재가 여기로 새어 들어올 수 있어 명시적으로 걸러낸다.
+  if(session&&session.user&&session.user.is_anonymous){
+    CURRENT_SESSION=null;
+    sbClient.auth.signOut();
+    return;
+  }
   CURRENT_SESSION=session||null;
   if(session&&session.user){
     CURRENT_USER={id:session.user.id,email:session.user.email};
