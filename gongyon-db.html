@@ -335,6 +335,12 @@ body.is-home .home-nav-dock{display:block}
 
 /* ── 프로필/계정 버튼 (우상단 고정) ── */
 .profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--text);font-family:'Noto Sans KR',sans-serif}
+.profile-fab.logged-in{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.25),0 0 0 2px rgba(200,169,110,0.25)}
+.fav-btn{background:none;border:none;cursor:pointer;font-size:1.15rem;color:var(--muted);padding:0.15rem;line-height:1;transition:color .15s,transform .1s}
+.fav-btn:hover{transform:scale(1.15)}
+.fav-btn.on{color:var(--accent)}
+.fav-btn-inline{vertical-align:middle;margin-left:0.5rem}
+.cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
 @media(max-width:768px){
   .profile-fab{top:0.6rem;right:0.7rem;width:34px;height:34px;font-size:0.9rem}
@@ -454,7 +460,7 @@ body.is-home .home-nav-dock{display:block}
   <div id="sb" style="display:none"></div>
 </div>
 
-<button class="profile-fab" onclick="showProfileTodo()" title="마이페이지">👤</button>
+<button class="profile-fab" id="profile-fab" onclick="handleProfileFabClick()" title="로그인">👤</button>
 
 <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="">
@@ -473,11 +479,106 @@ body.is-home .home-nav-dock{display:block}
   <button class="mob-tab" id="mobt-dashboard" onclick="goDashboard()"><span class="mob-icon">📊</span>대시보드</button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 var SUPABASE_URL='https://lezwarruqgccnecrmpga.supabase.co';
 var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlendhcnJ1cWdjY25lY3JtcGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODEzNjAsImV4cCI6MjEwMDQ1NzM2MH0.ERJBOwjc41Z0lzz8ocMqVeyqfXKZ3RHY3jZHCOCqMXk';
 var DB={shows:[],people:[],history:[],roles:[],staffRoles:[],works:[],troupes:[],venues:[],creationHistory:[]};
 var MAP={},STAFF_ORDER={},ROLE_ORDER={},POSTER={},PERSON_PHOTO={};
+
+/* ══ 인증 (Google 로그인) + 즐겨찾기 ══
+   PKCE flow를 명시: 콜백 토큰이 URL 해시(#)가 아니라 쿼리스트링(?code=)으로 오게 만들어서
+   이 앱의 해시 기반 라우팅(#shows, #person-xxx 등)과 절대 충돌하지 않게 한다. */
+var sbClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{flowType:'pkce'}});
+var CURRENT_USER=null; // {id, email, nickname}
+var FAVORITES_LIST=[]; // [{target_type,target_id},...]
+var FAVORITES_SET=new Set(); // "type:id" 빠른 조회용
+
+function loginWithGoogle(){
+  try{localStorage.setItem('oridb_return_hash',location.hash||'#home');}catch(e){}
+  sbClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+}
+function logout(){
+  sbClient.auth.signOut().then(function(){location.reload();});
+}
+function handleProfileFabClick(){
+  if(CURRENT_USER)goMyPage();else loginWithGoogle();
+}
+function renderProfileFab(){
+  var btn=$('profile-fab');if(!btn)return;
+  if(CURRENT_USER){btn.title=CURRENT_USER.nickname?CURRENT_USER.nickname+' · 마이페이지':'마이페이지';btn.classList.add('logged-in');}
+  else{btn.title='로그인';btn.classList.remove('logged-in');}
+}
+async function loadUserProfile(){
+  try{
+    var r=await sbClient.from('user_profiles').select('nickname').eq('id',CURRENT_USER.id).maybeSingle();
+    if(r.data)CURRENT_USER.nickname=r.data.nickname;
+  }catch(e){}
+}
+async function loadFavorites(){
+  if(!CURRENT_USER){FAVORITES_LIST=[];FAVORITES_SET=new Set();return;}
+  try{
+    var r=await sbClient.from('favorites').select('target_type,target_id').eq('user_id',CURRENT_USER.id);
+    FAVORITES_LIST=r.data||[];
+    FAVORITES_SET=new Set(FAVORITES_LIST.map(function(f){return f.target_type+':'+f.target_id;}));
+  }catch(e){FAVORITES_LIST=[];FAVORITES_SET=new Set();}
+}
+async function handleAuthSession(session){
+  if(session&&session.user){
+    CURRENT_USER={id:session.user.id,email:session.user.email};
+    await loadUserProfile();
+    await loadFavorites();
+  }else{
+    CURRENT_USER=null;FAVORITES_LIST=[];FAVORITES_SET=new Set();
+  }
+  renderProfileFab();
+  refreshFavoriteButtons();
+}
+async function initAuth(){
+  var got=await sbClient.auth.getSession();
+  await handleAuthSession(got.data.session);
+  sbClient.auth.onAuthStateChange(function(event,session){handleAuthSession(session);});
+  // OAuth 로그인 복귀 시, 로그인 누르기 전에 있던 화면(hash)로 되돌려준다
+  try{
+    var back=localStorage.getItem('oridb_return_hash');
+    if(back){
+      localStorage.removeItem('oridb_return_hash');
+      if(back!==location.hash){location.hash=back;routeFromHash(back);}
+    }
+  }catch(e){}
+}
+function favBtnHtml(type,id){
+  var key=type+':'+id;var on=FAVORITES_SET.has(key);
+  return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+(on?'★':'☆')+'</button>';
+}
+async function toggleFavorite(btn){
+  if(!CURRENT_USER){loginWithGoogle();return;}
+  var type=btn.dataset.favType,id=btn.dataset.favId,key=type+':'+id;
+  var isOn=FAVORITES_SET.has(key);
+  btn.disabled=true;
+  try{
+    if(isOn){
+      await sbClient.from('favorites').delete().eq('user_id',CURRENT_USER.id).eq('target_type',type).eq('target_id',id);
+      FAVORITES_SET.delete(key);
+      FAVORITES_LIST=FAVORITES_LIST.filter(function(f){return !(f.target_type===type&&f.target_id===id);});
+    }else{
+      await sbClient.from('favorites').insert({user_id:CURRENT_USER.id,target_type:type,target_id:id});
+      FAVORITES_SET.add(key);
+      FAVORITES_LIST.push({target_type:type,target_id:id});
+    }
+  }finally{
+    btn.disabled=false;refreshFavoriteButtons();
+    if(location.hash==='#mypage')renderMyPage();
+  }
+}
+function refreshFavoriteButtons(){
+  document.querySelectorAll('.fav-btn').forEach(function(b){
+    var key=b.dataset.favType+':'+b.dataset.favId;
+    var on=FAVORITES_SET.has(key);
+    b.classList.toggle('on',on);
+    b.textContent=on?'★':'☆';
+  });
+}
 
 function $(i){return document.getElementById(i);}
 function sb(h){$('sb').innerHTML=h;}
@@ -754,8 +855,41 @@ function setNav(v){
     if(wrap&&bar&&wrap.parentNode!==bar)bar.appendChild(wrap);
   }
 }
-function showProfileTodo(){
-  alert('마이페이지 기능은 준비 중이에요.\n로그인 도입 이후 내 참여이력·창작이력을 확인할 수 있게 열릴 예정입니다.');
+/* ══ 마이페이지 (즐겨찾기) ══ */
+var FAV_TYPE_LABEL={show:'공연',work:'작품',troupe:'단체',venue:'극장',person:'사람'};
+function myCardHtml(type,id){
+  var name=nm(id)||'(삭제된 항목)';
+  var imgUrl=type==='show'?(POSTER[id]||''):(type==='person'?(PERSON_PHOTO[id]||''):'');
+  var imgH=imgUrl?'<img class="cast-img" src="'+imgUrl+'">':'<div class="cast-img-ph">&nbsp;</div>';
+  return '<div class="cast-card" data-action="'+type+'" data-id="'+id+'" style="position:relative">'+favBtnHtml(type,id)+imgH+'<div class="cast-name">'+name+'</div></div>';
+}
+async function renderMyPage(){
+  await loadFavorites();
+  var byType={};
+  FAVORITES_LIST.forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
+  var order=['show','work','troupe','venue','person'];
+  var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'내 즐겨찾기')+'</div>'
+    +'<div class="detail-meta"><span>즐겨찾기 '+FAVORITES_LIST.length+'건</span></div></div>';
+  var any=false;
+  order.forEach(function(type){
+    var ids2=byType[type];if(!ids2||!ids2.length)return;
+    any=true;
+    h+='<div class="sec"><div class="sec-label">'+FAV_TYPE_LABEL[type]+'</div><div class="cast-grid">';
+    ids2.forEach(function(id){h+=myCardHtml(type,id);});
+    h+='</div></div>';
+  });
+  if(!any)h+='<div class="result-empty"><div class="result-empty-icon">☆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 ☆ 버튼을 눌러보세요.</div></div>';
+  h+='</div>';
+  mn(h);
+}
+function goMyPage(push){
+  if(push!==false)history.pushState({view:'mypage'},'','#mypage');
+  setNav('mypage');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  if(!CURRENT_USER){
+    mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">👤</div><div style="font-size:0.95rem;margin-bottom:0.4rem">로그인이 필요해요</div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">구글 계정으로 로그인하면 즐겨찾기를 저장할 수 있어요.</div><button class="pf-btn" onclick="loginWithGoogle()">구글로 로그인</button></div></div>');
+    return;
+  }
+  renderMyPage();
 }
 function actorCard(rec){
   var pid=ids(fld(rec,'참여자'))[0]||'';
@@ -1296,7 +1430,7 @@ function showWork(wid,push){
   var genre=workGenre(work);
   var wTags=fld(work,'태그')||[];
   var wTagsRowH=wTags.length?('<div class="result-card-tags" style="margin-top:0.5rem">'+wTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
-  var h='<div class="detail-header"><div class="eyebrow">작품'+(genre?' · '+genre:'')+'</div><div class="detail-title">'+fld(work,'작품명')+'</div>'+(fld(work,'작품명 (영문)')?'<div class="detail-meta"><span>'+fld(work,'작품명 (영문)')+'</span></div>':'')+wTagsRowH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">작품'+(genre?' · '+genre:'')+'</div><div class="detail-title">'+fld(work,'작품명')+favBtnHtml('work',wid)+'</div>'+(fld(work,'작품명 (영문)')?'<div class="detail-meta"><span>'+fld(work,'작품명 (영문)')+'</span></div>':'')+wTagsRowH+'</div>';
   if(shows.length){h+='<div class="sec"><div class="sec-label">공연 이력</div><div class="item-grid">'+shows.map(function(s){
     var p=POSTER[s.id]||'';
     var trid=ids(fld(s,'극단'))[0]||'';
@@ -1556,7 +1690,7 @@ function showShow(sid,push){
   var h='<div class="detail-header"><div class="poster-wrap">'+pH
     +'<div class="poster-info">'
     +'<div class="eyebrow">'+(wid?'<span class="link" data-action="work" data-id="'+wid+'">'+nm(wid)+'</span>':'공연')+'</div>'
-    +'<div class="detail-title">'+fld(show,'공연명')+'</div>'
+    +'<div class="detail-title">'+fld(show,'공연명')+favBtnHtml('show',sid)+'</div>'
     +'<div class="detail-meta">'
     +(trid?'<span>🏢 <span class="link" data-action="troupe" data-id="'+trid+'">'+nm(trid)+'</span></span>':'')
     +(vid?'<span>📍 <span class="link" data-action="venue" data-id="'+vid+'">'+nm(vid)+'</span></span>':'')
@@ -1782,7 +1916,7 @@ function showPerson(pid,push){
   var primaryPhotoUrl=personPhotos.length?personPhotos[0].url:'';
   var stickyPhotoH=primaryPhotoUrl?'<img class="person-sticky-photo" src="'+primaryPhotoUrl+'" alt="'+fld(person,'이름')+'">':'<div class="person-sticky-photo-ph">🎭</div>';
   var stickyH='<div class="person-sticky-header">'+stickyPhotoH
-    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div></div>';
+    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div></div>';
 
   var galleryH='';
   if(personPhotos.length>1){
@@ -1973,7 +2107,7 @@ function showTroupe(tid,push){
   if(tLinks.length){
     tLinksH='<div class="person-links-inline">'+tLinks.map(function(l){return '<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';}).join('')+'</div>';
   }
-  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+galleryH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+favBtnHtml('troupe',tid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+galleryH+'</div>';
   var tFoundedYear=fld(troupe,'창단연도');
   var tRecruiting=fld(troupe,'모집정보');
   var tInfoRows=[];
@@ -2134,7 +2268,7 @@ function showVenue(vid,push){
   if(venuePhotos.length){
     vGalleryH='<div class="mini-gallery">'+venuePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
   }
-  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seatsLabel?'<span>💺 좌석 '+seatsLabel+'</span>':'')+'</div>'+vGalleryH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+favBtnHtml('venue',vid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seatsLabel?'<span>💺 좌석 '+seatsLabel+'</span>':'')+'</div>'+vGalleryH+'</div>';
   var vRentalFee=fld(venue,'대관료');
   var vRentalAvail=fld(venue,'대관가능여부');
   var vContact=fld(venue,'연락처');
@@ -2303,6 +2437,7 @@ function routeFromHash(hash){
   if(h==='#troupes'){goTroupes(false);return;}
   if(h==='#content'){goContent(false);return;}
   if(h==='#dashboard'){goDashboard(false);return;}
+  if(h==='#mypage'){goMyPage(false);return;}
   var m;
   if(m=h.match(/^#show-(.+)$/)){showShow(m[1],false);return;}
   if(m=h.match(/^#person-(.+)$/)){showPerson(m[1],false);return;}
@@ -2317,6 +2452,7 @@ window.addEventListener('popstate',function(){routeFromHash(location.hash);});
 (async function(){
   try{await load();routeFromHash(location.hash);}
   catch(e){$('mn').innerHTML='<div style="color:#e06c6c;padding:2rem">연결 실패: '+e.message+'</div>';}
+  initAuth();
 })();
 </script>
 </body>
