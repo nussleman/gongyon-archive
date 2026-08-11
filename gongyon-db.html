@@ -362,13 +362,13 @@ body.is-home .home-nav-dock{display:block}
 .oath-gate.closing{animation:oathFadeOut .6s ease forwards}
 @keyframes oathFadeOut{to{opacity:0}}
 .oath-box{max-width:560px;text-align:center}
-.oath-text{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.25rem;line-height:2.1;color:var(--accent);letter-spacing:0.02em}
+.oath-text{font-family:'Noto Serif KR',serif;font-weight:300;font-size:1.25rem;line-height:2.1;color:var(--accent);letter-spacing:0.02em;word-break:keep-all;overflow-wrap:normal}
 .oath-char{display:inline-block;opacity:0;filter:blur(3px);transform:translateY(6px);animation:oathRise .6s ease forwards}
 @keyframes oathRise{to{opacity:1;filter:blur(0);transform:translateY(0)}}
 .oath-input-wrap{margin-top:2.4rem;opacity:0;transition:opacity .8s ease}
 .oath-input-wrap.show{opacity:1}
-.oath-input{background:none;border:none;border-bottom:1px solid var(--line);color:var(--text);font-family:'Noto Serif KR',serif;font-size:1.1rem;text-align:center;padding:0.4rem 0.2rem;outline:none;width:220px;letter-spacing:0.1em}
-.oath-input:focus{border-bottom-color:var(--accent)}
+.oath-confirm-btn{background:var(--bg2);border:1px solid var(--accent);border-radius:30px;color:var(--accent);font-family:'Noto Serif KR',serif;font-size:1.05rem;padding:0.7rem 2.2rem;cursor:pointer;transition:all .15s;letter-spacing:0.05em}
+.oath-confirm-btn:hover{background:var(--accent);color:var(--bg)}
 .oath-hint{font-size:0.68rem;color:var(--muted);letter-spacing:0.15em;margin-top:0.8rem;text-transform:uppercase;opacity:0.7}
 
 .lightbox-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:10000;cursor:zoom-out;padding:3rem;box-sizing:border-box}
@@ -440,8 +440,7 @@ body.is-home .home-nav-dock{display:block}
   <div class="oath-box">
     <div class="oath-text" id="oath-text"></div>
     <div class="oath-input-wrap" id="oath-input-wrap">
-      <input type="text" class="oath-input" id="oath-input" autocomplete="off" placeholder="　" onkeydown="if(event.key==='Enter')checkOath()">
-      <div class="oath-hint">'선언합니다'라고 적어주세요</div>
+      <button class="oath-confirm-btn" onclick="confirmOath()">네!! 선언합니다</button>
     </div>
   </div>
 </div>
@@ -539,7 +538,6 @@ var CURRENT_SESSION=null; // access_token 등 실제 세션 (rest() 호출용)
 var FAVORITES_LIST=[]; // [{target_type,target_id},...]
 var FAVORITES_SET=new Set(); // "type:id" 빠른 조회용
 var OATH_PHRASE='나는 천하의 멍텅구리지만 우리들의 정직하고 행복한 공연 생활에 진심으로 임할 것을 엄숙히 선언합니다.';
-var OATH_CONFIRM='선언합니다';
 
 function loginWithGoogle(){
   sbClient.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
@@ -588,15 +586,13 @@ function playOathRitual(){
       var span=document.createElement('span');
       span.className='oath-char';
       span.style.animationDelay=(i*32)+'ms';
-      span.textContent=ch===' '?'\u00A0':ch;
+      span.textContent=ch; // 공백은 그대로 둬야 단어(공백) 단위로만 줄바꿈된다
       textEl.appendChild(span);
     });
     var totalMs=chars.length*32+700;
-    var inputWrap=$('oath-input-wrap'),input=$('oath-input');
-    input.value='';
+    var inputWrap=$('oath-input-wrap');
     setTimeout(function(){
       inputWrap.classList.add('show');
-      input.focus();
     },totalMs);
     window._resolveOath=function(){
       gate.classList.add('closing');
@@ -604,15 +600,9 @@ function playOathRitual(){
     };
   });
 }
-function checkOath(){
-  var input=$('oath-input');
-  if(input.value.trim()===OATH_CONFIRM){
-    markDeclared();
-    if(window._resolveOath)window._resolveOath();
-  }else{
-    input.style.color='#e06c6c';
-    setTimeout(function(){input.style.color='';},500);
-  }
+function confirmOath(){
+  markDeclared();
+  if(window._resolveOath)window._resolveOath();
 }
 
 /* ── 인증 상태에 따라 전체 진입 흐름을 제어 ── */
