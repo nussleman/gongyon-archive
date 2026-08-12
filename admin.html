@@ -195,9 +195,22 @@
   .link-picker-item:hover { background: var(--accent-soft); }
   .dh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
   .dh-label { width: 110px; flex-shrink: 0; color: var(--ink-soft); }
-  .dh-track { flex: 1; background: var(--accent-soft); border-radius: 5px; height: 10px; overflow: hidden; }
-  .dh-fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .dh-track { background: var(--accent-soft); border-radius: 5px; height: 8px; overflow: hidden; }
+  .dh-fill { display: block; height: 100%; border-radius: 5px; }
   .dh-value { width: 48px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .dh-summary-card { display: inline-block; background: var(--accent-soft); border-radius: 10px; padding: 16px 28px; margin-bottom: 24px; }
+  .dh-summary-num { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .dh-summary-label { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .dh-section-title { font-size: 13px; font-weight: 600; margin: 0 0 12px; color: var(--ink); }
+  .dh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .dh-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .dh-card-top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 8px; }
+  .dh-card-pct { font-weight: 700; }
+  .dh-card-sub { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+  .dh-lic-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--accent-soft); margin-bottom: 10px; }
+  .dh-lic-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; }
+  .dh-lic-chip { display: flex; align-items: center; gap: 5px; color: var(--ink-soft); }
+  .dh-lic-dot { width: 8px; height: 8px; border-radius: 50%; }
   .cancel-edit-btn { display: none; margin-left: 8px; }
   .cancel-edit-btn.show { display: inline-block; }
   .edit-badge {
@@ -2725,24 +2738,37 @@ function loadDataHealth() {
   const shows = (cache.showsFull || []).filter(s => s.title);
   const total = shows.length || 1;
   const rows = [
-    ['공연 날짜', shows.filter(s => s.show_date).length],
-    ['극단 연결', shows.filter(s => s.troupe_id).length],
-    ['극장 연결', shows.filter(s => s.venue_id).length],
-    ['라이선스 상태', shows.filter(s => s.is_licensed).length],
+    ['공연 날짜', shows.filter(s => s.show_date).length, '📅'],
+    ['극단 연결', shows.filter(s => s.troupe_id).length, '🏢'],
+    ['극장 연결', shows.filter(s => s.venue_id).length, '📍'],
+    ['라이선스 상태', shows.filter(s => s.is_licensed).length, '📄'],
   ];
   const licCounts = { '창작': 0, '완료': 0, '미확보': 0, '미상': 0 };
   shows.forEach(s => { const v = s.is_licensed; licCounts[v && licCounts.hasOwnProperty(v) ? v : '미상']++; });
   const licColors = { '창작': '#c8a96e', '완료': '#6eb5c8', '미확보': '#d98a6a', '미상': '#ccc' };
-  el.innerHTML = `<p class="sub" style="margin-bottom:14px;">전체 공연 ${shows.length}건 대비</p>`
-    + rows.map(([label, cnt]) => {
-      const pct = Math.round(cnt / total * 100);
-      return `<div class="dh-row"><span class="dh-label">${label}</span><span class="dh-track"><span class="dh-fill" style="width:${pct}%"></span></span><span class="dh-value">${pct}%</span></div>`;
-    }).join('')
-    + `<h3 style="margin:22px 0 10px;font-size:14px;">라이선스 상태 비율</h3>`
-    + Object.keys(licCounts).map(k => {
+  function fillColor(pct) { return pct >= 80 ? '#6ea87a' : pct >= 50 ? '#c8a96e' : '#c26b6b'; }
+  el.innerHTML = `
+    <div class="dh-summary-card"><div class="dh-summary-num">${shows.length}</div><div class="dh-summary-label">전체 공연 건수</div></div>
+    <h3 class="dh-section-title">항목별 입력 완성도</h3>
+    <div class="dh-grid">
+      ${rows.map(([label, cnt, icon]) => {
+        const pct = Math.round(cnt / total * 100);
+        return `<div class="dh-card">
+          <div class="dh-card-top"><span>${icon} ${label}</span><span class="dh-card-pct" style="color:${fillColor(pct)}">${pct}%</span></div>
+          <div class="dh-track"><span class="dh-fill" style="width:${pct}%;background:${fillColor(pct)}"></span></div>
+          <div class="dh-card-sub">${cnt} / ${shows.length}건</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <h3 class="dh-section-title">라이선스 상태 분포</h3>
+    <div class="dh-lic-bar">${Object.keys(licCounts).map(k => {
       const pct = Math.round(licCounts[k] / total * 100);
-      return `<div class="dh-row"><span class="dh-label">${k}</span><span class="dh-track"><span class="dh-fill" style="width:${pct}%;background:${licColors[k]}"></span></span><span class="dh-value">${licCounts[k]}건</span></div>`;
-    }).join('');
+      return pct > 0 ? `<span style="width:${pct}%;background:${licColors[k]}" title="${k} ${licCounts[k]}건"></span>` : '';
+    }).join('')}</div>
+    <div class="dh-lic-legend">${Object.keys(licCounts).map(k =>
+      `<span class="dh-lic-chip"><span class="dh-lic-dot" style="background:${licColors[k]}"></span>${k} <b>${licCounts[k]}</b>건</span>`
+    ).join('')}</div>
+  `;
 }
 window.loadDataHealth = loadDataHealth;
 

@@ -210,6 +210,7 @@ body.is-home .home-nav-dock{display:block}
 
 /* ── 좌측 nav 구분선 (일반 메뉴 / 대시보드 구획) ── */
 .nav-divider{height:1px;background:var(--line);margin:0.7rem 1.4rem}
+.wip-badge{font-size:0.58rem;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:0.1rem 0.4rem;margin-left:0.3rem;vertical-align:middle;opacity:0.75}
 .home-nav-dock .nav-divider{margin:0.5rem 0.6rem}
 
 /* ── 대시보드 ── */
@@ -419,6 +420,9 @@ body.is-home .home-nav-dock{display:block}
 .myinfo-avatar-edit-btn{position:absolute;bottom:0.7rem;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--bg);border:2px solid var(--bg2);font-size:0.62rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .myinfo-avatar-options{display:flex;flex-wrap:wrap;gap:0.3rem;justify-content:center;max-width:320px;margin:0 auto}
 .myinfo-avatar-opt{background:var(--bg3);border:1px solid var(--line);border-radius:6px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.myinfo-role-options{display:flex;flex-wrap:wrap;gap:0.4rem}
+.myinfo-role-opt{background:var(--bg3);border:1px solid var(--line);border-radius:16px;padding:0.3rem 0.8rem;font-size:0.76rem;color:var(--muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.myinfo-role-opt.on{background:rgba(200,169,110,0.15);border-color:var(--accent);color:var(--accent)}
 .myinfo-edit-toggle{background:none;border:1px solid var(--line);border-radius:50%;width:22px;height:22px;color:var(--muted);font-size:0.68rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s}
 .myinfo-edit-toggle:hover{color:var(--accent);border-color:var(--accent)}
 .myinfo-view-row{display:flex;justify-content:space-between;gap:0.8rem;font-size:0.82rem;padding:0.5rem 0;border-bottom:1px solid var(--line)}
@@ -651,10 +655,10 @@ body.is-home .home-nav-dock{display:block}
       <button id="nav-roles" onclick="goRoles()">배역</button>
       <button id="nav-venues" onclick="goVenues()">극장</button>
       <button id="nav-troupes" onclick="goTroupes()">단체</button>
-      <button id="nav-content" onclick="goContent()">콘텐츠</button>
+      <button id="nav-content" onclick="goContent()">콘텐츠 <span class="wip-badge">준비중</span></button>
       <div class="nav-divider"></div>
-      <button id="nav-projects" onclick="goProjectBrowse()">프로젝트</button>
-      <button id="nav-dashboard" onclick="goDashboard()">대시보드</button>
+      <button id="nav-projects" onclick="goProjectBrowse()">프로젝트 <span class="wip-badge">준비중</span></button>
+      <button id="nav-dashboard" onclick="goDashboard()">대시보드 <span class="wip-badge">준비중</span></button>
     </nav>
     <div class="sidebar-credit">오리는 team 오리가 만들고 있어요<br><a href="#terms" onclick="goTerms();return false;">이용약관</a> · <a href="#privacy" onclick="goPrivacy();return false;">개인정보처리방침</a></div>
   </nav>
@@ -668,10 +672,10 @@ body.is-home .home-nav-dock{display:block}
       <button id="hdock-roles" onclick="goRoles()">배역</button>
       <button id="hdock-venues" onclick="goVenues()">극장</button>
       <button id="hdock-troupes" onclick="goTroupes()">단체</button>
-      <button id="hdock-content" onclick="goContent()">콘텐츠</button>
+      <button id="hdock-content" onclick="goContent()">콘텐츠 <span class="wip-badge">준비중</span></button>
       <div class="nav-divider"></div>
-      <button id="hdock-projects" onclick="goProjectBrowse()">프로젝트</button>
-      <button id="hdock-dashboard" onclick="goDashboard()">대시보드</button>
+      <button id="hdock-projects" onclick="goProjectBrowse()">프로젝트 <span class="wip-badge">준비중</span></button>
+      <button id="hdock-dashboard" onclick="goDashboard()">대시보드 <span class="wip-badge">준비중</span></button>
     </nav>
   </div>
 
@@ -706,7 +710,7 @@ body.is-home .home-nav-dock{display:block}
     <div class="edit-modal-sub">잘못된 정보를 봤거나, 새로 추가하고 싶은 게 있으면 알려주세요. 관리자가 확인 후 반영해요.</div>
     <div class="edit-modal-field">
       <label>무엇에 대한 건가요?</label>
-      <select id="edit-target-type">
+      <select id="edit-target-type" onchange="onEditTargetTypeChange()">
         <option value="show">공연</option>
         <option value="work">작품</option>
         <option value="troupe">단체</option>
@@ -715,6 +719,12 @@ body.is-home .home-nav-dock{display:block}
         <option value="role">배역</option>
         <option value="other">기타 / 새로운 항목 추가</option>
       </select>
+    </div>
+    <div class="edit-modal-field" id="edit-target-picker-field">
+      <label>어떤 항목인가요?</label>
+      <input type="text" class="wizard-search" id="edit-target-search" style="margin-bottom:0.4rem" placeholder="이름으로 검색..." oninput="editModalFilterList(this.value)">
+      <div id="edit-target-selected" style="font-size:0.8rem;color:var(--accent);margin-bottom:0.4rem;display:none"></div>
+      <div class="wizard-results" id="edit-target-results"></div>
     </div>
     <div class="edit-modal-field">
       <label>어떤 요청인가요?</label>
@@ -726,7 +736,7 @@ body.is-home .home-nav-dock{display:block}
     </div>
     <div class="edit-modal-field">
       <label>한 줄 요약</label>
-      <input type="text" id="edit-summary" placeholder="예: '이슬 이야기' 공연 날짜가 잘못됐어요">
+      <input type="text" id="edit-summary" placeholder="예: 공연 날짜가 잘못됐어요">
     </div>
     <div class="edit-modal-field">
       <label>자세한 내용 (선택)</label>
@@ -825,8 +835,8 @@ function renderProfileFab(){
 }
 async function loadUserProfile(){
   try{
-    var r=await sbClient.from('user_profiles').select('nickname,person_id,intro,contact,avatar_emoji').eq('id',CURRENT_USER.id).maybeSingle();
-    if(r.data){CURRENT_USER.nickname=r.data.nickname;CURRENT_USER.personId=r.data.person_id;CURRENT_USER.intro=r.data.intro;CURRENT_USER.contact=r.data.contact;CURRENT_USER.avatarEmoji=r.data.avatar_emoji;}
+    var r=await sbClient.from('user_profiles').select('nickname,person_id,intro,contact,avatar_emoji,preferred_roles').eq('id',CURRENT_USER.id).maybeSingle();
+    if(r.data){CURRENT_USER.nickname=r.data.nickname;CURRENT_USER.personId=r.data.person_id;CURRENT_USER.intro=r.data.intro;CURRENT_USER.contact=r.data.contact;CURRENT_USER.avatarEmoji=r.data.avatar_emoji;CURRENT_USER.preferredRoles=r.data.preferred_roles||[];}
   }catch(e){}
 }
 async function loadFavorites(){
@@ -1040,22 +1050,67 @@ function inviteThisPerson(pid){
 
 /* ── 수정요청 모달 ── */
 var _editModalTarget=null; // {type,id} 프리셋 (상세페이지에서 열었을 때)
+var EDIT_TARGET_FIELD={show:'공연명',work:'작품명',troupe:'극단명',venue:'극장명',person:'이름',role:'배역명'};
+function editTargetList(type){
+  if(type==='show')return DB.shows;
+  if(type==='work')return DB.works;
+  if(type==='troupe')return DB.troupes;
+  if(type==='venue')return DB.venues;
+  if(type==='person')return DB.people;
+  if(type==='role')return DB.roles;
+  return [];
+}
+function onEditTargetTypeChange(){
+  _editModalTarget=null;
+  $('edit-target-search').value='';
+  $('edit-target-results').innerHTML='';
+  $('edit-target-selected').style.display='none';
+  var type=$('edit-target-type').value;
+  var pickerField=$('edit-target-picker-field');
+  pickerField.style.display=type==='other'?'none':'block';
+}
+function editModalFilterList(q){
+  var el=$('edit-target-results');if(!el)return;
+  var type=$('edit-target-type').value;
+  var field=EDIT_TARGET_FIELD[type];
+  q=q.trim();
+  if(!q||!field){el.innerHTML='';return;}
+  var matches=editTargetList(type).filter(function(item){var n=fld(item,field);return n&&n.toLowerCase().indexOf(q.toLowerCase())>-1;}).slice(0,8);
+  el.innerHTML=matches.length?matches.map(function(item){return '<div class="wizard-result-item" onclick="editModalSelectTarget(\''+item.id+'\',\''+escHtml(fld(item,field)).replace(/'/g,"\\'")+'\')">'+escHtml(fld(item,field))+'</div>';}).join(''):'<div class="wizard-result-empty">일치하는 항목이 없어요. "기타"로 새로 등록 요청해보세요.</div>';
+}
+function editModalSelectTarget(id,name){
+  _editModalTarget={type:$('edit-target-type').value,id:id};
+  $('edit-target-selected').style.display='block';
+  $('edit-target-selected').textContent='✓ 선택됨: '+name;
+  $('edit-target-results').innerHTML='';
+  $('edit-target-search').value='';
+}
 function openEditModal(targetType,targetId){
   if(!CURRENT_USER){loginWithGoogle();return;}
   _editModalTarget=targetId?{type:targetType,id:targetId}:null;
   $('edit-summary').value='';$('edit-details').value='';$('edit-modal-msg').textContent='';
+  $('edit-target-search').value='';$('edit-target-results').innerHTML='';
   if(targetType)$('edit-target-type').value=targetType;
+  if(targetId&&targetType){
+    $('edit-target-selected').style.display='block';
+    $('edit-target-selected').textContent='✓ 선택됨: '+(nm(targetId)||'');
+  }else{
+    $('edit-target-selected').style.display='none';
+  }
+  $('edit-target-picker-field').style.display=(targetType||$('edit-target-type').value)==='other'?'none':'block';
   $('edit-request-type').value=targetId?'edit':'create';
   $('edit-modal-overlay').classList.add('open');
 }
 function closeEditModal(){$('edit-modal-overlay').classList.remove('open');}
 async function submitEditRequest(){
   var summary=$('edit-summary').value.trim();
+  var targetType=$('edit-target-type').value;
+  if(targetType!=='other'&&!_editModalTarget){$('edit-modal-msg').textContent='어떤 항목인지 검색해서 선택해주세요.';return;}
   if(!summary){$('edit-modal-msg').textContent='한 줄 요약은 꼭 적어주세요.';return;}
   var row={
     user_id:CURRENT_USER.id,
     request_type:$('edit-request-type').value,
-    target_type:$('edit-target-type').value,
+    target_type:targetType,
     target_id:_editModalTarget?_editModalTarget.id:null,
     summary:summary,
     details:$('edit-details').value.trim()||null
@@ -1391,6 +1446,7 @@ function renderMyPageTabContent(){
   else if(tab==='projects')renderMyPageProjects(el);
 }
 var AVATAR_EMOJI_OPTIONS=['🦆','🎭','🎬','🎨','🎤','🎹','🎻','🎺','🥁','🎧','🎪','🎟️','⭐','🌙','☀️','🌈','🔥','🌊','🍀','🌸','🌵','🍄','🦊','🐯','🐰','🐼','🐨','🐸','🐙','🦉','🐧','🦁','🐶','🐱','👻','🤖','👽','🦄','🐲','😎','🥳','🤠','🧚','🧛','🧜','🥷','🕺','💃','🎯','🎲','🧩','🔮','💎','🍕','🍩','☕','🍉','🎈','⚡','❄️','🌻'];
+var PREFERRED_ROLE_OPTIONS=['배우','연출','조연출','무대','미술','안무','음악','운영','조명','소품','메이크업','음향','홍보','의상','제작·기획'];
 window._infoEditMode=false;
 function renderMyPageInfo(el){
   var h='<div class="myinfo-wrap">';
@@ -1422,6 +1478,11 @@ function renderMyPageInfo(el){
     h+='<div class="edit-modal-field"><label>이메일</label><input type="text" value="'+(CURRENT_USER.email||'')+'" disabled></div>';
     h+='<div class="edit-modal-field"><label>자기소개<span class="myinfo-field-note"> · 연결된 사람 페이지에 공개돼요</span></label><textarea id="profile-intro" rows="2" placeholder="어떤 활동을 하는지, 관심사 등을 적어보세요">'+(CURRENT_USER.intro||'')+'</textarea></div>';
     h+='<div class="edit-modal-field"><label>연락처<span class="myinfo-field-note"> · 비공개, 프로젝트 참여 요청시에만 사용</span></label><input type="text" id="profile-contact" value="'+(CURRENT_USER.contact||'').replace(/"/g,'&quot;')+'" placeholder="카카오톡 오픈채팅, 전화번호 등"></div>';
+    h+='<div class="edit-modal-field"><label>관심 있는 역할<span class="myinfo-field-note"> · 여러 개 선택 가능</span></label><div class="myinfo-role-options">'
+      +PREFERRED_ROLE_OPTIONS.map(function(r){
+        var on=(CURRENT_USER.preferredRoles||[]).indexOf(r)>-1;
+        return '<button type="button" class="myinfo-role-opt'+(on?' on':'')+'" data-role="'+r+'" onclick="this.classList.toggle(\'on\')">'+r+'</button>';
+      }).join('')+'</div></div>';
     h+='<button class="pf-btn pf-active" style="width:100%" onclick="saveProfileInfo()">저장</button>';
     h+='<div id="profile-save-msg" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;text-align:center"></div>';
     h+='<div style="text-align:center;margin-top:1.2rem"><span class="danger-link" onclick="deleteMyAccount()">회원 탈퇴</span></div>';
@@ -1430,6 +1491,7 @@ function renderMyPageInfo(el){
     h+='<div class="myinfo-view-row"><span class="myinfo-view-label">이메일</span><span>'+escHtml(CURRENT_USER.email||'')+'</span></div>';
     h+='<div class="myinfo-view-row"><span class="myinfo-view-label">자기소개</span><span>'+escHtml(CURRENT_USER.intro||'설정 안 함')+'</span></div>';
     h+='<div class="myinfo-view-row"><span class="myinfo-view-label">연락처</span><span>'+escHtml(CURRENT_USER.contact||'설정 안 함')+'</span></div>';
+    h+='<div class="myinfo-view-row"><span class="myinfo-view-label">관심 역할</span><span>'+((CURRENT_USER.preferredRoles||[]).map(escHtml).join(', ')||'설정 안 함')+'</span></div>';
   }
   h+='</div>';
 
@@ -1474,9 +1536,10 @@ async function saveProfileInfo(){
   var intro=$('profile-intro').value.trim();
   var contact=$('profile-contact').value.trim();
   var avatarEmoji=_pickedAvatarEmoji!==null?_pickedAvatarEmoji:CURRENT_USER.avatarEmoji;
+  var preferredRoles=Array.prototype.slice.call(document.querySelectorAll('.myinfo-role-opt.on')).map(function(b){return b.dataset.role;});
   try{
-    await sbClient.from('user_profiles').update({nickname:nickname||null,intro:intro||null,contact:contact||null,avatar_emoji:avatarEmoji||null}).eq('id',CURRENT_USER.id);
-    CURRENT_USER.nickname=nickname;CURRENT_USER.intro=intro;CURRENT_USER.contact=contact;CURRENT_USER.avatarEmoji=avatarEmoji;
+    await sbClient.from('user_profiles').update({nickname:nickname||null,intro:intro||null,contact:contact||null,avatar_emoji:avatarEmoji||null,preferred_roles:preferredRoles.length?preferredRoles:null}).eq('id',CURRENT_USER.id);
+    CURRENT_USER.nickname=nickname;CURRENT_USER.intro=intro;CURRENT_USER.contact=contact;CURRENT_USER.avatarEmoji=avatarEmoji;CURRENT_USER.preferredRoles=preferredRoles;
     renderProfileFab();
     window._infoEditMode=false;
     renderMyPageInfo($('mypage-tab-content'));
@@ -3280,10 +3343,7 @@ function showRole(rid,push){
   var roleTags=fld(role,'태그')||[];
   var tagsRowH=roleTags.length?('<div class="result-card-tags" style="margin-top:0.5rem">'+roleTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
   var h='<div class="detail-header"><div class="eyebrow">'+(wid?'<span class="link" data-action="work" data-id="'+wid+'">'+nm(wid)+'</span> · 배역':'배역')+'</div><div class="detail-title">'+fld(role,'배역명')+wishBtnHtml('role',rid)+'</div>'+tagsRowH+'<div class="detail-meta"><span>출연 '+hists.length+'건</span>'+(showIds.length?'<span>공연 '+showIds.length+'개</span>':'')+'</div></div>';
-  var rolePhotos=(fld(role,'사진')||[]).filter(function(p){return p&&p.url;});
-  if(rolePhotos.length){
-    h+='<div class="person-gallery-full"><div class="person-gallery-grid-wide">'+rolePhotos.map(function(p){return '<img src="'+p.url+'" alt="'+fld(role,'배역명')+'">';}).join('')+'</div></div>';
-  }
+  h+=buildPhotoGalleryHtml(fld(role,'사진'),fld(role,'배역명'),false);
   if(hists.length){
     // 공연별로 묶어서 날짜순 정렬
     var byShow={};hists.forEach(function(h){var sid=ids(fld(h,'공연'))[0]||'';if(!sid)return;if(!byShow[sid])byShow[sid]=[];byShow[sid].push(h);});
@@ -3385,6 +3445,7 @@ function showShow(sid,push){
     +(dateLabel?'<span>📅 '+dateLabel+'</span>':'')
     +(licenseLabel?'<span>'+licenseLabel+'</span>':'')
     +'</div>'+outcomeH+'</div></div></div>';
+  h+=buildPhotoGalleryHtml(fld(show,'포스터'),fld(show,'공연명'));
   if(actors.length){
     var sortedActors=actors.slice().sort(function(a,b){var ra=ids(fld(a,'배역'))[0]||'',rb=ids(fld(b,'배역'))[0]||'';var oa=ROLE_ORDER[ra],ob=ROLE_ORDER[rb];if(oa==null&&ob==null)return 0;if(oa==null)return 1;if(ob==null)return -1;return oa-ob;});
     h+='<div class="sec"><div class="sec-label">출연진</div><div class="cast-grid">';
@@ -3782,6 +3843,23 @@ function showPerson(pid,push){
     if(hdr&&spacer)spacer.style.height=hdr.offsetHeight+'px';
   });
 }
+function buildPhotoGalleryHtml(photos,altText,skipFirst){
+  photos=(photos||[]).filter(function(p){return p&&p.url;});
+  if(skipFirst===false){
+    if(!photos.length)return '';
+  }else{
+    if(photos.length<2)return '';
+    photos=photos.slice(1);
+  }
+  var rest=photos;
+  var GALLERY_INITIAL=12;
+  var h='<div class="person-gallery-full"><div class="person-gallery-grid-wide">';
+  rest.forEach(function(p,i){h+='<img src="'+p.url+'" alt="'+escHtml(altText||'')+'"'+(i>=GALLERY_INITIAL?' class="gallery-extra-hidden"':'')+'>';});
+  h+='</div>';
+  if(rest.length>GALLERY_INITIAL)h+='<button class="person-gallery-more-btn" data-hidden-count="'+(rest.length-GALLERY_INITIAL)+'" onclick="togglePersonGalleryWide(this)">+'+(rest.length-GALLERY_INITIAL)+'장 더보기</button>';
+  h+='</div>';
+  return h;
+}
 function togglePersonGalleryWide(btn){
   var grid=btn.previousElementSibling;if(!grid)return;
   var expanded=grid.classList.toggle('gallery-expanded');
@@ -3853,10 +3931,6 @@ function showTroupe(tid,push){
   var memberCnt=Object.keys(memberMap).length;
 
   var troupePhotos=fld(troupe,'사진')||[];
-  var galleryH='';
-  if(troupePhotos.length){
-    galleryH='<div class="mini-gallery">'+troupePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
-  }
   var tStatus=fld(troupe,'운영상태');
   var tRegion=fld(troupe,'활동지역');
   var tLinksH='';
@@ -3864,7 +3938,8 @@ function showTroupe(tid,push){
   if(tLinks.length){
     tLinksH='<div class="person-links-inline">'+tLinks.map(function(l){return '<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';}).join('')+'</div>';
   }
-  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+favBtnHtml('troupe',tid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+galleryH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+favBtnHtml('troupe',tid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+'</div>';
+  h+=buildPhotoGalleryHtml(troupePhotos,fld(troupe,'극단명'),false);
   var tFoundedYear=fld(troupe,'창단연도');
   var tRecruiting=fld(troupe,'모집정보');
   var tInfoRows=[];
@@ -4021,11 +4096,8 @@ function showVenue(vid,push){
   var shows=sortShows(DB.shows.filter(function(s){return ids(fld(s,'극장')).indexOf(vid)>-1;}));
   var seatsLabel=venueSeatsLabel(venue);
   var venuePhotos=fld(venue,'사진')||[];
-  var vGalleryH='';
-  if(venuePhotos.length){
-    vGalleryH='<div class="mini-gallery">'+venuePhotos.map(function(p){return '<img src="'+p.url+'">';}).join('')+'</div>';
-  }
-  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+favBtnHtml('venue',vid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seatsLabel?'<span>💺 좌석 '+seatsLabel+'</span>':'')+'</div>'+vGalleryH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">극장</div><div class="detail-title">'+fld(venue,'극장명')+favBtnHtml('venue',vid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(seatsLabel?'<span>💺 좌석 '+seatsLabel+'</span>':'')+'</div></div>';
+  h+=buildPhotoGalleryHtml(venuePhotos,fld(venue,'극장명'),false);
   var vRentalFee=fld(venue,'대관료');
   var vRentalAvail=fld(venue,'대관가능여부');
   var vContact=fld(venue,'연락처');
