@@ -545,6 +545,12 @@
               <div class="combo-dropdown" id="ddl-role-tag"></div>
             </div>
           </div>
+          <div class="photo-widget">
+            <label>사진</label>
+            <div class="photo-thumbs" id="photos-role"></div>
+            <input type="file" id="upload-role" accept="image/*" multiple>
+            <div class="photo-upload-status" id="upload-status-role"></div>
+          </div>
           <button type="submit" class="btn">배역 저장</button>
           <button type="button" class="btn secondary cancel-edit-btn" id="cancel-role">취소</button>
           <div class="msg" id="msg-role"></div>
@@ -1517,7 +1523,7 @@ window.quickAdd = async function(table, promptText, buildPayload, onCreated) {
 
 // ---------- 사진 위젯 ----------
 // key별로 현재 URL 배열을 들고 있다가, 폼 제출 시 그대로 payload에 실어보낸다.
-let photoState = { work: [], show: [], person: [], participation: [], troupe: [], venue: [] };
+let photoState = { work: [], show: [], person: [], participation: [], troupe: [], venue: [], role: [] };
 
 function renderPhotoThumbs(key) {
   const box = document.getElementById('photos-' + key);
@@ -1537,7 +1543,7 @@ document.querySelector('main').addEventListener('click', (e) => {
   photoState[key].splice(Number(rm.dataset.idx), 1);
   renderPhotoThumbs(key);
 });
-['work','show','person','participation','troupe','venue'].forEach(key => {
+['work','show','person','participation','troupe','venue','role'].forEach(key => {
   document.getElementById('upload-' + key).addEventListener('change', async (e) => {
     const files = [...e.target.files];
     if (!files.length) return;
@@ -2133,6 +2139,7 @@ function renderAllLists() {
 
   const tRole = searchVal('role');
   const roleColumns = [
+    {label:'사진', render: r => thumbHtml(r.photo_urls)},
     {label:'배역명', key:'name', editable:true},
     {label:'작품', key:'work_id', editable:true, editType:'fk', fkEntity:'work',
       render: r => cache.works.find(w=>w.id===r.work_id)?.title || '<span class="warn-badge">⚠ 작품 미지정</span>', sortValue: r => cache.works.find(w=>w.id===r.work_id)?.title || ''},
@@ -2414,7 +2421,7 @@ document.querySelector('main').addEventListener('click', async (e) => {
       troupeRegionPicker.render('troupe-region-chips');
     }
     if (table === 'venues') resetPhotoWidget('venue', row.photo_urls);
-    if (table === 'roles') resetRoleTags(row.tags || []);
+    if (table === 'roles') { resetRoleTags(row.tags || []); resetPhotoWidget('role', row.photo_urls); }
     editState[table] = id;
     setEditMode(formId, table, true);
     moveCardToRow(TABLE_TO_KEY[table], btn.closest('tr'));
@@ -2540,7 +2547,7 @@ function simpleFormHandler(formId, tableName, msgId, photoKey) {
   });
 }
 simpleFormHandler('form-work', 'works', 'msg-work', 'work');
-simpleFormHandler('form-role', 'roles', 'msg-role');
+simpleFormHandler('form-role', 'roles', 'msg-role', 'role');
 simpleFormHandler('form-troupe', 'troupes', 'msg-troupe', 'troupe');
 simpleFormHandler('form-venue', 'venues', 'msg-venue', 'venue');
 simpleFormHandler('form-staffrole', 'staff_roles', 'msg-staffrole');
