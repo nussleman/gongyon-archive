@@ -175,6 +175,23 @@
   }
   .btn:hover { opacity: 0.9; }
   .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
+  .btn.small { margin-top: 0; padding: 4px 10px; font-size: 12px; }
+  .edits-filter-tabs { display: flex; gap: 4px; margin: 10px 0 16px; }
+  .edits-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
+  .edits-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .edits-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .edits-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--line); color: var(--ink-soft); font-weight: 600; font-size: 12px; }
+  .edits-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .edits-table .edits-details { max-width: 260px; white-space: pre-wrap; color: var(--ink-soft); }
+  .edits-table .edits-actions { white-space: nowrap; display: flex; gap: 6px; }
+  .edits-status-pending { color: #b8860b; font-weight: 600; }
+  .edits-status-done { color: #2e7d32; font-weight: 600; }
+  .edits-status-rejected { color: #999; }
+  .dh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
+  .dh-label { width: 110px; flex-shrink: 0; color: var(--ink-soft); }
+  .dh-track { flex: 1; background: var(--accent-soft); border-radius: 5px; height: 10px; overflow: hidden; }
+  .dh-fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .dh-value { width: 48px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .cancel-edit-btn { display: none; margin-left: 8px; }
   .cancel-edit-btn.show { display: inline-block; }
   .edit-badge {
@@ -270,6 +287,7 @@
     </div>
     <div class="nav-section">
       <div class="nav-section-label">기타</div>
+      <button data-tab="datahealth">데이터 현황</button>
       <button data-tab="settings">설정</button>
     </div>
   </nav>
@@ -778,7 +796,13 @@
 
     <section class="tab-panel" id="tab-edits">
       <h2>수정요청</h2>
-      <p class="sub">유저가 사이트에서 보낸 정보 수정·추가·삭제 요청이에요. 여기서 직접 데이터를 바꾸는 게 아니라, 각 탭(공연/작품 등)에서 직접 반영한 뒤 "처리완료"로 표시해주세요.</p>
+      <p class="sub">유저가 사이트에서 보낸 정보 수정·추가·삭제 요청이에요. 표에서 "이동" 누르면 해당 카테고리 탭으로 가서 직접 반영할 수 있어요. 반영 후 처리완료로 표시해주세요.</p>
+      <div class="edits-filter-tabs">
+        <button type="button" class="edits-filter-tab active" data-status="pending" onclick="setEditsFilter('pending')">대기중</button>
+        <button type="button" class="edits-filter-tab" data-status="done" onclick="setEditsFilter('done')">처리완료</button>
+        <button type="button" class="edits-filter-tab" data-status="rejected" onclick="setEditsFilter('rejected')">반려</button>
+        <button type="button" class="edits-filter-tab" data-status="all" onclick="setEditsFilter('all')">전체</button>
+      </div>
       <div id="edits-list">불러오는 중...</div>
     </section>
 
@@ -793,6 +817,12 @@
         <div class="msg" id="msg-admins"></div>
       </div>
       <div id="admins-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-datahealth">
+      <h2>데이터 현황</h2>
+      <p class="sub">공연 데이터가 얼마나 채워져 있는지 보여줘요. 사용자 대시보드에는 안 뜨는, 운영용 지표예요.</p>
+      <div id="datahealth-content">불러오는 중...</div>
     </section>
 
     <section class="tab-panel" id="tab-settings">
@@ -886,16 +916,19 @@ async function ensureAuth() {
 }
 
 // ---------- 탭 전환 ----------
+function switchAdminTab(tab) {
+  document.querySelectorAll('nav button[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('tab-' + tab);
+  if (panel) panel.classList.add('active');
+}
+window.switchAdminTab = switchAdminTab;
 document.getElementById('navTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-tab]');
   if (!btn) return;
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  switchAdminTab(btn.dataset.tab);
 });
-document.querySelector('nav button[data-tab=show]').classList.add('active');
-document.getElementById('tab-show').classList.add('active');
+switchAdminTab('show');
 
 function showMsg(id, ok, text) {
   const el = document.getElementById(id);
@@ -2557,24 +2590,38 @@ window.rejectClaim = rejectClaim;
 // ---------- 수정요청 ----------
 const EDIT_TYPE_LABEL = { show:'공연', work:'작품', troupe:'단체', venue:'극장', person:'사람', role:'배역', other:'기타' };
 const EDIT_REQ_LABEL = { edit:'수정', create:'추가', delete:'삭제' };
+const EDIT_STATUS_LABEL = { pending:'대기중', done:'완료', rejected:'반려' };
+let _editsFilter = 'pending';
+function setEditsFilter(status) {
+  _editsFilter = status;
+  document.querySelectorAll('.edits-filter-tab').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+  loadEdits();
+}
+window.setEditsFilter = setEditsFilter;
 async function loadEdits() {
   const el = document.getElementById('edits-list');
-  const { data, error } = await supabase.from('edit_requests').select('*').eq('status','pending').order('created_at',{ascending:true});
+  let q = supabase.from('edit_requests').select('*').order('created_at', { ascending: false });
+  if (_editsFilter !== 'all') q = q.eq('status', _editsFilter);
+  const { data, error } = await q;
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
-  document.getElementById('badge-edits').classList.toggle('on', !!(data && data.length));
-  if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
-  el.innerHTML = data.map(r => `
-    <div class="card">
-      <div><b>[${EDIT_REQ_LABEL[r.request_type]||r.request_type} · ${EDIT_TYPE_LABEL[r.target_type]||r.target_type}]</b> ${r.summary}</div>
-      ${r.details ? `<div class="sub" style="margin-top:6px; white-space:pre-wrap;">${r.details}</div>` : ''}
-      ${r.target_id ? `<div class="sub" style="margin-top:6px;">대상 id: ${r.target_id}</div>` : ''}
-      <div class="sub" style="margin-top:6px;">${new Date(r.created_at).toLocaleString('ko-KR')}</div>
-      <div style="display:flex; gap:8px; margin-top:10px;">
-        <button type="button" class="btn" onclick="resolveEdit('${r.id}','done')">처리완료</button>
-        <button type="button" class="btn secondary" onclick="resolveEdit('${r.id}','rejected')">반려</button>
-      </div>
-    </div>
-  `).join('');
+  const { data: pendingData } = await supabase.from('edit_requests').select('id').eq('status', 'pending');
+  document.getElementById('badge-edits').classList.toggle('on', !!(pendingData && pendingData.length));
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">해당하는 요청이 없어요.</p>'; return; }
+  el.innerHTML = `<table class="edits-table"><thead><tr><th>구분</th><th>요약</th><th>내용</th><th>날짜</th><th>상태</th><th></th></tr></thead><tbody>`
+    + data.map(r => `
+      <tr>
+        <td>${EDIT_REQ_LABEL[r.request_type] || r.request_type} · ${EDIT_TYPE_LABEL[r.target_type] || r.target_type}</td>
+        <td>${r.summary}</td>
+        <td class="edits-details">${r.details || ''}</td>
+        <td>${new Date(r.created_at).toLocaleDateString('ko-KR')}</td>
+        <td><span class="edits-status-${r.status}">${EDIT_STATUS_LABEL[r.status] || r.status}</span></td>
+        <td class="edits-actions">
+          ${r.target_type !== 'other' ? `<button type="button" class="btn small secondary" onclick="switchAdminTab('${r.target_type}')">이동</button>` : ''}
+          ${r.status === 'pending' ? `<button type="button" class="btn small" onclick="resolveEdit('${r.id}','done')">완료</button><button type="button" class="btn small secondary" onclick="resolveEdit('${r.id}','rejected')">반려</button>` : ''}
+        </td>
+      </tr>
+    `).join('')
+    + `</tbody></table>`;
 }
 async function resolveEdit(id, status) {
   const { error } = await supabase.from('edit_requests').update({ status, reviewed_by: (await supabase.auth.getUser()).data.user.id, reviewed_at: new Date().toISOString() }).eq('id', id);
@@ -2582,6 +2629,25 @@ async function resolveEdit(id, status) {
   loadEdits();
 }
 window.resolveEdit = resolveEdit;
+
+// ---------- 데이터 현황 ----------
+function loadDataHealth() {
+  const el = document.getElementById('datahealth-content');
+  const shows = (cache.showsFull || []).filter(s => s.title);
+  const total = shows.length || 1;
+  const rows = [
+    ['공연 날짜', shows.filter(s => s.show_date).length],
+    ['극단 연결', shows.filter(s => s.troupe_id).length],
+    ['극장 연결', shows.filter(s => s.venue_id).length],
+    ['라이선스 상태', shows.filter(s => s.is_licensed).length],
+  ];
+  el.innerHTML = `<p class="sub" style="margin-bottom:14px;">전체 공연 ${shows.length}건 대비</p>`
+    + rows.map(([label, cnt]) => {
+      const pct = Math.round(cnt / total * 100);
+      return `<div class="dh-row"><span class="dh-label">${label}</span><span class="dh-track"><span class="dh-fill" style="width:${pct}%"></span></span><span class="dh-value">${pct}%</span></div>`;
+    }).join('');
+}
+window.loadDataHealth = loadDataHealth;
 
 // ---------- 관리자 목록 ----------
 async function loadAdmins() {
@@ -2622,6 +2688,7 @@ window.removeAdminEmail = removeAdminEmail;
   await loadClaims();
   await loadEdits();
   await loadAdmins();
+  loadDataHealth();
   renderOptionManager();
 })();
 </script>
