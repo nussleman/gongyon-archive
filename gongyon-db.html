@@ -128,7 +128,18 @@ main{padding:2rem;min-height:100vh;box-sizing:border-box;width:100%;display:bloc
 .home-credit{font-size:0.62rem;color:var(--muted);opacity:0.45;margin-top:0.7rem;letter-spacing:0.02em}
 .home-project-cta{margin-top:1.1rem;background:none;border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:0.5rem 1.1rem;font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;cursor:pointer;transition:all .15s}
 .home-project-cta:hover{background:var(--accent);color:var(--bg)}
-.sidebar-credit{position:absolute;bottom:1rem;left:0;right:0;text-align:center;font-size:0.6rem;color:var(--muted);opacity:0.4;padding:0 0.8rem;letter-spacing:0.02em}
+.sidebar-credit{position:absolute;bottom:1rem;left:0;right:0;text-align:center;font-size:0.6rem;color:var(--muted);opacity:0.4;padding:0 0.8rem;letter-spacing:0.02em;line-height:1.6}
+.sidebar-credit a{color:var(--muted);text-decoration:none}
+.sidebar-credit a:hover{color:var(--accent)}
+.legal-body{max-width:620px;font-size:0.85rem;line-height:1.8;color:var(--text)}
+.legal-body h4{font-family:'Noto Serif KR',serif;font-weight:400;font-size:0.98rem;color:var(--accent);margin:1.8rem 0 0.5rem}
+.legal-body h4:first-child{margin-top:0}
+.legal-body p{color:var(--muted);margin:0}
+.legal-body a{color:var(--accent)}
+.report-copyright-link{font-size:0.72rem;color:var(--muted);opacity:0.55;cursor:pointer;text-decoration:underline}
+.report-copyright-link:hover{opacity:0.9;color:var(--accent)}
+.danger-link{font-size:0.72rem;color:var(--muted);opacity:0.5;cursor:pointer;text-decoration:underline}
+.danger-link:hover{color:#e06c6c;opacity:0.9}
 
 /* ── 홈 전용 플로팅 메뉴 컨트롤러 (좌측, 세로 가운데 정렬, 떠있는 느낌) ── */
 .home-nav-dock{display:none;position:fixed;left:1.3rem;top:50%;transform:translateY(-50%);background:rgba(23,23,26,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:0.55rem;box-shadow:0 14px 44px rgba(0,0,0,0.5);z-index:200}
@@ -371,6 +382,9 @@ body.is-home .home-nav-dock{display:block}
 .pg-item{position:relative}
 .pg-item img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid var(--line);display:block}
 .pg-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.65);color:#fff;border:none;font-size:0.7rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pg-primary-badge{position:absolute;bottom:2px;left:2px;background:var(--accent);color:var(--bg);font-size:0.58rem;font-weight:600;padding:0.1rem 0.35rem;border-radius:4px;z-index:1}
+.pg-primary-btn{position:absolute;bottom:2px;left:2px;width:18px;height:18px;border-radius:4px;background:rgba(0,0,0,0.65);color:#fff;border:none;font-size:0.68rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1}
+.pg-primary-btn:hover{background:var(--accent);color:var(--bg)}
 .person-gallery-more-btn{width:100%;margin-top:0.4rem;background:none;border:1px solid var(--line);border-radius:5px;padding:0.3rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.68rem;cursor:pointer;transition:all .15s}
 .person-gallery-more-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
 .gallery-extra-hidden{display:none}
@@ -410,6 +424,37 @@ body.is-home .home-nav-dock{display:block}
 .edit-modal-field select:focus,.edit-modal-field input:focus,.edit-modal-field textarea:focus{border-color:var(--accent)}
 .edit-modal-field input:disabled{opacity:0.5;cursor:not-allowed}
 .edit-modal-actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.2rem}
+
+/* ── 프로젝트 위저드: 중앙 고정 카드, 내용만 페이드 전환 ── */
+.wizard-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:none;align-items:center;justify-content:center;z-index:5000;padding:1.2rem}
+.wizard-overlay.open{display:flex}
+.wizard-card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:1.8rem;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.wizard-top-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.2rem}
+.wizard-progress{font-size:0.68rem;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase}
+.wizard-close-btn{background:none;border:none;color:var(--muted);font-size:0.9rem;cursor:pointer;padding:0.2rem}
+.wizard-close-btn:hover{color:var(--text)}
+.wizard-content{transition:opacity .2s ease;min-height:160px}
+.wizard-question{font-family:'Noto Serif KR',serif;font-size:1.15rem;color:var(--text);margin-bottom:1.2rem;line-height:1.5}
+.wizard-search{width:100%;background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;padding:0.7rem 0.9rem;box-sizing:border-box;outline:none;margin-bottom:0.8rem}
+.wizard-search:focus{border-color:var(--accent)}
+.wizard-results{max-height:220px;overflow-y:auto;margin-bottom:0.8rem}
+.wizard-result-item{padding:0.6rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.86rem;transition:background .12s}
+.wizard-result-item:hover{background:var(--bg3)}
+.wizard-result-empty{padding:0.6rem 0.8rem;font-size:0.8rem;color:var(--muted)}
+.wizard-role-options{display:flex;flex-direction:column;gap:0.5rem}
+.wizard-role-btn{background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:0.7rem 1rem;text-align:left;font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;color:var(--text);cursor:pointer;transition:all .15s}
+.wizard-role-btn:hover{border-color:var(--accent);color:var(--accent)}
+.wizard-skip-btn{width:100%;background:none;border:1px dashed var(--line);border-radius:8px;padding:0.6rem;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;cursor:pointer;margin-top:0.4rem;transition:all .15s}
+.wizard-skip-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+.wizard-date-row{display:flex;align-items:center;gap:0.6rem}
+.wizard-date-row input{flex:1;background:var(--bg3);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;padding:0.6rem;box-sizing:border-box;outline:none}
+.wizard-date-row span{color:var(--muted)}
+.wizard-done{text-align:center}
+.wizard-done-icon{font-size:2rem;margin-bottom:0.8rem}
+.proj-field-row{display:flex;justify-content:space-between;font-size:0.82rem;padding:0.4rem 0.1rem;border-bottom:1px solid var(--line)}
+.proj-field-row:last-child{border-bottom:none}
+.proj-field-row>span:first-child{color:var(--muted)}
+.proj-field-empty{color:var(--muted);opacity:0.6}
 
 /* ── 프로필/계정 버튼 (우상단 고정) ── */
 .profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--muted);font-family:'Noto Sans KR',sans-serif}
@@ -553,7 +598,7 @@ body.is-home .home-nav-dock{display:block}
       <button id="nav-projects" onclick="goProjectBrowse()">프로젝트</button>
       <button id="nav-dashboard" onclick="goDashboard()">대시보드</button>
     </nav>
-    <div class="sidebar-credit">오리는 태준이 혼자 만들고 있어요</div>
+    <div class="sidebar-credit">오리는 태준이 혼자 만들고 있어요<br><a href="#terms" onclick="goTerms();return false;">이용약관</a> · <a href="#privacy" onclick="goPrivacy();return false;">개인정보처리방침</a></div>
   </nav>
 
   <!-- 홈 화면 전용: 좌측 세로 가운데에 떠있는 메뉴 컨트롤러 (제목이 곧 홈 버튼이라 '홈' 항목은 없음) -->
@@ -634,6 +679,16 @@ body.is-home .home-nav-dock{display:block}
       <button class="pf-btn pf-active" onclick="submitEditRequest()">보내기</button>
     </div>
     <div id="edit-modal-msg" style="font-size:0.76rem;color:var(--muted);margin-top:0.6rem"></div>
+  </div>
+</div>
+
+<div class="wizard-overlay" id="wizard-overlay">
+  <div class="wizard-card">
+    <div class="wizard-top-row">
+      <div class="wizard-progress" id="wizard-progress"></div>
+      <button class="wizard-close-btn" onclick="closeWizard()" title="나중에 계속하기">✕</button>
+    </div>
+    <div class="wizard-content" id="wizard-content"></div>
   </div>
 </div>
 
@@ -983,7 +1038,7 @@ function groupBy(rows,key){
 
 async function load(){
   var raw=await Promise.all([
-    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls,audience_count,is_sold_out,has_rerun,is_licensed'),
+    rest('shows','select=id,title,show_date,end_date,troupe_id,venue_id,work_id,poster_urls,audience_count,is_sold_out,has_rerun,is_licensed&is_hidden=is.false'),
     rest('people','select=id,name,photo_urls,social_links'),
     rest('participation_history','select=id,person_id,show_id,photo_urls'),
     rest('participation_roles','select=participation_id,role_id'),
@@ -1267,6 +1322,7 @@ function renderMyPageInfo(el){
     h+='<div class="edit-modal-field"><label>연락처<span class="myinfo-field-note"> · 비공개, 프로젝트 참여 요청시에만 사용</span></label><input type="text" id="profile-contact" value="'+(CURRENT_USER.contact||'').replace(/"/g,'&quot;')+'" placeholder="카카오톡 오픈채팅, 전화번호 등"></div>';
     h+='<button class="pf-btn pf-active" style="width:100%" onclick="saveProfileInfo()">저장</button>';
     h+='<div id="profile-save-msg" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;text-align:center"></div>';
+    h+='<div style="text-align:center;margin-top:1.2rem"><span class="danger-link" onclick="deleteMyAccount()">회원 탈퇴</span></div>';
   }else{
     h+='<div class="myinfo-view-row"><span class="myinfo-view-label">닉네임</span><span>'+escHtml(CURRENT_USER.nickname||'설정 안 함')+'</span></div>';
     h+='<div class="myinfo-view-row"><span class="myinfo-view-label">이메일</span><span>'+escHtml(CURRENT_USER.email||'')+'</span></div>';
@@ -1282,8 +1338,10 @@ function renderMyPageInfo(el){
     h+='<div class="myinfo-card">';
     h+='<div class="person-side-title" style="text-align:center">내 사진'+(myPhotos.length?' ('+myPhotos.length+')':'')+'</div>';
     if(myPhotos.length){
-      h+='<div class="person-gallery-grid-wide">'+myPhotos.map(function(p){
-        return '<div class="pg-item"><img src="'+p.url+'" alt="사진"><button class="pg-del" onclick="removeMyPhoto(\''+p.url.replace(/'/g,"\\'")+'\')" title="삭제">×</button></div>';
+      h+='<div class="person-gallery-grid-wide">'+myPhotos.map(function(p,i){
+        var esc=p.url.replace(/'/g,"\\'");
+        return '<div class="pg-item">'+(i===0?'<span class="pg-primary-badge">대표</span>':'<button class="pg-primary-btn" onclick="setPrimaryPhoto(\''+esc+'\')" title="대표사진으로 설정">★</button>')
+          +'<img src="'+p.url+'" alt="사진"><button class="pg-del" onclick="removeMyPhoto(\''+esc+'\')" title="삭제">×</button></div>';
       }).join('')+'</div>';
     }
     h+='<input type="file" id="my-photo-upload" accept="image/*" style="display:none" onchange="uploadMyPhoto(this)">'
@@ -1324,6 +1382,17 @@ async function saveProfileInfo(){
     var msg=$('profile-save-msg');
     if(msg)msg.textContent='저장 실패: '+e.message;
   }
+}
+async function deleteMyAccount(){
+  if(!confirm('정말 탈퇴하시겠어요?\n즐겨찾기, 프로젝트, 프로필 연결이 모두 삭제되고 되돌릴 수 없어요.\n(단, 참여이력 데이터 자체는 아카이브 목적상 유지돼요)'))return;
+  if(!confirm('마지막 확인이에요. 정말 탈퇴할까요?'))return;
+  try{
+    var r=await sbClient.rpc('delete_my_account');
+    if(r.error)throw r.error;
+    alert('탈퇴 처리됐어요. 그동안 이용해주셔서 감사해요.');
+    await sbClient.auth.signOut();
+    location.reload();
+  }catch(e){alert('탈퇴 처리 중 문제가 생겼어요: '+e.message);}
 }
 function renderMyPageFavorites(el){
   var byType={};
@@ -1493,6 +1562,23 @@ async function goProject(pid,push){
       var roleLabel=myPosition.position_label||(myPosition.position_type==='actor'?'배우':'참여자');
       h+='<div class="sec"><div class="sec-label">내 역할</div><div style="font-size:0.9rem">'+roleLabel+'</div></div>';
 
+      // 작품/단체/극장/날짜 요약 + 이어서 질문 답하기
+      var missingSteps=[];
+      if(!pr.data.venue_id)missingSteps.push('venue');
+      if(!pr.data.troupe_id)missingSteps.push('troupe');
+      if(!pr.data.work_id)missingSteps.push('work');
+      if(!pr.data.target_start_date)missingSteps.push('date');
+      h+='<div class="sec"><div class="sec-label">프로젝트 기본 정보</div>'
+        +'<div style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.8rem">'
+        +'<div class="proj-field-row"><span>작품</span><span>'+(pr.data.work_id?nm(pr.data.work_id):'<span class="proj-field-empty">미정</span>')+'</span></div>'
+        +'<div class="proj-field-row"><span>단체</span><span>'+(pr.data.troupe_id?nm(pr.data.troupe_id):'<span class="proj-field-empty">미정</span>')+'</span></div>'
+        +'<div class="proj-field-row"><span>극장</span><span>'+(pr.data.venue_id?nm(pr.data.venue_id):'<span class="proj-field-empty">미정</span>')+'</span></div>'
+        +'<div class="proj-field-row"><span>날짜</span><span>'+(pr.data.target_start_date?(pr.data.target_start_date+(pr.data.target_end_date?' ~ '+pr.data.target_end_date:'')):'<span class="proj-field-empty">미정</span>')+'</span></div>'
+        +'</div>'
+        +(missingSteps.length?'<button class="pf-btn pf-active" onclick=\'openProjectWizard("'+pid+'",'+JSON.stringify(missingSteps)+')\'>이어서 질문 답하기 ('+missingSteps.length+'개 남음)</button>'
+          :'<div style="font-size:0.8rem;color:var(--accent)">✓ 기본 정보가 모두 채워졌어요</div>')
+        +'</div>';
+
       h+='<div class="sec"><div class="sec-label">참여 현황</div>';
       if(positions.length){
         h+='<div style="display:flex;flex-direction:column;gap:0.4rem">'+positions.map(function(p){
@@ -1513,8 +1599,6 @@ async function goProject(pid,push){
         +'켜두면 빈 자리가 "프로젝트" 메뉴에 공개돼서 다른 사람이 신청할 수 있어요</label></div>';
 
       h+='<div class="sec"><div class="sec-label">참여 요청</div><div id="join-requests-list">불러오는 중…</div></div>';
-
-      h+='<div class="sec"><div class="sec-label">다음 단계</div><div style="font-size:0.82rem;color:var(--muted)">극장·단체·작품·날짜를 정하는 질문들은 곧 이어질 예정이에요.</div></div>';
     }
     mn(h);
     injectBackBtn('← 마이페이지',function(){goMyPage();});
@@ -1523,6 +1607,90 @@ async function goProject(pid,push){
     mn('<div class="tab-index"><div class="result-empty">프로젝트를 불러올 수 없어요. 접근 권한이 없거나 삭제되었을 수 있어요.</div></div>');
   }
 }
+/* ══ 프로젝트 위저드: 화면 중앙 고정 카드에서 단계별로 이어서 질문 ══ */
+var WIZARD_STEP_LABEL={venue:'극장',troupe:'단체',work:'작품',date:'날짜'};
+var WIZARD_STEP_FIELD={venue:'극장명',troupe:'극단명',work:'작품명'};
+var _wizardPid=null,_wizardSteps=[],_wizardStepIdx=0;
+function openProjectWizard(pid,steps){
+  _wizardPid=pid;_wizardSteps=steps;_wizardStepIdx=0;
+  $('wizard-overlay').classList.add('open');
+  renderWizardStep();
+}
+function closeWizard(){
+  $('wizard-overlay').classList.remove('open');
+  if(_wizardPid)goProject(_wizardPid);
+}
+function wizardNext(){
+  _wizardStepIdx++;
+  if(_wizardStepIdx>=_wizardSteps.length){wizardShowDone();return;}
+  renderWizardStep();
+}
+function wizardShowDone(){
+  var content=$('wizard-content');
+  content.style.opacity=0;
+  setTimeout(function(){
+    content.innerHTML='<div class="wizard-done"><div class="wizard-done-icon">✓</div><div class="wizard-question" style="font-size:1rem">여기까지 답한 내용이 저장됐어요</div>'
+      +'<button class="pf-btn pf-active" style="width:100%" onclick="closeWizard()">확인</button></div>';
+    $('wizard-progress').textContent='완료';
+    content.style.opacity=1;
+  },200);
+}
+function renderWizardStep(){
+  var step=_wizardSteps[_wizardStepIdx];
+  var content=$('wizard-content');
+  content.style.opacity=0;
+  setTimeout(function(){
+    content.innerHTML=buildWizardStepHtml(step);
+    $('wizard-progress').textContent=(_wizardStepIdx+1)+' / '+_wizardSteps.length;
+    content.style.opacity=1;
+    var input=$('wizard-search');if(input)input.focus();
+  },200);
+}
+function buildWizardStepHtml(step){
+  if(step==='date')return wizardDateStepHtml();
+  var label=WIZARD_STEP_LABEL[step];
+  var q=step==='venue'?'극장은 정해졌나요?':step==='troupe'?'함께하는 단체는 정해졌나요?':'올릴 작품은 정해졌나요?';
+  return '<div class="wizard-question">'+q+'</div>'
+    +'<input type="text" class="wizard-search" id="wizard-search" placeholder="'+label+' 이름으로 검색..." oninput="wizardFilterList(this.value)">'
+    +'<div class="wizard-results" id="wizard-results"></div>'
+    +'<button class="wizard-skip-btn" onclick="wizardSkip()">아직 안 정해졌어요, 나중에 할게요</button>';
+}
+function wizardFilterList(q){
+  var el=$('wizard-results');if(!el)return;
+  var step=_wizardSteps[_wizardStepIdx];
+  var list=step==='venue'?DB.venues:step==='troupe'?DB.troupes:DB.works;
+  var nameField=WIZARD_STEP_FIELD[step];
+  q=q.trim();
+  if(!q){el.innerHTML='';return;}
+  var matches=list.filter(function(item){var n=fld(item,nameField);return n&&n.toLowerCase().indexOf(q.toLowerCase())>-1;}).slice(0,8);
+  el.innerHTML=matches.length?matches.map(function(item){return '<div class="wizard-result-item" onclick="wizardSelect(\''+item.id+'\')">'+escHtml(fld(item,nameField))+'</div>';}).join(''):'<div class="wizard-result-empty">일치하는 결과가 없어요</div>';
+}
+async function wizardSelect(id){
+  var step=_wizardSteps[_wizardStepIdx];
+  var field=step+'_id';
+  var patch={};patch[field]=id;
+  try{await sbClient.from('projects').update(patch).eq('id',_wizardPid);}catch(e){alert('저장 실패: '+e.message);}
+  wizardNext();
+}
+async function wizardSkip(){
+  var step=_wizardSteps[_wizardStepIdx];
+  if(step==='date'){wizardNext();return;}
+  try{await sbClient.from('project_positions').insert({project_id:_wizardPid,position_type:'other',position_label:WIZARD_STEP_LABEL[step]+' 미정',status:'open'});}catch(e){}
+  wizardNext();
+}
+function wizardDateStepHtml(){
+  return '<div class="wizard-question">공연 날짜는 정해졌나요?</div>'
+    +'<div class="wizard-date-row"><input type="date" id="wizard-date-start"><span>~</span><input type="date" id="wizard-date-end"></div>'
+    +'<button class="pf-btn pf-active" style="width:100%;margin-top:0.8rem" onclick="wizardSaveDate()">확인</button>'
+    +'<button class="wizard-skip-btn" onclick="wizardSkip()">아직 안 정해졌어요, 나중에 할게요</button>';
+}
+async function wizardSaveDate(){
+  var start=$('wizard-date-start').value,end=$('wizard-date-end').value;
+  if(!start){wizardNext();return;}
+  try{await sbClient.from('projects').update({target_start_date:start,target_end_date:end||null}).eq('id',_wizardPid);}catch(e){alert('저장 실패: '+e.message);}
+  wizardNext();
+}
+
 function showAddPositionForm(pid){
   var el=$('add-position-form');if(!el)return;
   var options=DB.staffRoles.filter(function(s){return fld(s,'Name');});
@@ -1624,7 +1792,7 @@ async function submitProjectRole(pid,memberId,choice){
   }
   try{
     await sbClient.from('project_positions').insert(row);
-    goProject(pid);
+    openProjectWizard(pid,['venue','troupe','work','date']);
   }catch(e){alert('저장 중 문제가 생겼어요: '+e.message);}
 }
 
@@ -1644,6 +1812,57 @@ function goContent(push){
   mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">📰</div>'
     +'<div style="font-size:0.95rem;margin-bottom:0.4rem">콘텐츠 메뉴는 준비 중입니다</div>'
     +'<div style="font-size:0.8rem;color:var(--muted)">공지, 아티클, 큐레이션 등을 담을 공간이 곧 열릴 예정이에요.</div>'
+    +'</div></div>');
+}
+
+/* ══ 법적 문서 (이용약관 / 개인정보처리방침) ══ */
+async function openCopyrightReport(sid){
+  if(!CURRENT_USER){loginWithGoogle();return;}
+  if(!confirm('저작권 문제를 신고하시겠어요?\n신고 즉시 이 공연은 비공개 처리되고, 운영자가 확인해요.'))return;
+  var note=prompt('간단히 설명해주세요 (선택)')||'';
+  try{
+    var r=await sbClient.rpc('report_copyright',{p_show_id:sid,p_note:note});
+    if(r.error)throw r.error;
+    alert('신고 접수됐어요. 해당 공연은 비공개 처리됐습니다.');
+    goShows();
+  }catch(e){alert('신고 처리 중 문제가 생겼어요: '+e.message);}
+}
+function goTerms(push){
+  if(push!==false)history.pushState({view:'terms'},'','#terms');
+  setNav('');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  mn('<div class="tab-index legal-doc"><div class="detail-header"><div class="eyebrow">약관</div><div class="detail-title">이용약관</div><div class="detail-meta"><span>시행일: 2026년 8월</span></div></div>'
+    +'<div class="legal-body">'
+    +'<h4>1. 서비스의 목적과 성격</h4>'
+    +'<p>오리(이하 "서비스")는 아마추어·세미프로 연극/뮤지컬 커뮤니티를 위한 비영리 성격의 공연 아카이브입니다. 비슷한 조건에서 공연을 만든 사례를 모아 누구나 더 쉽게 공연을 준비할 수 있도록 돕는 것을 목적으로 합니다. 서비스는 현재 1인이 운영하고 있으며, 사전 고지 없이 기능이 변경되거나 서비스가 중단될 수 있습니다.</p>'
+    +'<h4>2. 게시된 정보의 성격과 책임 소재</h4>'
+    +'<p>서비스에 게시된 공연·작품·단체 정보는 운영자가 조사하거나 이용자가 제공한 정보를 정리한 것입니다. 실제 공연의 저작권·라이선스 확보 여부는 해당 공연을 기획·제작한 단체 또는 개인의 책임이며, 서비스는 이를 보증하지 않습니다.</p>'
+    +'<h4>3. 저작권 침해 신고 및 처리</h4>'
+    +'<p>본인의 저작권이 침해되었다고 판단되는 게시물을 발견한 경우, 각 공연 상세페이지의 "저작권 문제 신고" 기능을 통해 신고할 수 있습니다. 신고가 접수되면 사실관계 확인 전이라도 해당 게시물은 즉시 비공개 처리되며, 운영자가 이후 내용을 검토합니다. 신고는 로그인한 이용자라면 누구나 할 수 있습니다.</p>'
+    +'<h4>4. 이용자가 등록하는 콘텐츠</h4>'
+    +'<p>이용자가 직접 등록하는 사진, 자기소개 등의 콘텐츠에 대한 책임은 등록한 본인에게 있습니다. 타인의 권리를 침해하거나 부적절한 콘텐츠는 운영자가 사전 통지 없이 삭제할 수 있습니다.</p>'
+    +'<h4>5. 계정</h4>'
+    +'<p>서비스는 구글 계정으로 로그인합니다. 실명 사용 의무는 없으며, 별도의 닉네임을 설정할 수 있습니다.</p>'
+    +'<h4>6. 문의</h4>'
+    +'<p>서비스 관련 문의, 정정 요청, 저작권 관련 사항은 <a href="mailto:gksxowns@gmail.com">gksxowns@gmail.com</a>으로 연락 주세요.</p>'
+    +'</div></div>');
+}
+function goPrivacy(push){
+  if(push!==false)history.pushState({view:'privacy'},'','#privacy');
+  setNav('');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  mn('<div class="tab-index legal-doc"><div class="detail-header"><div class="eyebrow">약관</div><div class="detail-title">개인정보처리방침</div><div class="detail-meta"><span>시행일: 2026년 8월</span></div></div>'
+    +'<div class="legal-body">'
+    +'<h4>1. 수집하는 개인정보 항목</h4>'
+    +'<p>구글 로그인을 통해 이메일 주소를 수집합니다. 그 외 닉네임, 자기소개, 연락처, 프로필 사진은 이용자가 마이페이지에서 직접 입력할 때만 수집되며, 모두 선택 항목입니다.</p>'
+    +'<h4>2. 수집 목적</h4>'
+    +'<p>로그인 및 본인 확인, 즐겨찾기·위시리스트 등 개인화 기능 제공, 공연 프로젝트 협업 기능(연락처는 참여 요청이 승인된 경우에 한해 상대방에게 노출될 수 있음)을 위해 사용합니다.</p>'
+    +'<h4>3. 보관 및 파기</h4>'
+    +'<p>회원 탈퇴 시 계정 정보(이메일, 닉네임, 자기소개, 연락처, 즐겨찾기, 프로젝트 등)는 즉시 삭제됩니다. 단, 이용자가 사람(참여자) 레코드에 연결한 경우, 그 사람의 공연 참여이력 자체는 서비스의 아카이브 목적상 계정 삭제 후에도 유지되며 계정과의 연결만 해제됩니다.</p>'
+    +'<h4>4. 제3자 제공</h4>'
+    +'<p>수집한 개인정보를 외부에 제공하지 않습니다. 데이터는 Supabase(데이터베이스·인증), Google(로그인)을 통해 처리됩니다.</p>'
+    +'<h4>5. 이용자의 권리</h4>'
+    +'<p>마이페이지 &gt; 내 정보에서 언제든 본인 정보를 열람·수정할 수 있고, 같은 곳에서 회원 탈퇴(삭제 요청)를 할 수 있습니다.</p>'
+    +'<h4>6. 문의</h4>'
+    +'<p>개인정보 관련 문의는 <a href="mailto:gksxowns@gmail.com">gksxowns@gmail.com</a>으로 연락 주세요.</p>'
     +'</div></div>');
 }
 
@@ -2472,6 +2691,8 @@ function showShow(sid,push){
     h+='</div></div>';
   }
 
+  h+='<div style="text-align:center;margin-top:2rem"><span class="report-copyright-link" onclick="openCopyrightReport(\''+sid+'\')">이 공연에 저작권 문제가 있나요? 신고하기</span></div>';
+
   mn(h);
   injectBackBtn('← 공연',function(){goShows();});
 }
@@ -2668,16 +2889,17 @@ function showPerson(pid,push){
     +'<span id="claim-widget" style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"></span></div></div>';
 
   var isMyProfile=CURRENT_USER&&CURRENT_USER.personId===pid;
+  var nonPrimaryPhotos=personPhotos.slice(1); // 첫번째(대표사진)는 고정헤더에 이미 나오므로 목록에서 제외
   var galleryFullH='';
-  if(personPhotos.length){
+  if(nonPrimaryPhotos.length){
     var GALLERY_INITIAL=12;
     galleryFullH='<div class="person-gallery-full"><div class="person-gallery-grid-wide">';
-    personPhotos.forEach(function(p,i){
+    nonPrimaryPhotos.forEach(function(p,i){
       galleryFullH+='<img src="'+p.url+'" alt="'+fld(person,'이름')+'"'+(i>=GALLERY_INITIAL?' class="gallery-extra-hidden"':'')+'>';
     });
     galleryFullH+='</div>';
-    if(personPhotos.length>GALLERY_INITIAL){
-      galleryFullH+='<button class="person-gallery-more-btn" data-hidden-count="'+(personPhotos.length-GALLERY_INITIAL)+'" onclick="togglePersonGalleryWide(this)">+'+(personPhotos.length-GALLERY_INITIAL)+'장 더보기</button>';
+    if(nonPrimaryPhotos.length>GALLERY_INITIAL){
+      galleryFullH+='<button class="person-gallery-more-btn" data-hidden-count="'+(nonPrimaryPhotos.length-GALLERY_INITIAL)+'" onclick="togglePersonGalleryWide(this)">+'+(nonPrimaryPhotos.length-GALLERY_INITIAL)+'장 더보기</button>';
     }
     galleryFullH+='</div>';
   }
@@ -2864,6 +3086,13 @@ async function removeMyPhoto(url){
     if(r.error)throw r.error;
     renderMyPageInfo($('mypage-tab-content'));
   }catch(e){alert('삭제 실패: '+e.message);}
+}
+async function setPrimaryPhoto(url){
+  try{
+    var r=await sbClient.rpc('set_primary_person_photo',{photo_url:url});
+    if(r.error)throw r.error;
+    renderMyPageInfo($('mypage-tab-content'));
+  }catch(e){alert('설정 실패: '+e.message);}
 }
 
 function showTroupe(tid,push){
@@ -3231,6 +3460,8 @@ function routeFromHash(hash){
   if(h==='#dashboard'){goDashboard(false);return;}
   if(h==='#mypage'){goMyPage(false);return;}
   if(h==='#projects'){goProjectBrowse(false);return;}
+  if(h==='#terms'){goTerms(false);return;}
+  if(h==='#privacy'){goPrivacy(false);return;}
   var m;
   if(m=h.match(/^#show-(.+)$/)){showShow(m[1],false);return;}
   if(m=h.match(/^#person-(.+)$/)){showPerson(m[1],false);return;}

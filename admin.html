@@ -2059,6 +2059,8 @@ function renderAllLists() {
     {label:'관객수', key:'audience_count', editable:true, editType:'number'},
     {label:'매진', key:'is_sold_out', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'매진'},{value:'false',label:'미매진'}], render: r => r.is_sold_out==null?'':(r.is_sold_out?'매진':'미매진')},
     {label:'재공연', key:'has_rerun', editable:true, editType:'select', editOptions:[{value:'',label:'(없음)'},{value:'true',label:'있음'},{value:'false',label:'없음'}], render: r => r.has_rerun==null?'':(r.has_rerun?'있음':'없음')},
+    {label:'숨김', key:'is_hidden', editable:true, editType:'select', editOptions:[{value:'false',label:'공개'},{value:'true',label:'숨김'}],
+      render: r => r.is_hidden ? '<span class="warn-badge">⚠ 숨김(저작권 신고 등)</span>' : ''},
   ];
   renderColumnFilterBar('qf-show', 'shows', showColumns, cache.showsFull);
   renderTable('list-show', applyColumnFilters('shows', showColumns, cache.showsFull).filter(r => matches(tShow, r.title,
