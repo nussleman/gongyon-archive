@@ -187,6 +187,12 @@
   .edits-status-pending { color: #b8860b; font-weight: 600; }
   .edits-status-done { color: #2e7d32; font-weight: 600; }
   .edits-status-rejected { color: #999; }
+  .unlinked-chip { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 12px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
+  .unlinked-chip:hover { opacity: 0.8; }
+  .link-picker-input { width: 180px; padding: 4px 8px; font-size: 12px; border: 1px solid var(--line); border-radius: 5px; }
+  .link-picker-results { position: relative; margin-top: 4px; max-height: 160px; overflow-y: auto; }
+  .link-picker-item { padding: 5px 8px; font-size: 12.5px; cursor: pointer; border-radius: 4px; }
+  .link-picker-item:hover { background: var(--accent-soft); }
   .dh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; }
   .dh-label { width: 110px; flex-shrink: 0; color: var(--ink-soft); }
   .dh-track { flex: 1; background: var(--accent-soft); border-radius: 5px; height: 10px; overflow: hidden; }
@@ -2661,12 +2667,15 @@ async function loadUsers() {
   const { data, error } = await supabase.rpc('list_all_users');
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
   if (!data || !data.length) { el.innerHTML = '<p class="sub">가입한 유저가 없어요.</p>'; return; }
+  window._usersData = data;
   el.innerHTML = `<table class="edits-table"><thead><tr><th>이메일</th><th>닉네임</th><th>연결된 사람</th><th>관리자</th><th>가입일</th></tr></thead><tbody>`
     + data.map(u => `
       <tr>
         <td>${u.email || ''}</td>
         <td>${u.nickname || ''}</td>
-        <td>${u.person_name || '<span class="sub">미연결</span>'}</td>
+        <td id="user-link-${u.user_id}">${u.person_name
+          ? escHtmlAdmin(u.person_name)
+          : `<span class="unlinked-chip" onclick="openLinkPicker('${u.user_id}')">미연결 · 연결하기</span>`}</td>
         <td>${u.is_admin ? '✓' : ''}</td>
         <td>${new Date(u.created_at).toLocaleDateString('ko-KR')}</td>
       </tr>
@@ -2674,6 +2683,34 @@ async function loadUsers() {
     + `</tbody></table>`;
 }
 window.loadUsers = loadUsers;
+function escHtmlAdmin(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function openLinkPicker(userId) {
+  const cell = document.getElementById('user-link-' + userId);
+  if (!cell) return;
+  cell.innerHTML = `<input type="text" class="link-picker-input" placeholder="사람 이름 검색..." oninput="filterLinkPicker('${userId}', this.value)">
+    <div class="link-picker-results" id="link-picker-results-${userId}"></div>`;
+  document.querySelector(`#user-link-${userId} input`).focus();
+}
+function filterLinkPicker(userId, q) {
+  const el = document.getElementById('link-picker-results-' + userId);
+  if (!el) return;
+  q = q.trim();
+  if (!q) { el.innerHTML = ''; return; }
+  const matches = (cache.people || []).filter(p => p.name && p.name.includes(q)).slice(0, 8);
+  el.innerHTML = matches.length
+    ? matches.map(p => `<div class="link-picker-item" onclick="confirmLinkUser('${userId}','${p.id}')">${escHtmlAdmin(p.name)}</div>`).join('')
+    : `<div class="sub">일치하는 사람이 없어요.</div>`;
+}
+async function confirmLinkUser(userId, personId) {
+  const { error } = await supabase.rpc('admin_link_user_person', { p_user_id: userId, p_person_id: personId });
+  if (error) { alert('연결 실패: ' + error.message); return; }
+  loadUsers();
+}
+window.openLinkPicker = openLinkPicker;
+window.filterLinkPicker = filterLinkPicker;
+window.confirmLinkUser = confirmLinkUser;
 
 // ---------- 데이터 현황 ----------
 function loadDataHealth() {
@@ -2686,10 +2723,18 @@ function loadDataHealth() {
     ['극장 연결', shows.filter(s => s.venue_id).length],
     ['라이선스 상태', shows.filter(s => s.is_licensed).length],
   ];
+  const licCounts = { '창작': 0, '완료': 0, '미확보': 0, '미상': 0 };
+  shows.forEach(s => { const v = s.is_licensed; licCounts[v && licCounts.hasOwnProperty(v) ? v : '미상']++; });
+  const licColors = { '창작': '#c8a96e', '완료': '#6eb5c8', '미확보': '#d98a6a', '미상': '#ccc' };
   el.innerHTML = `<p class="sub" style="margin-bottom:14px;">전체 공연 ${shows.length}건 대비</p>`
     + rows.map(([label, cnt]) => {
       const pct = Math.round(cnt / total * 100);
       return `<div class="dh-row"><span class="dh-label">${label}</span><span class="dh-track"><span class="dh-fill" style="width:${pct}%"></span></span><span class="dh-value">${pct}%</span></div>`;
+    }).join('')
+    + `<h3 style="margin:22px 0 10px;font-size:14px;">라이선스 상태 비율</h3>`
+    + Object.keys(licCounts).map(k => {
+      const pct = Math.round(licCounts[k] / total * 100);
+      return `<div class="dh-row"><span class="dh-label">${k}</span><span class="dh-track"><span class="dh-fill" style="width:${pct}%;background:${licColors[k]}"></span></span><span class="dh-value">${licCounts[k]}건</span></div>`;
     }).join('');
 }
 window.loadDataHealth = loadDataHealth;
