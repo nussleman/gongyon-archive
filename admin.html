@@ -177,8 +177,8 @@
   .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
   .btn.small { margin-top: 0; padding: 4px 10px; font-size: 12px; }
   .edits-filter-tabs { display: flex; gap: 4px; margin: 10px 0 16px; }
-  .edits-filter-tab, .claims-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
-  .edits-filter-tab.active, .claims-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .edits-filter-tab, .claims-filter-tab, .inquiries-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
+  .edits-filter-tab.active, .claims-filter-tab.active, .inquiries-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .edits-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .edits-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--line); color: var(--ink-soft); font-weight: 600; font-size: 12px; }
   .edits-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -302,6 +302,7 @@
       <button data-tab="person">사람</button>
       <button data-tab="claims">클레임 승인 <span class="nav-badge" id="badge-claims"></span></button>
       <button data-tab="edits">수정요청 <span class="nav-badge" id="badge-edits"></span></button>
+      <button data-tab="inquiries">라이선스 문의 <span class="nav-badge" id="badge-inquiries"></span></button>
       <button data-tab="users">유저 목록</button>
       <button data-tab="admins">관리자 목록</button>
     </div>
@@ -836,6 +837,18 @@
         <button type="button" class="edits-filter-tab" data-status="all" onclick="setEditsFilter('all')">전체</button>
       </div>
       <div id="edits-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-inquiries">
+      <h2>라이선스 문의</h2>
+      <p class="sub">유저가 공연 상세페이지에서 보낸 라이선스 관련 문의예요.</p>
+      <div class="edits-filter-tabs">
+        <button type="button" class="inquiries-filter-tab active" data-status="new" onclick="setInquiriesFilter('new')">새 문의</button>
+        <button type="button" class="inquiries-filter-tab" data-status="answered" onclick="setInquiriesFilter('answered')">답변완료</button>
+        <button type="button" class="inquiries-filter-tab" data-status="closed" onclick="setInquiriesFilter('closed')">종료</button>
+        <button type="button" class="inquiries-filter-tab" data-status="all" onclick="setInquiriesFilter('all')">전체</button>
+      </div>
+      <div id="inquiries-list">불러오는 중...</div>
     </section>
 
     <section class="tab-panel" id="tab-users">
@@ -2688,7 +2701,7 @@ async function loadUsers() {
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
   if (!data || !data.length) { el.innerHTML = '<p class="sub">가입한 유저가 없어요.</p>'; return; }
   window._usersData = data;
-  el.innerHTML = `<table class="edits-table"><thead><tr><th>이메일</th><th>닉네임</th><th>연결된 사람</th><th>관리자</th><th>가입일</th></tr></thead><tbody>`
+  el.innerHTML = `<table class="edits-table"><thead><tr><th>이메일</th><th>닉네임</th><th>연결된 사람</th><th>현재 역할</th><th>관리자</th><th>가입일</th></tr></thead><tbody>`
     + data.map(u => `
       <tr>
         <td>${u.email || ''}</td>
@@ -2696,6 +2709,7 @@ async function loadUsers() {
         <td id="user-link-${u.user_id}">${u.person_name
           ? escHtmlAdmin(u.person_name)
           : `<span class="unlinked-chip" onclick="openLinkPicker('${u.user_id}')">미연결 · 연결하기</span>`}</td>
+        <td>${(u.preferred_roles || []).map(escHtmlAdmin).join(', ') || '<span class="sub">-</span>'}</td>
         <td>${u.is_admin ? '✓' : ''}</td>
         <td>${new Date(u.created_at).toLocaleDateString('ko-KR')}</td>
       </tr>
@@ -2703,6 +2717,50 @@ async function loadUsers() {
     + `</tbody></table>`;
 }
 window.loadUsers = loadUsers;
+
+// ---------- 라이선스 문의 ----------
+const INQUIRY_STATUS_LABEL = { new: '새 문의', answered: '답변완료', closed: '종료' };
+let _inquiriesFilter = 'new';
+function setInquiriesFilter(status) {
+  _inquiriesFilter = status;
+  document.querySelectorAll('.inquiries-filter-tab').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+  loadInquiries();
+}
+window.setInquiriesFilter = setInquiriesFilter;
+async function loadInquiries() {
+  const el = document.getElementById('inquiries-list');
+  const { data, error } = await supabase.rpc('list_license_inquiries', { p_status: _inquiriesFilter });
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  const { data: newData } = await supabase.rpc('list_license_inquiries', { p_status: 'new' });
+  document.getElementById('badge-inquiries').classList.toggle('on', !!(newData && newData.length));
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">해당하는 문의가 없어요.</p>'; return; }
+  el.innerHTML = data.map(q => `
+    <div class="card">
+      <div><b>${q.show_title || q.work_title || '(일반 문의)'}</b> <span class="edits-status-${q.status === 'answered' ? 'done' : q.status === 'new' ? 'pending' : 'rejected'}">[${INQUIRY_STATUS_LABEL[q.status] || q.status}]</span></div>
+      <div class="sub" style="margin-top:6px;">${q.requester_nickname || q.requester_email} · ${new Date(q.created_at).toLocaleString('ko-KR')}${q.contact ? ' · 연락처: ' + q.contact : ''}</div>
+      <div style="margin-top:8px; white-space:pre-wrap;">${q.message || ''}</div>
+      ${q.admin_note ? `<div class="sub" style="margin-top:6px;">메모: ${q.admin_note}</div>` : ''}
+      ${q.status !== 'closed' ? `
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button type="button" class="btn small" onclick="answerInquiry('${q.id}')">답변완료로 표시</button>
+        <button type="button" class="btn small secondary" onclick="closeInquiry('${q.id}')">종료</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+async function answerInquiry(id) {
+  const note = prompt('안내한 내용을 메모로 남겨두시겠어요? (선택)') || null;
+  const { error } = await supabase.rpc('resolve_license_inquiry', { p_id: id, p_status: 'answered', p_admin_note: note });
+  if (error) { alert('처리 실패: ' + error.message); return; }
+  loadInquiries();
+}
+async function closeInquiry(id) {
+  const { error } = await supabase.rpc('resolve_license_inquiry', { p_id: id, p_status: 'closed', p_admin_note: null });
+  if (error) { alert('처리 실패: ' + error.message); return; }
+  loadInquiries();
+}
+window.answerInquiry = answerInquiry;
+window.closeInquiry = closeInquiry;
 function escHtmlAdmin(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -2810,6 +2868,7 @@ window.removeAdminEmail = removeAdminEmail;
   await loadSettings();
   await loadClaims();
   await loadEdits();
+  await loadInquiries();
   await loadAdmins();
   loadUsers();
   loadDataHealth();
