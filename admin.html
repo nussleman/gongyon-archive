@@ -822,7 +822,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://lezwarruqgccnecrmpga.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlendhcnJ1cWdjY25lY3JtcGdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4ODEzNjAsImV4cCI6MjEwMDQ1NzM2MH0.ERJBOwjc41Z0lzz8ocMqVeyqfXKZ3RHY3jZHCOCqMXk';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce' } });
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', storageKey: 'oridb-admin-auth' } });
 
 const authStatusEl = document.getElementById('authStatus');
 
