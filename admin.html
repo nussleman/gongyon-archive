@@ -177,8 +177,8 @@
   .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
   .btn.small { margin-top: 0; padding: 4px 10px; font-size: 12px; }
   .edits-filter-tabs { display: flex; gap: 4px; margin: 10px 0 16px; }
-  .edits-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
-  .edits-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .edits-filter-tab, .claims-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
+  .edits-filter-tab.active, .claims-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .edits-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .edits-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--line); color: var(--ink-soft); font-weight: 600; font-size: 12px; }
   .edits-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -792,6 +792,12 @@
     <section class="tab-panel" id="tab-claims">
       <h2>클레임 승인</h2>
       <p class="sub">유저가 "이거 나예요"로 요청한 사람(people) 레코드 연결이에요. 자동승인은 없고, 여기서 직접 승인/거절해야 반영돼요.</p>
+      <div class="edits-filter-tabs">
+        <button type="button" class="claims-filter-tab active" data-status="pending" onclick="setClaimsFilter('pending')">대기중</button>
+        <button type="button" class="claims-filter-tab" data-status="approved" onclick="setClaimsFilter('approved')">승인됨</button>
+        <button type="button" class="claims-filter-tab" data-status="rejected" onclick="setClaimsFilter('rejected')">거절됨</button>
+        <button type="button" class="claims-filter-tab" data-status="all" onclick="setClaimsFilter('all')">전체</button>
+      </div>
       <div id="claims-list">불러오는 중...</div>
     </section>
 
@@ -2564,22 +2570,32 @@ document.getElementById('setting-show-unlicensed').addEventListener('change', as
 });
 
 // ---------- 클레임 승인 ----------
+const CLAIM_STATUS_LABEL = { pending: '대기중', approved: '승인됨', rejected: '거절됨' };
+let _claimsFilter = 'pending';
+function setClaimsFilter(status) {
+  _claimsFilter = status;
+  document.querySelectorAll('.claims-filter-tab').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+  loadClaims();
+}
+window.setClaimsFilter = setClaimsFilter;
 async function loadClaims() {
   const el = document.getElementById('claims-list');
-  const { data, error } = await supabase.rpc('list_pending_claims');
+  const { data, error } = await supabase.rpc('list_claims', { p_status: _claimsFilter });
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
-  document.getElementById('badge-claims').classList.toggle('on', !!(data && data.length));
-  if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
+  const { data: pendingData } = await supabase.rpc('list_claims', { p_status: 'pending' });
+  document.getElementById('badge-claims').classList.toggle('on', !!(pendingData && pendingData.length));
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">해당하는 요청이 없어요.</p>'; return; }
   el.innerHTML = data.map(c => `
     <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
       <div>
-        <b>${c.person_name}</b> 님으로 연결 요청
-        <div class="sub">요청자: ${c.requester_email} · ${new Date(c.created_at).toLocaleString('ko-KR')}</div>
+        <b>${c.person_name}</b> 님으로 연결 요청 <span class="edits-status-${c.status === 'approved' ? 'done' : c.status}">[${CLAIM_STATUS_LABEL[c.status] || c.status}]</span>
+        <div class="sub">요청자: ${c.requester_email} · 요청 ${new Date(c.created_at).toLocaleString('ko-KR')}${c.reviewed_at ? ' · 처리 ' + new Date(c.reviewed_at).toLocaleString('ko-KR') : ''}</div>
       </div>
+      ${c.status === 'pending' ? `
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button type="button" class="btn" onclick="approveClaim('${c.claim_id}')">승인</button>
         <button type="button" class="btn secondary" onclick="rejectClaim('${c.claim_id}')">거절</button>
-      </div>
+      </div>` : ''}
     </div>
   `).join('');
 }
