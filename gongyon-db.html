@@ -364,7 +364,18 @@ body.is-home .home-nav-dock{display:block}
 .budget-table input{width:100%;background:none;border:1px solid transparent;border-radius:4px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.82rem;padding:0.3rem 0.4rem;box-sizing:border-box}
 .budget-table input:hover{border-color:var(--line)}
 .budget-table input:focus{outline:none;border-color:var(--accent);background:var(--bg3)}
+.budget-summary-strip{display:flex;gap:1.5rem;justify-content:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1rem;margin-bottom:1.6rem;font-size:0.85rem;color:var(--muted)}
+.budget-summary-strip b{color:var(--accent);font-size:1rem;margin-left:0.3rem}
 .proj-member-row-empty{color:var(--muted)}
+.proj-slot-label{color:var(--text);font-weight:500}
+.proj-slot-meta{color:var(--muted);font-size:0.72rem;margin-left:0.5rem}
+.proj-staff-subgroup{font-size:0.64rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin:0.9rem 0 0.4rem;opacity:0.85}
+.proj-staff-subgroup:first-child{margin-top:0}
+.invite-candidate-row{display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.6rem;border-radius:6px}
+.invite-candidate-row:hover{background:var(--bg3)}
+.invite-unjoined-tag{color:var(--muted);font-size:0.7rem;margin-left:auto}
+.proj-toggle-row{display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem}
+.proj-toggle-row:last-child{margin-bottom:0}
 .venue-cand-selected{border-color:var(--accent) !important}
 .proj-request-row{display:flex;justify-content:space-between;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;background:var(--bg2);border-left:3px solid var(--accent);border-radius:6px;margin-bottom:0.4rem;flex-wrap:wrap}
 .status-chip{display:inline-block;background:var(--bg3);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:0.25rem 0.8rem;font-size:0.76rem}
@@ -1741,12 +1752,27 @@ function renderProjectTabContent(){
   else if(tab==='requests')renderProjectRequests(el);
 }
 async function updateProjectStatus(pid,status){
-  try{await sbClient.from('projects').update({status:status}).eq('id',pid);window._projectCtx.pr.status=status;renderProjectOverview($('project-tab-content'));}
+  var ctx=window._projectCtx;
+  if(status==='upcoming'&&!ctx.pr.published_show_id){
+    if(!confirm('상태를 "공연 예정"으로 바꾸면, 지금까지 채운 정보(작품·단체·극장·날짜·구성원)로 공연 데이터가 자동으로 만들어져요.\n계속할까요?')){
+      renderProjectOverview($('project-tab-content'));return;
+    }
+    try{
+      await sbClient.from('projects').update({status:status}).eq('id',pid);
+      var r=await sbClient.rpc('publish_project_as_show',{p_project_id:pid});
+      if(r.error)throw r.error;
+      ctx.pr.status=status;ctx.pr.published_show_id=r.data;
+      alert('공연 데이터가 만들어졌어요!');
+      renderProjectOverview($('project-tab-content'));
+    }catch(e){alert('공연 데이터 생성 중 문제가 생겼어요: '+e.message);}
+    return;
+  }
+  try{await sbClient.from('projects').update({status:status}).eq('id',pid);ctx.pr.status=status;renderProjectOverview($('project-tab-content'));}
   catch(e){alert('상태 변경 실패: '+e.message);}
 }
 var PROJECT_STATUS_CHIP_CLASS={planning:'',upcoming:'status-chip-upcoming',running:'status-chip-running',completed:'status-chip-completed',cancelled:'status-chip-cancelled'};
 function renderProjectOverview(el){
-  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr,members=ctx.members;
+  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr;
   var h='<div class="person-overview-grid">';
   var chipClass=PROJECT_STATUS_CHIP_CLASS[pr.status]||'';
   h+='<div class="person-side-card"><div class="person-side-title">상태</div>'
@@ -1755,23 +1781,30 @@ function renderProjectOverview(el){
       +Object.keys(PROJECT_STATUS_LABEL).map(function(k){return '<option value="'+k+'"'+(pr.status===k?' selected':'')+'>'+PROJECT_STATUS_LABEL[k]+'</option>';}).join('')
       +'</select>':'')
     +(pr.is_licensed?'<div style="margin-top:0.6rem"><span class="status-chip'+(pr.is_licensed==='미확보'?' status-chip-cancelled':'')+'">라이선스 '+pr.is_licensed+'</span></div>':'')
+    +(pr.published_show_id?'<div style="margin-top:0.6rem"><span class="link" data-action="show" data-id="'+pr.published_show_id+'">공연 페이지 보기 →</span></div>':'')
     +'</div>';
-  h+='<div class="person-side-card"><div class="person-side-title">구성원</div><div style="font-size:0.85rem;color:var(--muted)">관리자 '+members.filter(function(m){return m.member_role==='owner'||m.member_role==='admin';}).length+'명 · 멤버 '+members.filter(function(m){return m.member_role==='member';}).length+'명</div>'
+  h+='<div class="person-side-card"><div class="person-side-title">관리자</div><div id="overview-admin-list" style="font-size:0.85rem">불러오는 중…</div>'
     +'<button class="pf-btn" style="margin-top:0.7rem;width:100%" onclick="switchProjectTab(\'members\')">전체 구성원 보기 →</button></div>';
-  if(ctx.isAdmin){
-    h+='<div class="person-side-card"><div class="person-side-title">모집 공개</div>'
-      +'<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.8rem;color:var(--muted)">'
-      +'<input type="checkbox" id="recruiting-toggle" '+(pr.is_recruiting?'checked':'')+' onchange="toggleRecruiting(\''+pid+'\',this.checked)">'
-      +'빈 자리를 "프로젝트" 메뉴에 공개</label></div>';
-  }
-  if(ctx.isOwner){
-    h+='<div class="person-side-card"><div class="person-side-title">예산 공개 범위</div>'
-      +'<label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.8rem;color:var(--muted)">'
-      +'<input type="checkbox" '+(pr.budget_visible_to_members?'checked':'')+' onchange="toggleBudgetVisible(\''+pid+'\',this.checked)">'
-      +'일반 멤버에게도 예산 탭 공개</label></div>';
+  if(ctx.isAdmin||ctx.isOwner){
+    h+='<div class="person-side-card"><div class="person-side-title">설정</div>';
+    if(ctx.isAdmin)h+='<label class="proj-toggle-row"><input type="checkbox" '+(pr.is_recruiting?'checked':'')+' onchange="toggleRecruiting(\''+pid+'\',this.checked)">빈 자리를 "프로젝트" 메뉴에 공개</label>';
+    if(ctx.isOwner)h+='<label class="proj-toggle-row"><input type="checkbox" '+(pr.budget_visible_to_members?'checked':'')+' onchange="toggleBudgetVisible(\''+pid+'\',this.checked)">일반 멤버에게도 예산 탭 공개</label>';
+    h+='</div>';
   }
   h+='</div>';
   el.innerHTML=h;
+  loadOverviewAdminList(pid);
+}
+async function loadOverviewAdminList(pid){
+  var el=$('overview-admin-list');if(!el)return;
+  try{
+    var r=await sbClient.rpc('list_project_members_detail',{p_project_id:pid});
+    var admins=(r.data||[]).filter(function(m){return m.member_role==='owner'||m.member_role==='admin';});
+    el.innerHTML=admins.map(function(m){
+      var nameH=m.person_id?'<span class="link" data-action="person" data-id="'+m.person_id+'">'+escHtml(m.nickname||m.email)+'</span>':escHtml(m.nickname||m.email);
+      return '<div style="margin-bottom:0.35rem">'+(m.member_role==='owner'?'👑 ':'')+nameH+'</div>';
+    }).join('')||'<span style="color:var(--muted)">없음</span>';
+  }catch(e){el.innerHTML='<span style="color:var(--muted)">불러오기 실패</span>';}
 }
 async function toggleBudgetVisible(pid,on){
   try{await sbClient.from('projects').update({budget_visible_to_members:on}).eq('id',pid);window._projectCtx.pr.budget_visible_to_members=on;}
@@ -1850,6 +1883,13 @@ function renderProjectMembers(el){
     +'<div class="sec" style="margin-top:2rem"><div class="sec-label">전체 구성원</div><div id="project-full-roster">불러오는 중…</div></div>';
   loadProjectMembersDetail(pid);
 }
+function staffCategoryOf(name){
+  if(!name)return '기타';
+  if(name.indexOf('연출')>-1)return '연출진';
+  if(['무대','미술','안무','음악','조명','소품','메이크업','음향','의상'].some(function(k){return name.indexOf(k)>-1;}))return '크리에이티브';
+  if(['운영','홍보'].some(function(k){return name.indexOf(k)>-1;}))return '운영진';
+  return '기타';
+}
 async function loadProjectMembersDetail(pid){
   var el=$('project-members-grid');if(!el)return;
   try{
@@ -1877,21 +1917,23 @@ async function loadProjectMembersDetail(pid){
         :'<div style="font-size:0.78rem;color:var(--muted)">작품을 연결하면 배역이 자동으로 여기 떠요.</div>';
     }
 
-    // 스태프: 사이트 전체 스태프 역할 13종을 기본 체크리스트로
+    // 스태프: 대분류(연출진/크리에이티브/운영진/기타)로 구분
     var staffPositions=positions.filter(function(p){return p.position_type==='staff';});
     var staffRolesAll=DB.staffRoles.filter(function(s){return fld(s,'Name');}).slice().sort(function(a,b){return(STAFF_ORDER[a.id]||999)-(STAFF_ORDER[b.id]||999);});
-    var staffRowsH=staffRolesAll.map(function(sr){
-      var pos=staffPositions.find(function(p){return p.staff_role_id===sr.id;});
-      return filledOrEmptyRowFor('staff',pid,sr.id,fld(sr,'Name'),pos,emailByMemberId);
+    var staffGroups={'연출진':[],'크리에이티브':[],'운영진':[],'기타':[]};
+    staffRolesAll.forEach(function(sr){staffGroups[staffCategoryOf(fld(sr,'Name'))].push(sr);});
+    var staffRowsH=Object.keys(staffGroups).map(function(g){
+      if(!staffGroups[g].length)return '';
+      return '<div class="proj-staff-subgroup">'+g+'</div>'+staffGroups[g].map(function(sr){
+        var pos=staffPositions.find(function(p){return p.staff_role_id===sr.id;});
+        return filledOrEmptyRowFor('staff',pid,sr.id,fld(sr,'Name'),pos,emailByMemberId);
+      }).join('');
     }).join('');
 
     // 기타
     var otherPositions=positions.filter(function(p){return p.position_type==='other';});
     var otherRowsH=otherPositions.map(function(p){
-      var filled=p.status==='filled'&&p.assigned_member_id;
-      var email=filled?(emailByMemberId[p.assigned_member_id]||'참여자'):'';
-      return filled?('<div class="proj-member-row"><span class="proj-slot-filled-dot"></span><span>'+escHtml(p.position_label||'기타')+'</span><span style="margin-left:auto;color:var(--muted);font-size:0.78rem">'+email+'</span></div>')
-        :('<div class="proj-member-row proj-member-row-empty"><span class="proj-slot-empty-dot"></span><span>'+escHtml(p.position_label||'기타')+'</span></div>');
+      return filledOrEmptyRowFor('other',pid,null,p.position_label||'기타',p,emailByMemberId);
     }).join('');
 
     el.innerHTML='<div class="project-members-col"><div class="proj-member-group-title">배우</div>'+actorRowsH+'</div>'
@@ -1918,45 +1960,67 @@ async function toggleMemberAdmin(memberId,makeAdmin,pid){
 function filledOrEmptyRowFor(kind,pid,refId,label,pos,emailByMemberId){
   if(pos&&pos.status==='filled'&&pos.assigned_member_id){
     var email=(emailByMemberId&&emailByMemberId[pos.assigned_member_id])||'참여자';
-    return '<div class="proj-member-row"><span class="proj-slot-filled-dot"></span><span>'+escHtml(label)+'</span><span style="margin-left:auto;color:var(--muted);font-size:0.78rem">'+email+'</span></div>';
+    return '<div class="proj-member-row"><span class="proj-slot-filled-dot"></span><span class="proj-slot-label">'+escHtml(label)+'</span><span style="margin-left:auto;color:var(--muted);font-size:0.78rem">'+email+'</span></div>';
   }
   if(pos&&pos.status==='open'){
-    return '<div class="proj-member-row proj-member-row-empty"><span class="proj-slot-open-dot"></span><span>'+escHtml(label)+' · 모집중</span>'
+    return '<div class="proj-member-row"><span class="proj-slot-open-dot"></span><span class="proj-slot-label">'+escHtml(label)+'</span><span class="proj-slot-meta">지금 찾고 있어요</span>'
       +'<span style="margin-left:auto;display:flex;gap:0.3rem;flex-shrink:0">'
-      +'<button class="pf-btn" style="padding:0.2rem 0.5rem;font-size:0.68rem" onclick="openInvitePicker(\''+pos.id+'\')">사람 찾기</button>'
-      +'<button class="pf-btn" style="padding:0.2rem 0.5rem;font-size:0.68rem" onclick="setPositionRecruiting(\''+pos.id+'\',false,\''+pid+'\')">모집 닫기</button>'
+      +'<button class="pf-btn" style="padding:0.2rem 0.5rem;font-size:0.68rem" onclick="openInvitePicker(\''+pos.id+'\',\''+kind+'\',\''+refId+'\')">사람 찾기</button>'
+      +'<button class="pf-btn" style="padding:0.2rem 0.5rem;font-size:0.68rem" onclick="setPositionRecruiting(\''+pos.id+'\',false,\''+pid+'\')">닫기</button>'
       +'</span></div><div id="invite-picker-'+pos.id+'"></div>';
   }
   if(pos&&pos.status==='closed'){
-    return '<div class="proj-member-row proj-member-row-empty"><span class="proj-slot-empty-dot"></span><span>'+escHtml(label)+' · 마감</span>'
+    return '<div class="proj-member-row"><span class="proj-slot-empty-dot"></span><span class="proj-slot-label">'+escHtml(label)+'</span><span class="proj-slot-meta">마감됨</span>'
       +'<button class="pf-btn" style="margin-left:auto;padding:0.2rem 0.6rem;font-size:0.7rem" onclick="setPositionRecruiting(\''+pos.id+'\',true,\''+pid+'\')">다시 열기</button></div>';
   }
-  return '<div class="proj-member-row proj-member-row-empty"><span class="proj-slot-empty-dot"></span><span>'+escHtml(label)+'</span>'
-    +'<button class="pf-btn" style="margin-left:auto;padding:0.2rem 0.6rem;font-size:0.7rem" onclick="recruitProjectSlot(\''+pid+'\',\''+kind+'\',\''+refId+'\',\''+escHtml(label).replace(/'/g,"\\'")+'\')">모집하기</button></div>';
+  return '<div class="proj-member-row"><span class="proj-slot-empty-dot"></span><span class="proj-slot-label">'+escHtml(label)+'</span>'
+    +'<button class="pf-btn" style="margin-left:auto;padding:0.2rem 0.6rem;font-size:0.7rem" onclick="recruitProjectSlot(\''+pid+'\',\''+kind+'\',\''+refId+'\',\''+escHtml(label).replace(/'/g,"\\'")+'\')">자리 열기</button></div>';
 }
 async function setPositionRecruiting(posId,open,pid){
   try{await sbClient.rpc('set_position_recruiting',{p_position_id:posId,p_open:open});loadProjectMembersDetail(pid);}
   catch(e){alert('변경 실패: '+e.message);}
 }
-function openInvitePicker(posId){
+function openInvitePicker(posId,kind,refId){
   var el=$('invite-picker-'+posId);if(!el)return;
-  if(el.innerHTML){el.innerHTML='';return;}
-  el.innerHTML='<input type="text" class="wizard-search" style="margin-top:0.4rem" placeholder="이름으로 검색해서 초대..." oninput="inviteFilterList(\''+posId+'\',this.value)">'
+  if(el.dataset.open==='1'){el.innerHTML='';el.dataset.open='0';return;}
+  el.dataset.open='1';
+  el.innerHTML='<input type="text" class="wizard-search" style="margin-top:0.5rem" placeholder="이름으로 검색..." oninput="inviteFilterList(\''+posId+'\',this.value,\''+kind+'\',\''+refId+'\')">'
     +'<div class="wizard-results" id="invite-results-'+posId+'"></div>';
+  inviteFilterList(posId,'',kind,refId);
 }
-function inviteFilterList(posId,q){
+function getRecommendedPeople(kind,refId){
+  var counts={};
+  var field=kind==='role'?'배역':(kind==='staff'?'스텝':null);
+  if(field&&refId){
+    DB.history.filter(function(h){return isValidH(h)&&ids(fld(h,field)).indexOf(refId)>-1;}).forEach(function(h){
+      var p2=ids(fld(h,'참여자'))[0]||'';if(p2)counts[p2]=(counts[p2]||0)+1;
+    });
+  }
+  return Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];}).slice(0,5);
+}
+async function inviteFilterList(posId,q,kind,refId){
   var el=$('invite-results-'+posId);if(!el)return;
-  q=q.trim();
-  if(!q){el.innerHTML='';return;}
-  var matches=DB.people.filter(function(p){var n=fld(p,'이름');return n&&n.indexOf(q)>-1;}).slice(0,8);
-  el.innerHTML=matches.length?matches.map(function(p){return '<div class="wizard-result-item" onclick="sendPositionInvite(\''+posId+'\',\''+p.id+'\')">'+escHtml(fld(p,'이름'))+'</div>';}).join(''):'<div class="wizard-result-empty">일치하는 사람이 없어요</div>';
+  q=(q||'').trim();
+  el.innerHTML='<div class="wizard-result-empty">불러오는 중…</div>';
+  var personIds=q?DB.people.filter(function(p){var n=fld(p,'이름');return n&&n.indexOf(q)>-1;}).slice(0,8).map(function(p){return p.id;}):getRecommendedPeople(kind,refId);
+  if(!personIds.length){el.innerHTML='<div class="wizard-result-empty">'+(q?'일치하는 사람이 없어요':'추천할 사람이 없어요. 검색해보세요.')+'</div>';return;}
+  var results=await Promise.all(personIds.map(function(p2){
+    return sbClient.rpc('person_claim_status',{p_person_id:p2}).then(function(r){return {pid:p2,claimed:r.data&&r.data.claimed};}).catch(function(){return {pid:p2,claimed:false};});
+  }));
+  el.innerHTML='<div style="font-size:0.66rem;color:var(--muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.08em">'+(q?'검색 결과':'추천')+'</div>'
+    +results.map(function(r){
+      return '<div class="invite-candidate-row"><span class="proj-slot-label">'+escHtml(nm(r.pid))+'</span>'
+        +(r.claimed?'<button class="pf-btn" style="margin-left:auto;padding:0.15rem 0.5rem;font-size:0.68rem" onclick="sendPositionInvite(\''+posId+'\',\''+r.pid+'\')">참여 요청 보내기</button>'
+          :'<span class="invite-unjoined-tag">미가입자</span><button class="pf-btn" style="padding:0.15rem 0.5rem;font-size:0.68rem" onclick="inviteThisPerson(\''+r.pid+'\')">초대링크 복사</button>')
+        +'</div>';
+    }).join('');
 }
 async function sendPositionInvite(posId,personId){
   var msg=prompt('간단한 메시지를 남겨주세요 (선택)')||'';
   try{
     await sbClient.rpc('invite_person_to_position',{p_position_id:posId,p_person_id:personId,p_message:msg});
-    alert('초대 요청을 보냈어요.');
-  }catch(e){alert('초대할 수 없어요: 아직 오리 계정과 연결되지 않은 사람일 수 있어요.');}
+    alert('참여 요청을 보냈어요.');
+  }catch(e){alert('요청을 보낼 수 없어요: '+e.message);}
   loadProjectMembersDetail(window._projectCtx.pid);
 }
 async function recruitProjectSlot(pid,kind,refId,label){
@@ -1970,51 +2034,91 @@ async function recruitProjectSlot(pid,kind,refId,label){
   try{await sbClient.from('projects').update({is_recruiting:true}).eq('id',pid);window._projectCtx.pr.is_recruiting=true;}catch(e){}
   loadProjectMembersDetail(pid);
 }
+var BUDGET_PRESETS={
+  expense:{
+    '대관':['극장 대관료','연습실 대관료'],
+    '인건비':['배우 사례비','스태프 사례비','연출료'],
+    '무대/미술':['무대장치','소품','세트 제작'],
+    '의상/분장':['의상 제작·대여','분장품'],
+    '조명/음향':['조명 장비 대여','음향 장비 대여'],
+    '홍보':['포스터·전단 인쇄','SNS 광고','사진·영상 촬영'],
+    '티켓팅':['예매 수수료'],
+    '기타':['예비비','잡비']
+  },
+  income:{
+    '티켓':['현장 판매','온라인 예매'],
+    '후원':['개인 후원','기업 협찬'],
+    '펀딩':['크라우드펀딩'],
+    '기타':['기타 수입']
+  }
+};
 var BUDGET_TEMPLATE={
-  expense:[['대관','대관료'],['인건비','배우·스태프 사례비'],['무대/미술','무대장치·소품'],['의상/분장','의상·분장'],['조명/음향','장비 대여'],['홍보','포스터·SNS 광고'],['티켓팅','수수료'],['기타','예비비']],
-  income:[['티켓','티켓 판매'],['후원','후원·협찬'],['펀딩','크라우드펀딩'],['기타','기타 수입']]
+  expense:[['대관','극장 대관료'],['인건비','배우 사례비'],['무대/미술','무대장치'],['의상/분장','의상 제작·대여'],['조명/음향','조명 장비 대여'],['홍보','포스터·전단 인쇄'],['티켓팅','예매 수수료'],['기타','예비비']],
+  income:[['티켓','현장 판매'],['후원','개인 후원'],['펀딩','크라우드펀딩'],['기타','기타 수입']]
 };
 function renderProjectBudget(el){
   var pid=window._projectCtx.pid;
   el.innerHTML='<div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem">이 탭은 관리자'+(window._projectCtx.pr.budget_visible_to_members?' 및 멤버':'')+'만 볼 수 있어요</div>'
+    +'<div id="budget-summary" class="budget-summary-strip"></div>'
     +'<div><div class="proj-member-group-title">지출</div><div id="budget-expense-list">불러오는 중…</div>'
     +'<button class="pf-btn" style="margin-top:0.4rem" onclick="addBudgetRow(\''+pid+'\',\'expense\')">+ 지출 행 추가</button></div>'
     +'<div style="margin-top:1.6rem"><div class="proj-member-group-title">수입</div><div id="budget-income-list">불러오는 중…</div>'
     +'<button class="pf-btn" style="margin-top:0.4rem" onclick="addBudgetRow(\''+pid+'\',\'income\')">+ 수입 행 추가</button></div>'
-    +'<div style="text-align:center;margin-top:1.4rem"><button class="pf-btn" onclick="fillBudgetTemplate(\''+pid+'\')">표준 항목으로 채우기</button></div>'
-    +'<div id="budget-summary" style="text-align:center;margin-top:0.8rem;font-size:0.85rem;color:var(--accent)"></div>';
+    +'<div style="text-align:center;margin-top:1.4rem"><button class="pf-btn" onclick="fillBudgetTemplate(\''+pid+'\')">표준 항목으로 채우기</button></div>';
   loadProjectBudget(pid);
 }
-function budgetTableHtml(items,pid){
-  if(!items.length)return '<div style="font-size:0.78rem;color:var(--muted)">아직 없어요.</div>';
-  return '<table class="budget-table"><thead><tr><th>대항목</th><th>소항목</th><th>상세내용</th><th>금액</th><th></th></tr></thead><tbody>'
-    +items.map(function(b){
-      return '<tr>'
-        +'<td><input value="'+escHtml(b.category||'')+'" onblur="saveBudgetField(\''+b.id+'\',\'category\',this.value,\''+pid+'\')"></td>'
-        +'<td><input value="'+escHtml(b.item_name||'')+'" onblur="saveBudgetField(\''+b.id+'\',\'item_name\',this.value,\''+pid+'\')"></td>'
-        +'<td><input value="'+escHtml(b.notes||'')+'" onblur="saveBudgetField(\''+b.id+'\',\'notes\',this.value,\''+pid+'\')" placeholder="상세 내용"></td>'
-        +'<td><input type="number" value="'+(b.planned_amount!=null?b.planned_amount:'')+'" onblur="saveBudgetField(\''+b.id+'\',\'planned_amount\',this.value,\''+pid+'\')" style="width:90px"></td>'
-        +'<td><button class="proj-icon-btn" style="position:static" onclick="deleteBudgetItem(\''+b.id+'\',\''+pid+'\')" title="삭제">🗑</button></td>'
-        +'</tr>';
-    }).join('')+'</tbody></table>';
+function budgetDatalistOptions(type,category,projectRows){
+  var presetCats=Object.keys(BUDGET_PRESETS[type]||{});
+  var usedCats=projectRows.filter(function(b){return b.item_type===type&&b.category;}).map(function(b){return b.category;});
+  var allCats=presetCats.concat(usedCats).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var presetItems=(BUDGET_PRESETS[type]&&BUDGET_PRESETS[type][category])||[];
+  var usedItems=projectRows.filter(function(b){return b.item_type===type&&(!category||b.category===category)&&b.item_name;}).map(function(b){return b.item_name;});
+  var allItems=presetItems.concat(usedItems).filter(function(v,i,a){return a.indexOf(v)===i;});
+  return {cats:allCats,items:allItems};
+}
+function budgetTableHtml(items,pid,type,allRows){
+  var h='<datalist id="budget-cat-list-'+type+'">'+budgetDatalistOptions(type,null,allRows).cats.map(function(c){return '<option value="'+escHtml(c)+'">';}).join('')+'</datalist>';
+  if(!items.length)return h+'<div style="font-size:0.78rem;color:var(--muted)">아직 없어요.</div>';
+  h+='<table class="budget-table"><thead><tr><th>대항목</th><th>소항목</th><th>상세내용</th><th>금액</th><th></th></tr></thead><tbody>';
+  h+=items.map(function(b){
+    var itemOpts=budgetDatalistOptions(type,b.category,allRows).items;
+    return '<tr>'
+      +'<td><input list="budget-cat-list-'+type+'" value="'+escHtml(b.category||'')+'" onchange="onBudgetCategoryChange(\''+b.id+'\',\''+pid+'\',\''+type+'\',this.value)" onblur="saveBudgetField(\''+b.id+'\',\'category\',this.value,\''+pid+'\')"></td>'
+      +'<td><input list="budget-item-list-'+b.id+'" value="'+escHtml(b.item_name||'')+'" onblur="saveBudgetField(\''+b.id+'\',\'item_name\',this.value,\''+pid+'\')">'
+        +'<datalist id="budget-item-list-'+b.id+'">'+itemOpts.map(function(i){return '<option value="'+escHtml(i)+'">';}).join('')+'</datalist></td>'
+      +'<td><input value="'+escHtml(b.notes||'')+'" onblur="saveBudgetField(\''+b.id+'\',\'notes\',this.value,\''+pid+'\')" placeholder="상세 내용"></td>'
+      +'<td><input value="'+(b.planned_amount!=null?Number(b.planned_amount).toLocaleString():'')+'" inputmode="numeric" style="width:100px;text-align:right" onblur="saveBudgetAmount(\''+b.id+'\',this,\''+pid+'\')" placeholder="0"></td>'
+      +'<td><button class="proj-icon-btn" style="position:static" onclick="deleteBudgetItem(\''+b.id+'\',\''+pid+'\')" title="삭제">🗑</button></td>'
+      +'</tr>';
+  }).join('')+'</tbody></table>';
+  return h;
+}
+function onBudgetCategoryChange(id,pid,type,category){
+  // 카테고리 바뀌면 다음 로드 때 그 카테고리 기준 소항목 추천이 갱신됨 (즉시 반영 위해 저장 후 재로딩)
+  saveBudgetField(id,'category',category,pid).then(function(){loadProjectBudget(pid);});
 }
 async function loadProjectBudget(pid){
   var expEl=$('budget-expense-list'),incEl=$('budget-income-list');if(!expEl||!incEl)return;
   try{
     var r=await sbClient.from('project_budget_items').select('*').eq('project_id',pid).order('created_at',{ascending:true});
     var rows=r.data||[];
-    expEl.innerHTML=budgetTableHtml(rows.filter(function(b){return b.item_type==='expense';}),pid);
-    incEl.innerHTML=budgetTableHtml(rows.filter(function(b){return b.item_type==='income';}),pid);
+    expEl.innerHTML=budgetTableHtml(rows.filter(function(b){return b.item_type==='expense';}),pid,'expense',rows);
+    incEl.innerHTML=budgetTableHtml(rows.filter(function(b){return b.item_type==='income';}),pid,'income',rows);
     var incomeTotal=rows.filter(function(b){return b.item_type==='income';}).reduce(function(s,b){return s+(Number(b.planned_amount)||0);},0);
     var expenseTotal=rows.filter(function(b){return b.item_type==='expense';}).reduce(function(s,b){return s+(Number(b.planned_amount)||0);},0);
     var summaryEl=$('budget-summary');
-    if(summaryEl)summaryEl.textContent='수입 '+incomeTotal.toLocaleString()+'원 · 지출 '+expenseTotal.toLocaleString()+'원 · 잔액 '+(incomeTotal-expenseTotal).toLocaleString()+'원';
+    if(summaryEl)summaryEl.innerHTML='<span>수입 <b>'+incomeTotal.toLocaleString()+'</b>원</span><span>지출 <b>'+expenseTotal.toLocaleString()+'</b>원</span><span>잔액 <b>'+(incomeTotal-expenseTotal).toLocaleString()+'</b>원</span>';
   }catch(e){expEl.innerHTML=incEl.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패</div>';}
 }
-async function saveBudgetField(id,field,value,pid){
-  var patch={};patch[field]=field==='planned_amount'?(value?Number(value):null):(value||null);
-  try{await sbClient.from('project_budget_items').update(patch).eq('id',id);}catch(e){alert('저장 실패: '+e.message);return;}
-  if(field==='planned_amount')loadProjectBudget(pid);
+function saveBudgetField(id,field,value,pid){
+  var patch={};patch[field]=value||null;
+  return sbClient.from('project_budget_items').update(patch).eq('id',id).then(function(r){if(r.error)alert('저장 실패: '+r.error.message);});
+}
+async function saveBudgetAmount(id,input,pid){
+  var raw=input.value.replace(/[^0-9]/g,'');
+  var num=raw?Number(raw):null;
+  try{await sbClient.from('project_budget_items').update({planned_amount:num}).eq('id',id);}catch(e){alert('저장 실패: '+e.message);return;}
+  loadProjectBudget(pid);
 }
 async function addBudgetRow(pid,type){
   try{
