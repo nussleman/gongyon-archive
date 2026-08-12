@@ -66,6 +66,8 @@
   .nav-section { margin: 0 10px 14px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .nav-section-label { font-size: 10.5px; letter-spacing: 0.09em; color: var(--ink-soft); text-transform: uppercase; padding: 8px 14px; background: var(--accent-soft); border-bottom: 1px solid var(--line); }
   .nav-section button { padding: 9px 14px; }
+  .nav-badge { display: none; width: 7px; height: 7px; border-radius: 50%; background: #d9534f; margin-left: 4px; vertical-align: middle; }
+  .nav-badge.on { display: inline-block; }
 
   main { flex: 1; padding: 24px 32px; margin-left: 180px; max-width: none; }
   .tab-panel { display: none; }
@@ -262,8 +264,8 @@
     <div class="nav-section">
       <div class="nav-section-label">사람·계정</div>
       <button data-tab="person">사람</button>
-      <button data-tab="claims">클레임 승인</button>
-      <button data-tab="edits">수정요청</button>
+      <button data-tab="claims">클레임 승인 <span class="nav-badge" id="badge-claims"></span></button>
+      <button data-tab="edits">수정요청 <span class="nav-badge" id="badge-edits"></span></button>
       <button data-tab="admins">관리자 목록</button>
     </div>
     <div class="nav-section">
@@ -2524,6 +2526,7 @@ async function loadClaims() {
   const el = document.getElementById('claims-list');
   const { data, error } = await supabase.rpc('list_pending_claims');
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  document.getElementById('badge-claims').classList.toggle('on', !!(data && data.length));
   if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
   el.innerHTML = data.map(c => `
     <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
@@ -2558,6 +2561,7 @@ async function loadEdits() {
   const el = document.getElementById('edits-list');
   const { data, error } = await supabase.from('edit_requests').select('*').eq('status','pending').order('created_at',{ascending:true});
   if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  document.getElementById('badge-edits').classList.toggle('on', !!(data && data.length));
   if (!data || !data.length) { el.innerHTML = '<p class="sub">대기 중인 요청이 없어요.</p>'; return; }
   el.innerHTML = data.map(r => `
     <div class="card">

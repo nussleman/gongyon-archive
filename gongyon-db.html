@@ -167,7 +167,8 @@ body.is-home .home-nav-dock{display:block}
 
 /* 결과 그리드 */
 .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem}
-.result-card{border-radius:8px;overflow:hidden;cursor:pointer;background:var(--bg2);border:1px solid var(--line);transition:transform .18s,border-color .18s}
+.result-card{border-radius:8px;overflow:hidden;cursor:pointer;background:var(--bg2);border:1px solid var(--line);transition:transform .18s,border-color .18s;position:relative}
+.result-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .result-card:hover{transform:translateY(-3px);border-color:rgba(200,169,110,0.35)}
 .result-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
 .result-card-ph{width:100%;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--muted);background:var(--bg3)}
@@ -317,6 +318,10 @@ body.is-home .home-nav-dock{display:block}
 .claim-badge-pending{background:var(--bg3);color:var(--muted)}
 .person-sticky-spacer{height:92px}
 .person-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-bottom:2rem}
+.mypage-tabs{display:flex;gap:0.3rem;border-bottom:1px solid var(--line);margin-bottom:1.6rem;flex-wrap:wrap}
+.mypage-tab-btn{background:none;border:none;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;padding:0.6rem 1rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.mypage-tab-btn:hover{color:var(--text)}
+.mypage-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
 .person-side-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
 .person-side-title{font-size:0.64rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:0.75rem}
 .person-gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem}
@@ -341,10 +346,10 @@ body.is-home .home-nav-dock{display:block}
 .cast-card-tag-staff{background:var(--staff-bg);color:var(--staff)}
 
 /* ── 오류 제보 버튼 (우하단 고정) ── */
-.report-fab{position:fixed;right:1.2rem;bottom:1.2rem;width:44px;height:44px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:500;transition:transform .15s,background .15s;cursor:pointer;color:var(--text);font-family:inherit}
-.report-fab:hover{background:var(--bg3);transform:scale(1.06)}
+.report-fab{position:fixed;right:1.2rem;bottom:1.2rem;height:40px;padding:0 1rem;border-radius:20px;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:500;transition:transform .15s,background .15s,border-color .15s;cursor:pointer;color:var(--text);font-family:'Noto Sans KR',sans-serif}
+.report-fab:hover{background:var(--bg3);border-color:var(--accent);transform:scale(1.03)}
 @media(max-width:768px){
-  .report-fab{bottom:calc(56px + 0.8rem);right:0.9rem;width:40px;height:40px;font-size:1rem}
+  .report-fab{bottom:calc(56px + 0.8rem);right:0.9rem;height:36px;padding:0 0.8rem;font-size:0.72rem}
 }
 
 /* ── 수정요청 모달 ── */
@@ -360,12 +365,14 @@ body.is-home .home-nav-dock{display:block}
 .edit-modal-actions{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.2rem}
 
 /* ── 프로필/계정 버튼 (우상단 고정) ── */
-.profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--text);font-family:'Noto Sans KR',sans-serif}
-.profile-fab.logged-in{border-color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,0.25),0 0 0 2px rgba(200,169,110,0.25)}
+.profile-fab{position:fixed;right:1.2rem;top:1.1rem;width:40px;height:40px;border-radius:50%;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.25);z-index:600;transition:transform .15s,background .15s;color:var(--muted);font-family:'Noto Sans KR',sans-serif}
+.profile-fab.logged-in{border-color:var(--accent);color:var(--accent);background:rgba(200,169,110,0.15);box-shadow:0 4px 14px rgba(0,0,0,0.25),0 0 0 2px rgba(200,169,110,0.25)}
 .fav-btn{background:none;border:none;cursor:pointer;padding:0.15rem;line-height:1;transition:transform .1s,color .15s,opacity .15s;display:inline-flex;align-items:center;color:var(--muted);opacity:0.55}
 .fav-btn:hover{transform:scale(1.15);opacity:0.85}
 .fav-btn svg{width:14px;height:14px}
 .fav-btn.on{color:var(--accent);opacity:1}
+.wish-btn svg{width:13px;height:13px}
+.wish-btn.on{color:#d97a8a;opacity:1}
 .fav-btn-inline{vertical-align:middle;margin-left:0.4rem}
 .cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
@@ -539,7 +546,7 @@ body.is-home .home-nav-dock{display:block}
   <img id="lightbox-img" src="" alt="">
 </div>
 
-<button class="report-fab" onclick="openEditModal()" title="정보 제보 / 수정 요청">⚠</button>
+<button class="report-fab" onclick="openEditModal()" title="정보 제보 / 수정 요청"><span>✎</span><span>정보 제보</span></button>
 
 <div class="edit-modal-overlay" id="edit-modal-overlay" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-modal">
@@ -624,21 +631,26 @@ function handleProfileFabClick(){
 }
 function renderProfileFab(){
   var btn=$('profile-fab');if(!btn)return;
-  if(CURRENT_USER){btn.title=CURRENT_USER.nickname?CURRENT_USER.nickname+' · 마이페이지':'마이페이지';btn.classList.add('logged-in');}
-  else{btn.title='';btn.classList.remove('logged-in');}
+  if(CURRENT_USER){
+    btn.title=CURRENT_USER.nickname?CURRENT_USER.nickname+' · 마이페이지':'마이페이지';
+    btn.classList.add('logged-in');
+    btn.textContent=(CURRENT_USER.nickname||'?').charAt(0);
+  }else{
+    btn.title='';btn.classList.remove('logged-in');btn.textContent='';
+  }
 }
 async function loadUserProfile(){
   try{
-    var r=await sbClient.from('user_profiles').select('nickname,person_id').eq('id',CURRENT_USER.id).maybeSingle();
-    if(r.data){CURRENT_USER.nickname=r.data.nickname;CURRENT_USER.personId=r.data.person_id;}
+    var r=await sbClient.from('user_profiles').select('nickname,person_id,intro,contact').eq('id',CURRENT_USER.id).maybeSingle();
+    if(r.data){CURRENT_USER.nickname=r.data.nickname;CURRENT_USER.personId=r.data.person_id;CURRENT_USER.intro=r.data.intro;CURRENT_USER.contact=r.data.contact;}
   }catch(e){}
 }
 async function loadFavorites(){
   if(!CURRENT_USER){FAVORITES_LIST=[];FAVORITES_SET=new Set();return;}
   try{
-    var r=await sbClient.from('favorites').select('target_type,target_id').eq('user_id',CURRENT_USER.id);
+    var r=await sbClient.from('favorites').select('target_type,target_id,list_type').eq('user_id',CURRENT_USER.id);
     FAVORITES_LIST=r.data||[];
-    FAVORITES_SET=new Set(FAVORITES_LIST.map(function(f){return f.target_type+':'+f.target_id;}));
+    FAVORITES_SET=new Set(FAVORITES_LIST.map(function(f){return f.list_type+':'+f.target_type+':'+f.target_id;}));
   }catch(e){FAVORITES_LIST=[];FAVORITES_SET=new Set();}
 }
 
@@ -730,24 +742,30 @@ async function initAuth(){
 }
 
 var FAV_ICON_SVG='<svg viewBox="0 0 120 100" fill="currentColor"><ellipse cx="52" cy="68" rx="38" ry="25"/><circle cx="78" cy="40" r="20"/><path d="M94,34 Q118,28 119,38 Q118,48 94,44 Z"/></svg>';
-function favBtnHtml(type,id){
-  var key=type+':'+id;var on=FAVORITES_SET.has(key);
-  return '<button class="fav-btn fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" onclick="event.stopPropagation();toggleFavorite(this)" title="즐겨찾기">'+FAV_ICON_SVG+'</button>';
+var WISH_ICON_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.9-10-9.3C.4 8.4 1.9 5 5.3 5c2 0 3.4 1.1 4.2 2.3.4.6.6.9 1 .9s.6-.3 1-.9C12.3 6.1 13.7 5 15.7 5c3.4 0 4.9 3.4 3.3 6.7C19.5 16.1 12 21 12 21z"/></svg>';
+function favBtnHtml(type,id,listType){
+  listType=listType||'favorite';
+  var key=listType+':'+type+':'+id;var on=FAVORITES_SET.has(key);
+  var icon=listType==='wishlist'?WISH_ICON_SVG:FAV_ICON_SVG;
+  var label=listType==='wishlist'?'해보고 싶어요':'즐겨찾기';
+  var cls=listType==='wishlist'?'fav-btn wish-btn':'fav-btn';
+  return '<button class="'+cls+' fav-btn-inline'+(on?' on':'')+'" data-fav-type="'+type+'" data-fav-id="'+id+'" data-list-type="'+listType+'" onclick="event.stopPropagation();toggleFavorite(this)" title="'+label+'">'+icon+'</button>';
 }
+function wishBtnHtml(type,id){return favBtnHtml(type,id,'wishlist');}
 async function toggleFavorite(btn){
   if(!CURRENT_USER){loginWithGoogle();return;}
-  var type=btn.dataset.favType,id=btn.dataset.favId,key=type+':'+id;
+  var type=btn.dataset.favType,id=btn.dataset.favId,listType=btn.dataset.listType||'favorite',key=listType+':'+type+':'+id;
   var isOn=FAVORITES_SET.has(key);
   btn.disabled=true;
   try{
     if(isOn){
-      await sbClient.from('favorites').delete().eq('user_id',CURRENT_USER.id).eq('target_type',type).eq('target_id',id);
+      await sbClient.from('favorites').delete().eq('user_id',CURRENT_USER.id).eq('target_type',type).eq('target_id',id).eq('list_type',listType);
       FAVORITES_SET.delete(key);
-      FAVORITES_LIST=FAVORITES_LIST.filter(function(f){return !(f.target_type===type&&f.target_id===id);});
+      FAVORITES_LIST=FAVORITES_LIST.filter(function(f){return !(f.target_type===type&&f.target_id===id&&f.list_type===listType);});
     }else{
-      await sbClient.from('favorites').insert({user_id:CURRENT_USER.id,target_type:type,target_id:id});
+      await sbClient.from('favorites').insert({user_id:CURRENT_USER.id,target_type:type,target_id:id,list_type:listType});
       FAVORITES_SET.add(key);
-      FAVORITES_LIST.push({target_type:type,target_id:id});
+      FAVORITES_LIST.push({target_type:type,target_id:id,list_type:listType});
     }
   }finally{
     btn.disabled=false;refreshFavoriteButtons();
@@ -756,7 +774,7 @@ async function toggleFavorite(btn){
 }
 function refreshFavoriteButtons(){
   document.querySelectorAll('.fav-btn').forEach(function(b){
-    var key=b.dataset.favType+':'+b.dataset.favId;
+    var key=(b.dataset.listType||'favorite')+':'+b.dataset.favType+':'+b.dataset.favId;
     var on=FAVORITES_SET.has(key);
     b.classList.toggle('on',on);
   });
@@ -1102,25 +1120,41 @@ function setNav(v){
   }
 }
 /* ══ 마이페이지 (즐겨찾기) ══ */
-var FAV_TYPE_LABEL={show:'공연',work:'작품',troupe:'단체',venue:'극장',person:'사람'};
-function myCardHtml(type,id){
+var FAV_TYPE_LABEL={show:'공연',work:'작품',troupe:'단체',venue:'극장',person:'사람',role:'배역'};
+function myCardHtml(type,id,listType){
   var name=nm(id)||'(삭제된 항목)';
   var imgUrl=type==='show'?(POSTER[id]||''):(type==='person'?(PERSON_PHOTO[id]||''):'');
   var imgH=imgUrl?'<img class="cast-img" src="'+imgUrl+'">':'<div class="cast-img-ph">&nbsp;</div>';
-  return '<div class="cast-card" data-action="'+type+'" data-id="'+id+'" style="position:relative">'+favBtnHtml(type,id)+imgH+'<div class="cast-name">'+name+'</div></div>';
+  return '<div class="cast-card" data-action="'+type+'" data-id="'+id+'" style="position:relative">'+favBtnHtml(type,id,listType)+imgH+'<div class="cast-name">'+name+'</div></div>';
 }
+var MYPAGE_TABS=[['info','내 정보'],['favorites','즐겨찾기'],['wishlist','해보고 싶은'],['projects','프로젝트']];
+window._myPageTab='info';
 async function renderMyPage(){
   await loadFavorites();
-  await loadUserProfile(); // person 연결 상태를 최신으로 갱신
-  var byType={};
-  FAVORITES_LIST.forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
-  var order=['show','work','troupe','venue','person'];
-  var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'마이페이지')+'</div>'
-    +'<div class="detail-meta"><span>즐겨찾기 '+FAVORITES_LIST.length+'건</span></div></div>';
-
-  // 상단 오버뷰 카드 2개: 프로필 연결 + 공연 프로젝트 (같은 톤의 카드로 나란히)
-  h+='<div class="person-overview-grid" style="margin-bottom:2rem">';
-  h+='<div class="person-side-card"><div class="person-side-title">내 프로필 연결</div>';
+  await loadUserProfile();
+  var h='<div class="tab-index"><div class="detail-header"><div class="eyebrow">마이페이지</div><div class="detail-title">'+(CURRENT_USER.nickname||'마이페이지')+'</div></div>';
+  h+='<div class="mypage-tabs">'+MYPAGE_TABS.map(function(t){
+    return '<button class="mypage-tab-btn'+(window._myPageTab===t[0]?' active':'')+'" data-mytab="'+t[0]+'" onclick="switchMyPageTab(\''+t[0]+'\')">'+t[1]+'</button>';
+  }).join('')+'</div>';
+  h+='<div id="mypage-tab-content"></div></div>';
+  mn(h);
+  renderMyPageTabContent();
+}
+function switchMyPageTab(tab){
+  window._myPageTab=tab;
+  document.querySelectorAll('.mypage-tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.mytab===tab);});
+  renderMyPageTabContent();
+}
+function renderMyPageTabContent(){
+  var el=$('mypage-tab-content');if(!el)return;
+  var tab=window._myPageTab;
+  if(tab==='info')renderMyPageInfo(el);
+  else if(tab==='favorites')renderMyPageFavorites(el);
+  else if(tab==='wishlist')renderMyPageWishlist(el);
+  else if(tab==='projects')renderMyPageProjects(el);
+}
+function renderMyPageInfo(el){
+  var h='<div class="person-side-card" style="margin-bottom:1.2rem"><div class="person-side-title">내 프로필 연결</div>';
   if(CURRENT_USER.personId){
     var pname=nm(CURRENT_USER.personId)||'(이름없음)';
     h+='<div class="cast-grid" style="margin-bottom:0.6rem">'+myCardHtml('person',CURRENT_USER.personId)+'</div>'
@@ -1129,22 +1163,63 @@ async function renderMyPage(){
     h+='<div style="font-size:0.8rem;color:var(--muted);line-height:1.6">아직 연결 안 됨. 사람 페이지에서 "이거 나예요"를 눌러보세요.</div>';
   }
   h+='</div>';
-  h+='<div class="person-side-card"><div class="person-side-title">공연 프로젝트</div>'
-    +'<button class="pf-btn" style="margin-bottom:0.8rem" onclick="startNewProject()">+ 새 프로젝트 시작하기</button>'
-    +'<div id="my-projects-list">불러오는 중…</div></div>';
-  h+='</div>';
-
-  var any=false;
+  h+='<div class="person-side-card">'
+    +'<div class="person-side-title">개인 정보</div>'
+    +'<div class="edit-modal-field"><label>닉네임</label><input type="text" id="profile-nickname" value="'+(CURRENT_USER.nickname||'').replace(/"/g,'&quot;')+'"></div>'
+    +'<div class="edit-modal-field"><label>이메일</label><input type="text" value="'+(CURRENT_USER.email||'')+'" disabled style="opacity:0.5"></div>'
+    +'<div class="edit-modal-field"><label>자기소개 (선택)</label><textarea id="profile-intro" rows="3" placeholder="어떤 활동을 하는지, 관심사 등을 적어보세요">'+(CURRENT_USER.intro||'')+'</textarea></div>'
+    +'<div class="edit-modal-field"><label>연락처 (선택, 프로젝트 참여 요청시에만 사용)</label><input type="text" id="profile-contact" value="'+(CURRENT_USER.contact||'').replace(/"/g,'&quot;')+'" placeholder="카카오톡 오픈채팅, 전화번호 등"></div>'
+    +'<button class="pf-btn pf-active" onclick="saveProfileInfo()">저장</button>'
+    +'<div id="profile-save-msg" style="font-size:0.76rem;color:var(--muted);margin-top:0.6rem"></div>'
+    +'</div>';
+  el.innerHTML=h;
+}
+async function saveProfileInfo(){
+  var nickname=$('profile-nickname').value.trim();
+  var intro=$('profile-intro').value.trim();
+  var contact=$('profile-contact').value.trim();
+  if(!nickname){$('profile-save-msg').textContent='닉네임은 비워둘 수 없어요.';return;}
+  try{
+    await sbClient.from('user_profiles').update({nickname:nickname,intro:intro||null,contact:contact||null}).eq('id',CURRENT_USER.id);
+    CURRENT_USER.nickname=nickname;CURRENT_USER.intro=intro;CURRENT_USER.contact=contact;
+    renderProfileFab();
+    $('profile-save-msg').textContent='저장됐어요.';
+  }catch(e){$('profile-save-msg').textContent='저장 실패: '+e.message;}
+}
+function renderMyPageFavorites(el){
+  var byType={};
+  FAVORITES_LIST.filter(function(f){return f.list_type==='favorite';}).forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
+  var order=['show','work','troupe','venue','person'];
+  var h='',any=false;
   order.forEach(function(type){
     var ids2=byType[type];if(!ids2||!ids2.length)return;
     any=true;
     h+='<div class="person-side-card" style="margin-bottom:1.3rem"><div class="person-side-title">'+FAV_TYPE_LABEL[type]+'</div><div class="cast-grid" style="margin-bottom:0">';
-    ids2.forEach(function(id){h+=myCardHtml(type,id);});
+    ids2.forEach(function(id){h+=myCardHtml(type,id,'favorite');});
     h+='</div></div>';
   });
-  if(!any)h+='<div class="result-empty"><div class="result-empty-icon">🦆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 오리 아이콘을 눌러보세요.</div></div>';
-  h+='</div>';
-  mn(h);
+  if(!any)h='<div class="result-empty"><div class="result-empty-icon">🦆</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 즐겨찾기한 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">공연·작품·단체·극장·사람 페이지에서 오리 아이콘을 눌러보세요.</div></div>';
+  el.innerHTML=h;
+}
+function renderMyPageWishlist(el){
+  var byType={};
+  FAVORITES_LIST.filter(function(f){return f.list_type==='wishlist';}).forEach(function(f){(byType[f.target_type]=byType[f.target_type]||[]).push(f.target_id);});
+  var order=['work','role'];
+  var h='',any=false;
+  order.forEach(function(type){
+    var ids2=byType[type];if(!ids2||!ids2.length)return;
+    any=true;
+    h+='<div class="person-side-card" style="margin-bottom:1.3rem"><div class="person-side-title">해보고 싶은 '+FAV_TYPE_LABEL[type]+'</div><div class="cast-grid" style="margin-bottom:0">';
+    ids2.forEach(function(id){h+=myCardHtml(type,id,'wishlist');});
+    h+='</div></div>';
+  });
+  if(!any)h='<div class="result-empty"><div class="result-empty-icon">💗</div><div style="font-size:0.95rem;margin-bottom:0.4rem">아직 담아둔 게 없어요</div><div style="font-size:0.8rem;color:var(--muted)">작품·배역 페이지에서 하트 아이콘을 눌러보세요.</div></div>';
+  el.innerHTML=h;
+}
+function renderMyPageProjects(el){
+  el.innerHTML='<div class="person-side-card"><div class="person-side-title">공연 프로젝트</div>'
+    +'<button class="pf-btn" style="margin-bottom:0.8rem" onclick="startNewProject()">+ 새 프로젝트 시작하기</button>'
+    +'<div id="my-projects-list">불러오는 중…</div></div>';
   loadMyProjects();
 }
 function goMyPage(push){
@@ -1154,6 +1229,7 @@ function goMyPage(push){
     mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">👤</div><div style="font-size:0.95rem;margin-bottom:0.4rem">로그인이 필요해요</div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">구글 계정으로 로그인하면 즐겨찾기를 저장할 수 있어요.</div><button class="pf-btn" onclick="loginWithGoogle()">구글로 로그인</button></div></div>');
     return;
   }
+  window._myPageTab='info';
   renderMyPage();
 }
 
@@ -1174,9 +1250,12 @@ async function loadMyProjects(){
 async function startNewProject(){
   if(!CURRENT_USER)return;
   try{
-    var pr=await sbClient.from('projects').insert({owner_id:CURRENT_USER.id,title:'새 프로젝트',status:'draft'}).select().single();
+    var u=await sbClient.auth.getUser();
+    if(!u.data||!u.data.user){alert('로그인이 만료된 것 같아요. 다시 로그인해주세요.');loginWithGoogle();return;}
+    var realUid=u.data.user.id;
+    var pr=await sbClient.from('projects').insert({owner_id:realUid,title:'새 프로젝트',status:'draft'}).select().single();
     if(pr.error)throw pr.error;
-    var mr=await sbClient.from('project_members').insert({project_id:pr.data.id,user_id:CURRENT_USER.id,member_role:'owner',invite_status:'confirmed'}).select().single();
+    var mr=await sbClient.from('project_members').insert({project_id:pr.data.id,user_id:realUid,member_role:'owner',invite_status:'confirmed'}).select().single();
     if(mr.error)throw mr.error;
     goProject(pr.data.id);
   }catch(e){alert('프로젝트를 시작하는 중 문제가 생겼어요: '+e.message);}
@@ -1723,7 +1802,7 @@ function renderShowIndex(){
       var trid=ids(fld(s,'극단'))[0]||'';
       var date=ym(fld(s,'공연 날짜')||'');
       var p=POSTER[s.id]||'';
-      listH+='<div class="result-card" data-action="show" data-id="'+s.id+'">'
+      listH+='<div class="result-card" data-action="show" data-id="'+s.id+'">'+favBtnHtml('show',s.id)
         +(p?'<img src="'+p+'" alt="'+fld(s,'공연명')+'">':'<div class="result-card-ph">🎭</div>')
         +'<div class="result-card-body">'
         +'<div class="result-card-title">'+fld(s,'공연명')+'</div>'
@@ -1858,7 +1937,8 @@ function renderWorkIndex(){
       if(genre||wTags.length){
         tagsRowH='<div class="result-card-tags">'+(genre?'<span class="result-card-tag">'+genre+'</span>':'')+wTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>';
       }
-      listH+='<div class="result-card" data-action="work" data-id="'+w.id+'"><div class="result-card-ph">📖</div><div class="result-card-body"><div class="result-card-title">'+fld(w,'작품명')+'</div>'+(fld(w,'작품명 (영문)')?'<div class="result-card-sub">'+fld(w,'작품명 (영문)')+'</div>':'')+(countryLabel?'<div class="result-card-sub">'+countryLabel+'</div>':'')+'<div class="result-card-sub">공연 '+shows.length+'개'+(roleCnt?' · 배역 '+roleCnt+'명':'')+'</div>'+tagsRowH+'</div></div>';
+      listH+='<div class="result-card" data-action="work" data-id="'+w.id+'">'+favBtnHtml('work',w.id)
+        +'<div class="result-card-ph">📖</div><div class="result-card-body"><div class="result-card-title">'+fld(w,'작품명')+wishBtnHtml('work',w.id)+'</div>'+(fld(w,'작품명 (영문)')?'<div class="result-card-sub">'+fld(w,'작품명 (영문)')+'</div>':'')+(countryLabel?'<div class="result-card-sub">'+countryLabel+'</div>':'')+'<div class="result-card-sub">공연 '+shows.length+'개'+(roleCnt?' · 배역 '+roleCnt+'명':'')+'</div>'+tagsRowH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -1886,7 +1966,7 @@ function showWork(wid,push){
   var genre=workGenre(work);
   var wTags=fld(work,'태그')||[];
   var wTagsRowH=wTags.length?('<div class="result-card-tags" style="margin-top:0.5rem">'+wTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
-  var h='<div class="detail-header"><div class="eyebrow">작품'+(genre?' · '+genre:'')+'</div><div class="detail-title">'+fld(work,'작품명')+favBtnHtml('work',wid)+'</div>'+(fld(work,'작품명 (영문)')?'<div class="detail-meta"><span>'+fld(work,'작품명 (영문)')+'</span></div>':'')+wTagsRowH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">작품'+(genre?' · '+genre:'')+'</div><div class="detail-title">'+fld(work,'작품명')+favBtnHtml('work',wid)+wishBtnHtml('work',wid)+'</div>'+(fld(work,'작품명 (영문)')?'<div class="detail-meta"><span>'+fld(work,'작품명 (영문)')+'</span></div>':'')+wTagsRowH+'</div>';
   if(shows.length){h+='<div class="sec"><div class="sec-label">공연 이력</div><div class="item-grid">'+shows.map(function(s){
     var p=POSTER[s.id]||'';
     var trid=ids(fld(s,'극단'))[0]||'';
@@ -2028,7 +2108,7 @@ function renderRoleIndex(){
       var gender=fld(r,'성별')||fld(r,'젠더')||'';
       var rTags=fld(r,'태그')||[];
       var rTagsH=rTags.length?('<div class="result-card-tags">'+rTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
-      listH+='<div class="result-card" data-action="role" data-id="'+r.id+'"><div class="result-card-ph">🎬</div><div class="result-card-body"><div class="result-card-title">'+fld(r,'배역명')+'</div>'+(nm(wid)?'<div class="result-card-sub">'+nm(wid)+'</div>':'')+(gender?'<div class="result-card-sub">'+gender+'</div>':'')+rTagsH+'</div></div>';
+      listH+='<div class="result-card" data-action="role" data-id="'+r.id+'"><div class="result-card-ph">🎬</div><div class="result-card-body"><div class="result-card-title">'+fld(r,'배역명')+wishBtnHtml('role',r.id)+'</div>'+(nm(wid)?'<div class="result-card-sub">'+nm(wid)+'</div>':'')+(gender?'<div class="result-card-sub">'+gender+'</div>':'')+rTagsH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -2053,7 +2133,7 @@ function showRole(rid,push){
   var siblingRoles=wid?DB.roles.filter(function(r){return r.id!==rid&&ids(fld(r,'작품')).indexOf(wid)>-1&&fld(r,'배역명');}):[];
   var roleTags=fld(role,'태그')||[];
   var tagsRowH=roleTags.length?('<div class="result-card-tags" style="margin-top:0.5rem">'+roleTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
-  var h='<div class="detail-header"><div class="eyebrow">'+(wid?'<span class="link" data-action="work" data-id="'+wid+'">'+nm(wid)+'</span> · 배역':'배역')+'</div><div class="detail-title">'+fld(role,'배역명')+'</div>'+tagsRowH+'<div class="detail-meta"><span>출연 '+hists.length+'건</span>'+(showIds.length?'<span>공연 '+showIds.length+'개</span>':'')+'</div></div>';
+  var h='<div class="detail-header"><div class="eyebrow">'+(wid?'<span class="link" data-action="work" data-id="'+wid+'">'+nm(wid)+'</span> · 배역':'배역')+'</div><div class="detail-title">'+fld(role,'배역명')+wishBtnHtml('role',rid)+'</div>'+tagsRowH+'<div class="detail-meta"><span>출연 '+hists.length+'건</span>'+(showIds.length?'<span>공연 '+showIds.length+'개</span>':'')+'</div></div>';
   if(hists.length){
     // 공연별로 묶어서 날짜순 정렬
     var byShow={};hists.forEach(function(h){var sid=ids(fld(h,'공연'))[0]||'';if(!sid)return;if(!byShow[sid])byShow[sid]=[];byShow[sid].push(h);});
@@ -2291,7 +2371,7 @@ function renderPeopleIndex(){
       var tagsH='<div class="result-card-tags">'+(actCnt?'<span class="result-card-tag" style="color:var(--actor);background:var(--actor-bg)">배우 '+actCnt+'</span>':'');
       staffRoleNames.forEach(function(rname){tagsH+='<span class="result-card-tag" style="color:var(--staff);background:var(--staff-bg)">'+rname+' '+staffRoleCntMap[rname]+'</span>';});
       tagsH+='</div>';
-      listH+='<div class="result-card" data-action="person" data-id="'+p.id+'">'+(photo?'<img src="'+photo+'" alt="'+fld(p,'이름')+'" style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block">':'<div class="result-card-ph">👤</div>')+'<div class="result-card-body"><div class="result-card-title">'+fld(p,'이름')+'</div>'+tagsH+'</div></div>';
+      listH+='<div class="result-card" data-action="person" data-id="'+p.id+'">'+favBtnHtml('person',p.id)+(photo?'<img src="'+photo+'" alt="'+fld(p,'이름')+'" style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block">':'<div class="result-card-ph">👤</div>')+'<div class="result-card-body"><div class="result-card-title">'+fld(p,'이름')+'</div>'+tagsH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -2709,7 +2789,7 @@ function renderVenueIndex(){
       var seatsLabel=venueSeatsLabel(v);
       var vphoto=iurl(fld(v,'사진'));
       var vphH=vphoto?'<img src="'+vphoto+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':'📍';
-      listH+='<div class="result-card" data-action="venue" data-id="'+v.id+'"><div class="result-card-ph">'+vphH+'</div><div class="result-card-body"><div class="result-card-title">'+fld(v,'극장명')+'</div><div class="result-card-sub">공연 '+showCntMap[v.id]+'개'+(seatsLabel?' · 좌석 '+seatsLabel:'')+'</div></div></div>';
+      listH+='<div class="result-card" data-action="venue" data-id="'+v.id+'">'+favBtnHtml('venue',v.id)+'<div class="result-card-ph">'+vphH+'</div><div class="result-card-body"><div class="result-card-title">'+fld(v,'극장명')+'</div><div class="result-card-sub">공연 '+showCntMap[v.id]+'개'+(seatsLabel?' · 좌석 '+seatsLabel:'')+'</div></div></div>';
     });
     listH+='</div>';
   }
@@ -2871,7 +2951,7 @@ function renderTroupeIndex(){
     filtered.forEach(function(t){
       var tphoto=iurl(fld(t,'사진'));
       var tphH=tphoto?'<img src="'+tphoto+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':'🏢';
-      listH+='<div class="result-card" data-action="troupe" data-id="'+t.id+'">'
+      listH+='<div class="result-card" data-action="troupe" data-id="'+t.id+'">'+favBtnHtml('troupe',t.id)
         +'<div class="result-card-ph">'+tphH+'</div>'
         +'<div class="result-card-body">'
         +'<div class="result-card-title">'+fld(t,'극단명')+'</div>'
