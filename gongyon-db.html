@@ -315,31 +315,36 @@ body.is-home .home-nav-dock{display:block}
 .person-sticky-text{min-width:0}
 .person-sticky-name{font-family:'Noto Serif KR',serif;font-size:1.05rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .person-sticky-blurb{font-size:0.76rem;color:var(--muted);margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.person-sticky-links{display:flex;gap:0.6rem;margin-top:0.5rem;padding-left:calc(52px + 1rem)}
-.person-sticky-links a{color:var(--muted);font-size:1rem;text-decoration:none;transition:color .15s;line-height:1}
-.person-sticky-links a:hover{color:var(--accent)}
+.person-sticky-links-inline{margin-left:0.6rem}
+.person-sticky-links-inline a{color:var(--muted);font-size:0.76rem;text-decoration:none;margin-right:0.6rem;transition:color .15s}
+.person-sticky-links-inline a:hover{color:var(--accent)}
 .claim-btn{background:none;border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-family:'Noto Sans KR',sans-serif;font-size:0.76rem;padding:0.4rem 1rem;cursor:pointer;transition:all .15s;white-space:nowrap}
 .claim-btn:hover{background:var(--accent);color:var(--bg)}
 .claim-badge{font-size:0.72rem;padding:0.35rem 0.8rem;border-radius:20px;white-space:nowrap}
 .claim-badge-linked{background:rgba(200,169,110,0.15);color:var(--accent)}
 .claim-badge-pending{background:var(--bg3);color:var(--muted)}
 .person-sticky-spacer{height:92px}
-.person-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-bottom:2rem}
+.person-overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.1rem;margin-bottom:2rem}
+.person-card-wide{grid-column:span 2}
+@media(max-width:600px){.person-card-wide{grid-column:span 1}}
 .mypage-tabs{display:flex;gap:0.3rem;border-bottom:1px solid var(--line);margin-bottom:1.6rem;flex-wrap:wrap}
 .mypage-tab-btn{background:none;border:none;color:var(--muted);font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;padding:0.6rem 1rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
 .mypage-tab-btn:hover{color:var(--text)}
 .mypage-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
-.myinfo-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem}
-.myinfo-card{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.3rem 1.4rem;box-sizing:border-box}
+.myinfo-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.2rem;align-items:start}
+.myinfo-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.3rem 1.4rem;box-sizing:border-box}
+.myinfo-card-full{grid-column:1/-1}
 .myinfo-avatar-picker{text-align:center;margin-bottom:1.1rem}
+.myinfo-avatar-wrap{position:relative;display:inline-block}
 .myinfo-avatar-preview{width:52px;height:52px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 0.7rem;border:1px solid var(--line)}
-.myinfo-avatar-options{display:flex;flex-wrap:wrap;gap:0.3rem;justify-content:center}
+.myinfo-avatar-edit-btn{position:absolute;bottom:0.7rem;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--bg);border:2px solid var(--bg2);font-size:0.62rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.myinfo-avatar-options{display:flex;flex-wrap:wrap;gap:0.3rem;justify-content:center;max-width:320px;margin:0 auto}
 .myinfo-avatar-opt{background:var(--bg3);border:1px solid var(--line);border-radius:6px;width:30px;height:30px;font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
 .myinfo-avatar-opt:hover{border-color:var(--accent)}
 .person-side-card{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
 .person-side-title{font-size:0.64rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:0.75rem}
 .person-gallery-full{margin-bottom:2rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.1rem 1.3rem}
-.person-gallery-grid-wide{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem}
+.person-gallery-grid-wide{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:0.6rem}
 .person-gallery-grid-wide img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in}
 .person-gallery-grid-wide.gallery-expanded img.gallery-extra-hidden{display:block}
 .person-gallery-manage-hint{font-size:0.76rem;color:var(--muted);margin-top:0.8rem}
@@ -811,7 +816,7 @@ async function renderClaimWidget(pid){
   var el=$('claim-widget');if(!el)return;
   if(!CURRENT_USER){el.innerHTML='';return;}
   if(CURRENT_USER.personId===pid){
-    el.innerHTML='<span class="claim-badge claim-badge-linked">✓ 내 프로필</span>';
+    el.innerHTML='<span class="claim-badge claim-badge-linked">✓ 내 프로필</span><button class="claim-btn" onclick="goMyPage()">내 정보 수정하기</button>';
     return;
   }
   try{
@@ -1193,14 +1198,15 @@ function renderMyPageTabContent(){
   else if(tab==='wishlist')renderMyPageWishlist(el);
   else if(tab==='projects')renderMyPageProjects(el);
 }
-var AVATAR_EMOJI_OPTIONS=['🦆','🎭','🎬','🎨','🎤','🎹','⭐','🌙','🔥','🌊','🍀','🦊','🐯','🐰','🐼','👻'];
+var AVATAR_EMOJI_OPTIONS=['🦆','🎭','🎬','🎨','🎤','🎹','🎻','🎺','🥁','🎧','🎪','🎟️','⭐','🌙','☀️','🌈','🔥','🌊','🍀','🌸','🌵','🍄','🦊','🐯','🐰','🐼','🐨','🐸','🐙','🦉','🐧','🦁','🐶','🐱','👻','🤖','👽','🦄','🐲','😎','🥳','🤠','🧚','🧛','🧜','🥷','🕺','💃','🎯','🎲','🧩','🔮','💎','🍕','🍩','☕','🍉','🎈','⚡','❄️','🌻'];
 function renderMyPageInfo(el){
   var h='<div class="myinfo-wrap">';
 
   h+='<div class="myinfo-card">';
   h+='<div class="myinfo-avatar-picker">';
-  h+='<div class="myinfo-avatar-preview" id="avatar-preview">'+(CURRENT_USER.avatarEmoji||(CURRENT_USER.nickname||'?').charAt(0))+'</div>';
-  h+='<div class="myinfo-avatar-options">'+AVATAR_EMOJI_OPTIONS.map(function(e){
+  h+='<div class="myinfo-avatar-wrap"><div class="myinfo-avatar-preview" id="avatar-preview">'+(CURRENT_USER.avatarEmoji||(CURRENT_USER.nickname||'?').charAt(0))+'</div>'
+    +'<button type="button" class="myinfo-avatar-edit-btn" onclick="toggleAvatarPicker()" title="아이콘 바꾸기">✎</button></div>';
+  h+='<div class="myinfo-avatar-options" id="avatar-options" style="display:none">'+AVATAR_EMOJI_OPTIONS.map(function(e){
     return '<button type="button" class="myinfo-avatar-opt" data-emoji="'+e+'" onclick="pickAvatarEmoji(\''+e+'\')">'+e+'</button>';
   }).join('')+'</div></div>';
   h+='<div class="edit-modal-field"><label>닉네임</label><input type="text" id="profile-nickname" value="'+(CURRENT_USER.nickname||'').replace(/"/g,'&quot;')+'"></div>';
@@ -1225,10 +1231,10 @@ function renderMyPageInfo(el){
   if(CURRENT_USER.personId){
     var person=DB.people.find(function(p){return p.id===CURRENT_USER.personId;});
     var myPhotos=person?(fld(person,'사진')||[]).filter(function(p){return p&&p.url;}):[];
-    h+='<div class="myinfo-card">';
+    h+='<div class="myinfo-card myinfo-card-full">';
     h+='<div class="person-side-title" style="text-align:center">내 사진'+(myPhotos.length?' ('+myPhotos.length+')':'')+'</div>';
     if(myPhotos.length){
-      h+='<div class="person-gallery-grid">'+myPhotos.map(function(p){
+      h+='<div class="person-gallery-grid-wide">'+myPhotos.map(function(p){
         return '<div class="pg-item"><img src="'+p.url+'" alt="사진"><button class="pg-del" onclick="removeMyPhoto(\''+p.url.replace(/'/g,"\\'")+'\')" title="삭제">×</button></div>';
       }).join('')+'</div>';
     }
@@ -1240,6 +1246,10 @@ function renderMyPageInfo(el){
 
   h+='</div>';
   el.innerHTML=h;
+}
+function toggleAvatarPicker(){
+  var el=$('avatar-options');if(!el)return;
+  el.style.display=el.style.display==='none'?'flex':'none';
 }
 var _pickedAvatarEmoji=null;
 function pickAvatarEmoji(e){
@@ -2524,15 +2534,15 @@ function showPerson(pid,push){
 
   var personLinks=fld(person,'홍보링크')||[];
   var validLinks=personLinks.filter(function(l){return l&&l.url;});
-  var stickyLinksH=validLinks.length?('<div class="person-sticky-links">'+validLinks.map(function(l){
+  var stickyLinksInlineH=validLinks.length?validLinks.map(function(l){
     var d=detectLinkPlatform(l.url);
-    return '<a href="'+l.url+'" target="_blank" rel="noopener noreferrer" title="'+(d?d.name:'링크')+'">'+(d?d.icon:'🔗')+'</a>';
-  }).join('')+'</div>'):'';
+    return '<a href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+(d?d.icon+' '+d.name:'🔗 '+(l.label||'링크'))+'</a>';
+  }).join(''):'';
 
   var stickyH='<div class="person-sticky-header"><div class="person-sticky-row">'+stickyPhotoH
-    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div>'
-    +'<span id="claim-widget" style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"></span></div>'
-    +stickyLinksH+'</div>';
+    +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div>'
+    +'<div class="person-sticky-blurb">'+blurbFull+(stickyLinksInlineH?'<span class="person-sticky-links-inline">'+stickyLinksInlineH+'</span>':'')+'</div></div>'
+    +'<span id="claim-widget" style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"></span></div></div>';
 
   var isMyProfile=CURRENT_USER&&CURRENT_USER.personId===pid;
   var galleryFullH='';
@@ -2546,10 +2556,7 @@ function showPerson(pid,push){
     if(personPhotos.length>GALLERY_INITIAL){
       galleryFullH+='<button class="person-gallery-more-btn" data-hidden-count="'+(personPhotos.length-GALLERY_INITIAL)+'" onclick="togglePersonGalleryWide(this)">+'+(personPhotos.length-GALLERY_INITIAL)+'장 더보기</button>';
     }
-    if(isMyProfile)galleryFullH+='<div class="person-gallery-manage-hint">사진 추가·삭제는 <span class="link" onclick="goMyPage()">마이페이지 &gt; 내 정보</span>에서 할 수 있어요</div>';
     galleryFullH+='</div>';
-  }else if(isMyProfile){
-    galleryFullH='<div class="person-gallery-full"><div class="person-gallery-manage-hint">아직 사진이 없어요. <span class="link" onclick="goMyPage()">마이페이지 &gt; 내 정보</span>에서 추가할 수 있어요</div></div>';
   }
 
   var statsH='<div class="person-stats-inline">'
@@ -2560,7 +2567,7 @@ function showPerson(pid,push){
     +'<div class="psi-item"><div class="psi-num">'+roleIds.length+'</div><div class="psi-label">맡은 배역</div></div>'
     +'<div class="psi-item"><div class="psi-num">'+troupeIds.length+'</div><div class="psi-label">참여 단체</div></div>'
     +'</div>';
-  var statsCardH='<div class="person-side-card"><div class="person-side-title">활동 요약</div>'+statsH+'</div>';
+  var statsCardH='<div class="person-side-card person-card-wide"><div class="person-side-title">활동 요약</div>'+statsH+'</div>';
 
   var chartH='';
   if(allYears.length>=1){

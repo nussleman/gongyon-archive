@@ -283,6 +283,7 @@
       <button data-tab="person">사람</button>
       <button data-tab="claims">클레임 승인 <span class="nav-badge" id="badge-claims"></span></button>
       <button data-tab="edits">수정요청 <span class="nav-badge" id="badge-edits"></span></button>
+      <button data-tab="users">유저 목록</button>
       <button data-tab="admins">관리자 목록</button>
     </div>
     <div class="nav-section">
@@ -804,6 +805,12 @@
         <button type="button" class="edits-filter-tab" data-status="all" onclick="setEditsFilter('all')">전체</button>
       </div>
       <div id="edits-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-users">
+      <h2>유저 목록</h2>
+      <p class="sub">가입한 계정과, 사람(people) 레코드 연결 여부예요.</p>
+      <div id="users-list">불러오는 중...</div>
     </section>
 
     <section class="tab-panel" id="tab-admins">
@@ -2630,6 +2637,26 @@ async function resolveEdit(id, status) {
 }
 window.resolveEdit = resolveEdit;
 
+// ---------- 유저 목록 ----------
+async function loadUsers() {
+  const el = document.getElementById('users-list');
+  const { data, error } = await supabase.rpc('list_all_users');
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">가입한 유저가 없어요.</p>'; return; }
+  el.innerHTML = `<table class="edits-table"><thead><tr><th>이메일</th><th>닉네임</th><th>연결된 사람</th><th>관리자</th><th>가입일</th></tr></thead><tbody>`
+    + data.map(u => `
+      <tr>
+        <td>${u.email || ''}</td>
+        <td>${u.nickname || ''}</td>
+        <td>${u.person_name || '<span class="sub">미연결</span>'}</td>
+        <td>${u.is_admin ? '✓' : ''}</td>
+        <td>${new Date(u.created_at).toLocaleDateString('ko-KR')}</td>
+      </tr>
+    `).join('')
+    + `</tbody></table>`;
+}
+window.loadUsers = loadUsers;
+
 // ---------- 데이터 현황 ----------
 function loadDataHealth() {
   const el = document.getElementById('datahealth-content');
@@ -2688,6 +2715,7 @@ window.removeAdminEmail = removeAdminEmail;
   await loadClaims();
   await loadEdits();
   await loadAdmins();
+  loadUsers();
   loadDataHealth();
   renderOptionManager();
 })();
