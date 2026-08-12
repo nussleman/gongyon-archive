@@ -858,7 +858,21 @@ function logout(){
   sbClient.auth.signOut().then(function(){location.reload();});
 }
 function handleProfileFabClick(){
-  if(CURRENT_USER)goMyPage();
+  if(!CURRENT_USER)return;
+  var overlay=$('ori-modal-overlay');
+  $('ori-modal-message').textContent='무엇을 보시겠어요?';
+  $('ori-modal-input-field').style.display='none';
+  $('ori-modal-actions').innerHTML=''
+    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'info\')">👤 내 정보</button>'
+    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'troupes\')">🏢 내 단체</button>'
+    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'projects\')">🎭 내 프로젝트</button>'
+    +'<button class="pf-btn" style="width:100%;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'dashboard\')">📊 마이페이지 전체 보기</button>';
+  $('ori-modal-actions').style.flexDirection='column';
+  overlay.classList.add('open');
+}
+function goMyPageTab(tab){
+  window._myPageTab=tab;
+  goMyPage(true,true);
 }
 function renderProfileFab(){
   var btn=$('profile-fab');if(!btn)return;
@@ -1874,14 +1888,14 @@ function renderMyPageProjects(el){
     +'<div id="my-projects-list">불러오는 중…</div>';
   loadMyProjects();
 }
-function goMyPage(push){
+function goMyPage(push,keepTab){
   if(push!==false)history.pushState({view:'mypage'},'','#mypage');
   setNav('mypage');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
   if(!CURRENT_USER){
     mn('<div class="tab-index"><div class="result-empty"><div class="result-empty-icon">👤</div><div style="font-size:0.95rem;margin-bottom:0.4rem">로그인이 필요해요</div><div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">구글 계정으로 로그인하면 즐겨찾기를 저장할 수 있어요.</div><button class="pf-btn" onclick="loginWithGoogle()">구글로 로그인</button></div></div>');
     return;
   }
-  window._myPageTab='info';
+  if(!keepTab)window._myPageTab='info';
   renderMyPage();
 }
 
@@ -2032,7 +2046,7 @@ function switchTeamSubTab(tab){
 }
 function renderTeamSubTabContent(){
   var el=$('team-subtab-content');if(!el)return;
-  el.innerHTML='<div class="project-members-grid" id="project-members-grid">불러오는 중…</div>';
+  el.innerHTML='<div id="project-members-grid">불러오는 중…</div>';
 }
 async function updateProjectStatus(pid,status){
   var ctx=window._projectCtx;
@@ -2197,6 +2211,9 @@ function renderTeamSubTabBody(){
   var el=$('project-members-grid');if(!el)return;
   var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr,positions=ctx.positions||[],emailByMemberId=ctx.emailByMemberId||{};
   var sub=window._teamSubTab;
+  var extraEl=document.getElementById('team-subtab-extra');
+  if(extraEl)extraEl.remove();
+  el.className='';
   if(sub==='actor'){
     var actorPositions=positions.filter(function(p){return p.position_type==='actor';});
     var rowsH='';
@@ -2228,7 +2245,9 @@ function renderTeamSubTabBody(){
       }).join('');
       return '<div class="person-side-card"><div class="proj-staff-subgroup">'+g+'</div>'+rowsH+'</div>';
     }).join('');
-    el.innerHTML='<div class="project-members-grid project-members-grid-3col">'+cardsH+'</div>'+infoReportPrompt('스태프 역할','other');
+    el.className='project-members-grid project-members-grid-3col';
+    el.innerHTML=cardsH;
+    el.insertAdjacentHTML('afterend','<div id="team-subtab-extra">'+infoReportPrompt('스태프 역할','other')+'</div>');
   }else if(sub==='other'){
     var otherPositions=positions.filter(function(p){return p.position_type==='other';});
     var venueH=venueSectionHtml(pid,pr);
@@ -2749,77 +2768,66 @@ async function goProjectBrowse(push){
   if(push!==false)history.pushState({view:'projects'},'','#projects');
   setNav('projects');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
   if(!CURRENT_USER){mn('<div class="tab-index"><div class="result-empty">로그인이 필요해요</div></div>');return;}
-  var statusOptions=[['all','전체']].concat(Object.keys(PROJECT_STATUS_LABEL).map(function(k){return [k,PROJECT_STATUS_LABEL[k]];}));
-  var recruitTypeOptions=[['all','전체'],['actor','배우'],['staff','스태프'],['other','기타']];
+  var statusOptions=[['all','전체 상태']].concat(Object.keys(PROJECT_STATUS_LABEL).map(function(k){return [k,PROJECT_STATUS_LABEL[k]];}));
+  var recruitTypeOptions=[['all','전체 유형'],['actor','배우'],['staff','스태프'],['other','기타']];
   mn('<div class="tab-index"><div class="project-browse-grid">'
     +'<div class="project-browse-col">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;flex-wrap:wrap;gap:0.5rem">'
-      +'<span class="sec-label" style="margin-bottom:0">프로젝트 목록</span>'
+      +'<span class="sec-label" style="margin-bottom:0">프로젝트 목록<span style="font-size:0.7rem;color:var(--muted);font-weight:400;margin-left:0.4rem">공개로 설정된 프로젝트예요</span></span>'
       +'<button class="pf-btn pf-active" onclick="startNewProject()">+ 새 프로젝트 시작하기</button>'
       +'</div>'
-      +'<select class="wizard-search" style="width:auto;margin-bottom:0.8rem" onchange="setBrowseProjectFilter(this.value)">'
+      +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.8rem">'
+      +'<select class="wizard-search" style="width:auto;margin-bottom:0" onchange="setBrowseProjectFilter(this.value)">'
       +statusOptions.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>';}).join('')
       +'</select>'
-      +'<div id="browse-my-projects-list" class="project-card-grid">불러오는 중…</div>'
+      +'<input type="text" class="wizard-search" style="width:auto;flex:1;min-width:120px;margin-bottom:0" placeholder="제목·단체·작품 검색..." oninput="setBrowseProjectSearch(this.value)">'
+      +'</div>'
+      +'<div id="browse-public-projects-list" class="project-card-grid">불러오는 중…</div>'
     +'</div>'
     +'<div class="project-browse-col">'
       +'<span class="sec-label">모집 중인 자리</span>'
-      +'<select class="wizard-search" style="width:auto;margin-bottom:0.8rem" onchange="setBrowseRecruitFilter(this.value)">'
+      +'<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.8rem">'
+      +'<select class="wizard-search" style="width:auto;margin-bottom:0" onchange="setBrowseRecruitFilter(this.value)">'
       +recruitTypeOptions.map(function(o){return '<option value="'+o[0]+'">'+o[1]+'</option>';}).join('')
       +'</select>'
+      +'<input type="text" class="wizard-search" style="width:auto;flex:1;min-width:120px;margin-bottom:0" placeholder="프로젝트·자리명 검색..." oninput="setBrowseRecruitSearch(this.value)">'
+      +'</div>'
       +'<div id="browse-positions-list" class="project-card-grid">불러오는 중…</div>'
     +'</div>'
-    +'</div></div>'
-    +'<div class="sec" style="margin-top:2rem"><span class="sec-label">🌐 공개된 프로젝트</span><div style="font-size:0.76rem;color:var(--muted);margin-bottom:0.8rem">다른 사람들이 공개로 설정한 프로젝트예요. 구경만 가능해요.</div><div id="browse-public-projects-list" class="project-card-grid">불러오는 중…</div></div>'
-    +'</div>');
-  loadBrowseMyProjects();
-  loadBrowseRecruiting();
+    +'</div></div>');
   loadBrowsePublicProjects();
+  loadBrowseRecruiting();
 }
+var _browseProjectSearch='',_browseRecruitSearch='';
+function setBrowseProjectSearch(v){_browseProjectSearch=v.trim().toLowerCase();renderBrowsePublicProjects();}
+function setBrowseRecruitSearch(v){_browseRecruitSearch=v.trim().toLowerCase();renderBrowseRecruiting();}
 async function loadBrowsePublicProjects(){
-  var el=$('browse-public-projects-list');if(!el)return;
   try{
     var r=await sbClient.rpc('list_public_projects');
-    var rows=r.data||[];
-    if(!rows.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">아직 공개된 프로젝트가 없어요.</div>';return;}
-    el.innerHTML=rows.map(function(p){
-      var ownerNameH=p.owner_person_id?('<span class="link" data-action="person" data-id="'+p.owner_person_id+'" onclick="event.stopPropagation()">'+escHtml(p.owner_nickname||p.owner_email)+'</span>'):escHtml(p.owner_nickname||p.owner_email);
-      return '<div class="item-card proj-card" style="cursor:pointer" onclick="goProject(\''+p.id+'\')">'
-        +'<div class="item-card-title" style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem">'+escHtml(p.title||'새 프로젝트')+'<span class="status-chip '+(PROJECT_STATUS_CHIP_CLASS[p.status]||'')+'" style="font-size:0.62rem;padding:0.15rem 0.55rem">'+(PROJECT_STATUS_LABEL[p.status]||p.status)+'</span></div>'
-        +'<div style="font-size:0.76rem;color:var(--muted);margin-top:0.5rem;line-height:1.7">'
-        +(p.work_name?'작품 '+escHtml(p.work_name)+'<br>':'')
-        +(p.troupe_name?'단체 '+escHtml(p.troupe_name)+'<br>':'')
-        +'관리자 '+ownerNameH
-        +'</div></div>';
-    }).join('');
-  }catch(e){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오지 못했어요.</div>';}
-}
-async function loadBrowseMyProjects(){
-  try{
-    var r=await sbClient.rpc('list_my_projects_detail');
     _browseProjectsRaw=r.data||[];
-    renderBrowseMyProjects();
-  }catch(e){var el=$('browse-my-projects-list');if(el)el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패했어요.</div>';}
+    renderBrowsePublicProjects();
+  }catch(e){var el=$('browse-public-projects-list');if(el)el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오지 못했어요.</div>';}
 }
-function setBrowseProjectFilter(v){_browseProjectFilter=v;renderBrowseMyProjects();}
-function renderBrowseMyProjects(){
-  var el=$('browse-my-projects-list');if(!el)return;
-  var rows=_browseProjectFilter==='all'?_browseProjectsRaw:_browseProjectsRaw.filter(function(p){return p.status===_browseProjectFilter;});
+function setBrowseProjectFilter(v){_browseProjectFilter=v;renderBrowsePublicProjects();}
+function renderBrowsePublicProjects(){
+  var el=$('browse-public-projects-list');if(!el)return;
+  var rows=_browseProjectsRaw||[];
+  if(_browseProjectFilter&&_browseProjectFilter!=='all')rows=rows.filter(function(p){return p.status===_browseProjectFilter;});
+  if(_browseProjectSearch)rows=rows.filter(function(p){
+    return (p.title||'').toLowerCase().indexOf(_browseProjectSearch)>-1
+      ||(p.troupe_name||'').toLowerCase().indexOf(_browseProjectSearch)>-1
+      ||(p.work_name||'').toLowerCase().indexOf(_browseProjectSearch)>-1;
+  });
   if(!rows.length){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">해당하는 프로젝트가 없어요.</div>';return;}
   el.innerHTML=rows.map(function(p){
     var ownerNameH=p.owner_person_id?('<span class="link" data-action="person" data-id="'+p.owner_person_id+'" onclick="event.stopPropagation()">'+escHtml(p.owner_nickname||p.owner_email)+'</span>'):escHtml(p.owner_nickname||p.owner_email);
-    return '<div class="item-card proj-card">'
-      +'<div class="proj-card-actions">'
-      +'<button class="proj-icon-btn" onclick="event.stopPropagation();renameProject(\''+p.id+'\')" title="이름 수정">✎</button>'
-      +'<button class="proj-icon-btn" onclick="event.stopPropagation();deleteProject(\''+p.id+'\')" title="삭제">🗑</button>'
-      +'</div>'
-      +'<div style="cursor:pointer" onclick="goProject(\''+p.id+'\')">'
+    return '<div class="item-card proj-card" style="cursor:pointer" onclick="goProject(\''+p.id+'\')">'
       +'<div class="item-card-title" style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem">'+escHtml(p.title||'새 프로젝트')+'<span class="status-chip '+(PROJECT_STATUS_CHIP_CLASS[p.status]||'')+'" style="font-size:0.62rem;padding:0.15rem 0.55rem">'+(PROJECT_STATUS_LABEL[p.status]||p.status)+'</span></div>'
       +'<div style="font-size:0.76rem;color:var(--muted);margin-top:0.5rem;line-height:1.7">'
       +(p.work_name?'작품 '+escHtml(p.work_name)+'<br>':'')
       +(p.troupe_name?'단체 '+escHtml(p.troupe_name)+'<br>':'')
       +'관리자 '+ownerNameH
-      +'</div></div></div>';
+      +'</div></div>';
   }).join('');
 }
 var POSITION_TYPE_LABEL={actor:'배우 모집',staff:'스태프 모집',other:'기타 모집'};
@@ -2908,6 +2916,7 @@ function oriAlert(message){
     _oriModalResolve=resolve;
     $('ori-modal-message').textContent=message;
     $('ori-modal-input-field').style.display='none';
+    $('ori-modal-actions').style.flexDirection='row';
     $('ori-modal-actions').innerHTML='<button class="pf-btn pf-active" style="width:100%" onclick="_oriModalClose(true)">확인</button>';
     $('ori-modal-overlay').classList.add('open');
   });
@@ -2917,6 +2926,7 @@ function oriConfirm(message){
     _oriModalResolve=resolve;
     $('ori-modal-message').textContent=message;
     $('ori-modal-input-field').style.display='none';
+    $('ori-modal-actions').style.flexDirection='row';
     $('ori-modal-actions').innerHTML='<button class="pf-btn" style="flex:1" onclick="_oriModalClose(false)">취소</button><button class="pf-btn pf-active" style="flex:1" onclick="_oriModalClose(true)">확인</button>';
     $('ori-modal-overlay').classList.add('open');
   });
@@ -2927,6 +2937,7 @@ function oriPrompt(message,defaultValue){
     $('ori-modal-message').textContent=message;
     $('ori-modal-input-field').style.display='block';
     $('ori-modal-input').value=defaultValue||'';
+    $('ori-modal-actions').style.flexDirection='row';
     $('ori-modal-actions').innerHTML='<button class="pf-btn" style="flex:1" onclick="_oriModalClose(null)">취소</button><button class="pf-btn pf-active" style="flex:1" onclick="_oriModalClose($(\'ori-modal-input\').value)">확인</button>';
     $('ori-modal-overlay').classList.add('open');
     setTimeout(function(){$('ori-modal-input').focus();},50);
