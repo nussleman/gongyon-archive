@@ -169,6 +169,7 @@ body.is-home .home-nav-dock{display:block}
 .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem}
 .result-card{border-radius:8px;overflow:hidden;cursor:pointer;background:var(--bg2);border:1px solid var(--line);transition:transform .18s,border-color .18s;position:relative}
 .result-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.result-card .fav-btn ~ .fav-btn{right:1.9rem}
 .result-card:hover{transform:translateY(-3px);border-color:rgba(200,169,110,0.35)}
 .result-card img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block}
 .result-card-ph{width:100%;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--muted);background:var(--bg3)}
@@ -373,8 +374,10 @@ body.is-home .home-nav-dock{display:block}
 .fav-btn.on{color:var(--accent);opacity:1}
 .wish-btn svg{width:13px;height:13px}
 .wish-btn.on{color:#d97a8a;opacity:1}
-.fav-btn-inline{vertical-align:middle;margin-left:0.4rem}
+.fav-btn-inline{vertical-align:middle;margin-left:0.5rem}
+.fav-btn-inline svg{width:20px;height:20px}
 .cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cast-card .fav-btn ~ .fav-btn{right:1.9rem}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
 @media(max-width:768px){
   .profile-fab{top:0.6rem;right:0.7rem;width:34px;height:34px;font-size:0.9rem}
@@ -788,18 +791,32 @@ async function renderClaimWidget(pid){
     el.innerHTML='<span class="claim-badge claim-badge-linked">✓ 내 프로필</span>';
     return;
   }
-  if(CURRENT_USER.personId){el.innerHTML='';return;} // 이미 다른 사람과 연결됨 - 클레임 불가
   try{
     var r=await sbClient.rpc('person_claim_status',{p_person_id:pid});
     var status=r.data||{};
-    if(status.my_pending){
-      el.innerHTML='<span class="claim-badge claim-badge-pending">승인 대기 중</span>';
-    }else if(status.claimed){
-      el.innerHTML='';
+    var h='';
+    if(status.claimed){
+      h+='<span class="claim-badge claim-badge-linked">✓ 가입한 사람이에요</span>';
     }else{
-      el.innerHTML='<button class="claim-btn" onclick="submitClaim(\''+pid+'\')">이거 나예요</button>';
+      h+='<span class="claim-badge claim-badge-pending">아직 가입 안 했어요</span>'
+        +'<button class="claim-btn" onclick="inviteThisPerson(\''+pid+'\')">초대 링크 복사</button>';
     }
+    if(!CURRENT_USER.personId&&!status.claimed){
+      if(status.my_pending){h+='<span class="claim-badge claim-badge-pending">내 요청 승인 대기중</span>';}
+      else{h+='<button class="claim-btn" onclick="submitClaim(\''+pid+'\')">이거 나예요</button>';}
+    }
+    el.innerHTML=h;
   }catch(e){el.innerHTML='';}
+}
+function inviteThisPerson(pid){
+  var name=nm(pid)||'이 분';
+  var url=location.origin+location.pathname+'#person-'+pid;
+  var msg=name+'님, 오리(연극·뮤지컬 아카이브)에 참여이력이 등록되어 있어요! 로그인하고 확인해보세요: '+url;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(msg).then(function(){alert('복사했어요! 카톡 등으로 붙여넣어 보내보세요.');}).catch(function(){prompt('아래 내용을 복사해서 보내보세요:',msg);});
+  }else{
+    prompt('아래 내용을 복사해서 보내보세요:',msg);
+  }
 }
 async function submitClaim(pid){
   if(!CURRENT_USER)return;
@@ -1937,8 +1954,8 @@ function renderWorkIndex(){
       if(genre||wTags.length){
         tagsRowH='<div class="result-card-tags">'+(genre?'<span class="result-card-tag">'+genre+'</span>':'')+wTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>';
       }
-      listH+='<div class="result-card" data-action="work" data-id="'+w.id+'">'+favBtnHtml('work',w.id)
-        +'<div class="result-card-ph">📖</div><div class="result-card-body"><div class="result-card-title">'+fld(w,'작품명')+wishBtnHtml('work',w.id)+'</div>'+(fld(w,'작품명 (영문)')?'<div class="result-card-sub">'+fld(w,'작품명 (영문)')+'</div>':'')+(countryLabel?'<div class="result-card-sub">'+countryLabel+'</div>':'')+'<div class="result-card-sub">공연 '+shows.length+'개'+(roleCnt?' · 배역 '+roleCnt+'명':'')+'</div>'+tagsRowH+'</div></div>';
+      listH+='<div class="result-card" data-action="work" data-id="'+w.id+'">'+favBtnHtml('work',w.id)+wishBtnHtml('work',w.id)
+        +'<div class="result-card-ph">📖</div><div class="result-card-body"><div class="result-card-title">'+fld(w,'작품명')+'</div>'+(fld(w,'작품명 (영문)')?'<div class="result-card-sub">'+fld(w,'작품명 (영문)')+'</div>':'')+(countryLabel?'<div class="result-card-sub">'+countryLabel+'</div>':'')+'<div class="result-card-sub">공연 '+shows.length+'개'+(roleCnt?' · 배역 '+roleCnt+'명':'')+'</div>'+tagsRowH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -2108,7 +2125,7 @@ function renderRoleIndex(){
       var gender=fld(r,'성별')||fld(r,'젠더')||'';
       var rTags=fld(r,'태그')||[];
       var rTagsH=rTags.length?('<div class="result-card-tags">'+rTags.map(function(t){return '<span class="result-card-tag">'+t+'</span>';}).join('')+'</div>'):'';
-      listH+='<div class="result-card" data-action="role" data-id="'+r.id+'"><div class="result-card-ph">🎬</div><div class="result-card-body"><div class="result-card-title">'+fld(r,'배역명')+wishBtnHtml('role',r.id)+'</div>'+(nm(wid)?'<div class="result-card-sub">'+nm(wid)+'</div>':'')+(gender?'<div class="result-card-sub">'+gender+'</div>':'')+rTagsH+'</div></div>';
+      listH+='<div class="result-card" data-action="role" data-id="'+r.id+'">'+wishBtnHtml('role',r.id)+'<div class="result-card-ph">🎬</div><div class="result-card-body"><div class="result-card-title">'+fld(r,'배역명')+'</div>'+(nm(wid)?'<div class="result-card-sub">'+nm(wid)+'</div>':'')+(gender?'<div class="result-card-sub">'+gender+'</div>':'')+rTagsH+'</div></div>';
     });
     listH+='</div>';
   } else {
@@ -2453,7 +2470,7 @@ function showPerson(pid,push){
   var stickyPhotoH=primaryPhotoUrl?'<img class="person-sticky-photo" src="'+primaryPhotoUrl+'" alt="'+fld(person,'이름')+'">':'<div class="person-sticky-photo-ph">🎭</div>';
   var stickyH='<div class="person-sticky-header">'+stickyPhotoH
     +'<div class="person-sticky-text"><div class="person-sticky-name">'+fld(person,'이름')+favBtnHtml('person',pid)+'</div><div class="person-sticky-blurb">'+blurbFull+'</div></div>'
-    +'<span id="claim-widget" style="margin-left:auto"></span></div>';
+    +'<span id="claim-widget" style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap"></span></div>';
 
   var galleryH='';
   if(personPhotos.length>1){
