@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>공연DB 어드민</title>
+<title>오리 Admin</title>
 <style>
   :root {
     --bg: #f7f6f3;
@@ -177,8 +177,8 @@
   .btn.secondary { background: none; color: var(--accent); border: 1px solid var(--accent); }
   .btn.small { margin-top: 0; padding: 4px 10px; font-size: 12px; }
   .edits-filter-tabs { display: flex; gap: 4px; margin: 10px 0 16px; }
-  .edits-filter-tab, .claims-filter-tab, .inquiries-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
-  .edits-filter-tab.active, .claims-filter-tab.active, .inquiries-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .edits-filter-tab, .claims-filter-tab, .inquiries-filter-tab, .troupeclaims-filter-tab { background: none; border: 1px solid var(--line); border-radius: 16px; padding: 5px 14px; font-size: 12.5px; color: var(--ink-soft); cursor: pointer; }
+  .edits-filter-tab.active, .claims-filter-tab.active, .inquiries-filter-tab.active, .troupeclaims-filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   .edits-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .edits-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--line); color: var(--ink-soft); font-weight: 600; font-size: 12px; }
   .edits-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -277,7 +277,7 @@
 <body>
 
 <header>
-  <h1>공연DB 어드민</h1>
+  <h1>오리 Admin</h1>
   <span id="authStatus">인증 확인 중...</span>
 </header>
 
@@ -301,6 +301,7 @@
       <div class="nav-section-label">사람·계정</div>
       <button data-tab="person">사람</button>
       <button data-tab="claims">클레임 승인 <span class="nav-badge" id="badge-claims"></span></button>
+      <button data-tab="troupeclaims">단체 클레임 <span class="nav-badge" id="badge-troupeclaims"></span></button>
       <button data-tab="edits">수정요청 <span class="nav-badge" id="badge-edits"></span></button>
       <button data-tab="inquiries">라이선스 문의 <span class="nav-badge" id="badge-inquiries"></span></button>
       <button data-tab="users">유저 목록</button>
@@ -825,6 +826,18 @@
         <button type="button" class="claims-filter-tab" data-status="all" onclick="setClaimsFilter('all')">전체</button>
       </div>
       <div id="claims-list">불러오는 중...</div>
+    </section>
+
+    <section class="tab-panel" id="tab-troupeclaims">
+      <h2>단체 클레임</h2>
+      <p class="sub">유저가 "우리 단체예요"로 요청한 단체(troupes) 관리자 연결이에요. 승인하면 그 유저가 단체 정보를 직접 수정할 수 있어요.</p>
+      <div class="edits-filter-tabs">
+        <button type="button" class="troupeclaims-filter-tab active" data-status="pending" onclick="setTroupeClaimsFilter('pending')">대기중</button>
+        <button type="button" class="troupeclaims-filter-tab" data-status="confirmed" onclick="setTroupeClaimsFilter('confirmed')">승인됨</button>
+        <button type="button" class="troupeclaims-filter-tab" data-status="rejected" onclick="setTroupeClaimsFilter('rejected')">거절됨</button>
+        <button type="button" class="troupeclaims-filter-tab" data-status="all" onclick="setTroupeClaimsFilter('all')">전체</button>
+      </div>
+      <div id="troupeclaims-list">불러오는 중...</div>
     </section>
 
     <section class="tab-panel" id="tab-edits">
@@ -2761,6 +2774,49 @@ async function closeInquiry(id) {
 }
 window.answerInquiry = answerInquiry;
 window.closeInquiry = closeInquiry;
+
+// ---------- 단체 클레임 ----------
+const TROUPE_CLAIM_STATUS_LABEL = { pending: '대기중', confirmed: '승인됨', rejected: '거절됨' };
+let _troupeClaimsFilter = 'pending';
+function setTroupeClaimsFilter(status) {
+  _troupeClaimsFilter = status;
+  document.querySelectorAll('.troupeclaims-filter-tab').forEach(b => b.classList.toggle('active', b.dataset.status === status));
+  loadTroupeClaims();
+}
+window.setTroupeClaimsFilter = setTroupeClaimsFilter;
+async function loadTroupeClaims() {
+  const el = document.getElementById('troupeclaims-list');
+  const { data, error } = await supabase.rpc('list_troupe_claims', { p_status: _troupeClaimsFilter });
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  const { data: pendingData } = await supabase.rpc('list_troupe_claims', { p_status: 'pending' });
+  document.getElementById('badge-troupeclaims').classList.toggle('on', !!(pendingData && pendingData.length));
+  if (!data || !data.length) { el.innerHTML = '<p class="sub">해당하는 요청이 없어요.</p>'; return; }
+  el.innerHTML = data.map(c => `
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <div>
+        <b>${escHtmlAdmin(c.troupe_name)}</b> 관리자 연결 요청 <span class="edits-status-${c.status === 'confirmed' ? 'done' : c.status}">[${TROUPE_CLAIM_STATUS_LABEL[c.status] || c.status}]</span>
+        <div class="sub">요청자: ${c.requester_nickname || c.requester_email} · ${new Date(c.created_at).toLocaleString('ko-KR')}</div>
+      </div>
+      ${c.status === 'pending' ? `
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button type="button" class="btn" onclick="approveTroupeClaim('${c.claim_id}')">승인</button>
+        <button type="button" class="btn secondary" onclick="rejectTroupeClaim('${c.claim_id}')">거절</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+async function approveTroupeClaim(claimId) {
+  const { error } = await supabase.rpc('approve_troupe_claim', { p_claim_id: claimId });
+  if (error) { alert('승인 실패: ' + error.message); return; }
+  loadTroupeClaims();
+}
+async function rejectTroupeClaim(claimId) {
+  const { error } = await supabase.rpc('reject_troupe_claim', { p_claim_id: claimId });
+  if (error) { alert('거절 실패: ' + error.message); return; }
+  loadTroupeClaims();
+}
+window.approveTroupeClaim = approveTroupeClaim;
+window.rejectTroupeClaim = rejectTroupeClaim;
 function escHtmlAdmin(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -2869,6 +2925,7 @@ window.removeAdminEmail = removeAdminEmail;
   await loadClaims();
   await loadEdits();
   await loadInquiries();
+  await loadTroupeClaims();
   await loadAdmins();
   loadUsers();
   loadDataHealth();

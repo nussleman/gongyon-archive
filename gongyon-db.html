@@ -367,10 +367,11 @@ body.is-home .home-nav-dock{display:block}
 .budget-table input{width:100%;background:none;border:1px solid transparent;border-radius:4px;color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:0.8rem;padding:0.3rem 0.35rem;box-sizing:border-box}
 .budget-table input:hover{border-color:var(--line)}
 .budget-table input:focus{outline:none;border-color:var(--accent);background:var(--bg3)}
-.budget-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;align-items:start}
-@media(max-width:800px){.budget-3col{grid-template-columns:1fr}}
+.budget-2col{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;align-items:start}
+@media(max-width:640px){.budget-2col{grid-template-columns:1fr}}
+.budget-balance-bar{text-align:center;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:0.9rem;margin-bottom:1.6rem;font-size:0.9rem;color:var(--muted)}
+.budget-balance-bar b{font-size:1.3rem;margin-left:0.4rem}
 .budget-col{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:1.1rem}
-.budget-col-balance{text-align:center}
 .budget-col-total{margin-bottom:0.8rem}
 .budget-col-total-num{font-size:1.05rem;font-weight:600}
 .budget-col-income{color:#6eb5c8}
@@ -1028,6 +1029,33 @@ async function renderClaimWidget(pid){
     el.innerHTML=h;
   }catch(e){el.innerHTML='';}
 }
+async function renderTroupeClaimWidget(tid){
+  var el=$('troupe-claim-widget');if(!el)return;
+  if(!CURRENT_USER){el.innerHTML='';return;}
+  try{
+    var r=await sbClient.rpc('troupe_link_status',{p_troupe_id:tid});
+    var status=(r.data&&r.data[0])||{};
+    var h='';
+    if(status.my_role==='admin'){
+      h+='<span class="claim-badge claim-badge-linked">✓ 내가 관리하는 단체예요</span><button class="claim-btn" onclick="goMyTroupe(\''+tid+'\')">단체 정보 수정하기</button>';
+    }else if(status.my_pending){
+      h+='<span class="claim-badge claim-badge-pending">승인 대기 중</span>';
+    }else{
+      h+='<button class="claim-btn" onclick="requestTroupeLink(\''+tid+'\')">우리 단체예요</button>';
+    }
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='';}
+}
+async function requestTroupeLink(tid){
+  if(!CURRENT_USER){loginWithGoogle();return;}
+  if(!confirm('이 단체의 관리자로 연결을 요청할까요?\n관리자가 확인 후 승인하면 단체 정보를 수정할 수 있어요.'))return;
+  try{
+    var r=await sbClient.rpc('request_troupe_link',{p_troupe_id:tid});
+    if(r.error)throw r.error;
+    alert('요청을 보냈어요. 승인되면 단체 정보를 수정할 수 있어요.');
+    renderTroupeClaimWidget(tid);
+  }catch(e){alert('요청 실패: '+e.message);}
+}
 function maybeShowConnectPrompt(){
   if(!CURRENT_USER||CURRENT_USER.personId)return;
   try{if(sessionStorage.getItem('oridb_connect_dismissed')==='1')return;}catch(e){}
@@ -1481,6 +1509,9 @@ function renderMyPageInfo(el){
   }
   h+='</div>';
 
+  // 1.5) 내 단체
+  h+='<div class="myinfo-card" id="my-troupes-card"><div class="person-side-title" style="text-align:center">내 단체</div><div style="font-size:0.78rem;color:var(--muted);text-align:center">불러오는 중…</div></div>';
+
   // 2) 개인정보 (보기/편집 토글)
   h+='<div class="myinfo-card">';
   h+='<div class="person-side-title" style="display:flex;justify-content:space-between;align-items:center">개인 정보'
@@ -1534,6 +1565,116 @@ function renderMyPageInfo(el){
 
   h+='</div>';
   el.innerHTML=h;
+  loadMyTroupesCard();
+}
+async function loadMyTroupesCard(){
+  var el=$('my-troupes-card');if(!el)return;
+  try{
+    var r=await sbClient.rpc('list_my_troupes');
+    var rows=r.data||[];
+    if(!rows.length){
+      el.innerHTML='<div class="person-side-title" style="text-align:center">내 단체</div><div style="font-size:0.78rem;color:var(--muted);line-height:1.6;text-align:center">아직 연결 안 됨<br>단체 페이지에서 "우리 단체예요"를 눌러보세요</div>';
+      return;
+    }
+    el.innerHTML='<div class="person-side-title" style="text-align:center">내 단체</div>'+rows.map(function(t){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;padding:0.4rem 0" ><span class="link" data-action="troupe" data-id="'+t.troupe_id+'">'+escHtml(t.troupe_name)+'</span>'
+        +(t.member_role==='admin'?'<button class="pf-btn" style="padding:0.2rem 0.6rem;font-size:0.68rem" onclick="goMyTroupe(\''+t.troupe_id+'\')">수정</button>':'<span style="color:var(--muted);font-size:0.72rem">멤버</span>')+'</div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div class="person-side-title" style="text-align:center">내 단체</div>';}
+}
+function goMyTroupe(tid,push){
+  if(push!==false)history.pushState({view:'mytroupe',id:tid},'','#mytroupe-'+tid);
+  setNav('mypage');sb('');_sbContext='';setIndexMode(false);mobShowDetail();
+  if(!CURRENT_USER){mn('<div class="tab-index"><div class="result-empty">로그인이 필요해요</div></div>');return;}
+  var troupe=DB.troupes.find(function(t){return t.id===tid;});
+  if(!troupe){mn('<div class="tab-index"><div class="result-empty">단체를 찾을 수 없어요.</div></div>');return;}
+  var name=fld(troupe,'극단명')||'';
+  var status=fld(troupe,'운영상태')||'';
+  var memberBase=fld(troupe,'구성원기반')||'';
+  var region=fld(troupe,'활동지역')||'';
+  var founded=fld(troupe,'창단연도')||'';
+  var recruiting=fld(troupe,'모집정보')||'';
+  var photos=(fld(troupe,'사진')||[]).filter(function(p){return p&&p.url;});
+  var h='<div class="detail-header"><div class="eyebrow">내 단체 관리</div><div class="detail-title">'+escHtml(name)+'</div>'
+    +'<div class="detail-meta"><span class="link" data-action="troupe" data-id="'+tid+'">공개 페이지 보기 →</span></div></div>';
+  h+='<div class="myinfo-wrap">';
+  h+='<div class="myinfo-card"><div class="person-side-title">기본 정보</div>'
+    +'<div class="edit-modal-field"><label>단체명</label><input type="text" id="mt-name" value="'+escHtml(name).replace(/"/g,'&quot;')+'"></div>'
+    +'<div class="edit-modal-field"><label>운영상태</label><select id="mt-status">'
+    +['','창단준비중','활동중','활동뜸함','해체'].map(function(s){return '<option value="'+s+'"'+(status===s?' selected':'')+'>'+(s||'(없음)')+'</option>';}).join('')+'</select></div>'
+    +'<div class="edit-modal-field"><label>구성원기반</label><select id="mt-memberbase">'
+    +['','학생','직장인','일반'].map(function(s){return '<option value="'+s+'"'+(memberBase===s?' selected':'')+'>'+(s||'(없음)')+'</option>';}).join('')+'</select></div>'
+    +'<div class="edit-modal-field"><label>활동지역</label><input type="text" id="mt-region" value="'+escHtml(Array.isArray(region)?region.join(', '):region).replace(/"/g,'&quot;')+'" placeholder="예: 서울, 경기"></div>'
+    +'<div class="edit-modal-field"><label>창단연도</label><input type="number" id="mt-founded" value="'+(founded||'')+'"></div>'
+    +'<div class="edit-modal-field"><label>단원 모집 정보</label><textarea id="mt-recruiting" rows="3" placeholder="모집 중인 내용이 있으면 적어주세요">'+escHtml(recruiting)+'</textarea></div>'
+    +'<button class="pf-btn pf-active" style="width:100%" onclick="saveMyTroupe(\''+tid+'\')">저장</button>'
+    +'<div id="mt-save-msg" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;text-align:center"></div></div>';
+  h+='<div class="myinfo-card myinfo-card-wide"><div class="person-side-title">사진</div>';
+  if(photos.length){
+    h+='<div class="person-gallery-grid-wide">'+photos.map(function(p,i){
+      var esc=p.url.replace(/'/g,"\\'");
+      return '<div class="pg-item">'+(i===0?'<span class="pg-primary-badge">대표</span>':'<button class="pg-primary-btn" onclick="setPrimaryTroupePhoto(\''+tid+'\',\''+esc+'\')" title="대표사진으로 설정">★</button>')
+        +'<img src="'+p.url+'" alt="사진"><button class="pg-del" onclick="removeTroupePhoto(\''+tid+'\',\''+esc+'\')" title="삭제">×</button></div>';
+    }).join('')+'</div>';
+  }
+  h+='<input type="file" id="mt-photo-upload" accept="image/*" style="display:none" onchange="uploadTroupePhoto(this,\''+tid+'\')">'
+    +'<button class="person-gallery-more-btn" style="margin-top:0.6rem" onclick="document.getElementById(\'mt-photo-upload\').click()">+ 사진 추가</button>'
+    +'<div id="mt-photo-upload-msg" style="font-size:0.7rem;color:var(--muted);margin-top:0.4rem;text-align:center"></div></div>';
+  h+='</div>';
+  mn(h);
+  injectBackBtn('← 마이페이지',function(){goMyPage();});
+}
+async function saveMyTroupe(tid){
+  var region=$('mt-region').value.trim();
+  var payload={
+    name:$('mt-name').value.trim(),
+    status:$('mt-status').value||null,
+    member_base:$('mt-memberbase').value||null,
+    region:region?region.split(',').map(function(s){return s.trim();}).filter(Boolean):null,
+    founded_year:$('mt-founded').value?Number($('mt-founded').value):null,
+    recruiting_info:$('mt-recruiting').value.trim()||null
+  };
+  try{
+    await sbClient.from('troupes').update(payload).eq('id',tid);
+    $('mt-save-msg').textContent='저장됐어요.';
+  }catch(e){$('mt-save-msg').textContent='저장 실패: '+e.message;}
+}
+async function uploadTroupePhoto(input,tid){
+  var file=input.files&&input.files[0];if(!file)return;
+  var msgEl=$('mt-photo-upload-msg');if(msgEl)msgEl.textContent='업로드 중…';
+  try{
+    var ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    var path='troupes/'+tid+'/'+Date.now()+'.'+ext;
+    var up=await sbClient.storage.from('photos').upload(path,file);
+    if(up.error)throw up.error;
+    var pub=sbClient.storage.from('photos').getPublicUrl(path);
+    var troupe=DB.troupes.find(function(t){return t.id===tid;});
+    var existing=(fld(troupe,'사진')||[]).map(function(p){return p.url;});
+    existing.push(pub.data.publicUrl);
+    await sbClient.from('troupes').update({photo_urls:existing}).eq('id',tid);
+    await load();
+    goMyTroupe(tid);
+  }catch(e){if(msgEl)msgEl.textContent='업로드 실패: '+e.message;}
+}
+async function removeTroupePhoto(tid,url){
+  if(!confirm('이 사진을 삭제할까요?'))return;
+  try{
+    var troupe=DB.troupes.find(function(t){return t.id===tid;});
+    var existing=(fld(troupe,'사진')||[]).map(function(p){return p.url;}).filter(function(u){return u!==url;});
+    await sbClient.from('troupes').update({photo_urls:existing}).eq('id',tid);
+    await load();
+    goMyTroupe(tid);
+  }catch(e){alert('삭제 실패: '+e.message);}
+}
+async function setPrimaryTroupePhoto(tid,url){
+  try{
+    var troupe=DB.troupes.find(function(t){return t.id===tid;});
+    var existing=(fld(troupe,'사진')||[]).map(function(p){return p.url;});
+    var reordered=[url].concat(existing.filter(function(u){return u!==url;}));
+    await sbClient.from('troupes').update({photo_urls:reordered}).eq('id',tid);
+    await load();
+    goMyTroupe(tid);
+  }catch(e){alert('설정 실패: '+e.message);}
 }
 function toggleInfoEdit(){
   window._infoEditMode=!window._infoEditMode;
@@ -2230,12 +2371,12 @@ var BUDGET_TEMPLATE={
 function renderProjectBudget(el){
   var pid=window._projectCtx.pid;
   el.innerHTML='<div style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;text-align:center">이 탭은 관리자'+(window._projectCtx.pr.budget_visible_to_members?' 및 멤버':'')+'만 볼 수 있어요</div>'
-    +'<div class="budget-3col">'
+    +'<div id="budget-balance-bar" class="budget-balance-bar"></div>'
+    +'<div class="budget-2col">'
     +'<div class="budget-col"><div class="proj-member-group-title">수입</div><div id="budget-income-total" class="budget-col-total"></div><div id="budget-income-list">불러오는 중…</div>'
     +'<button class="pf-btn" style="margin-top:0.5rem;width:100%" onclick="addBudgetRow(\''+pid+'\',\'income\')">+ 수입 행 추가</button></div>'
     +'<div class="budget-col"><div class="proj-member-group-title">지출</div><div id="budget-expense-total" class="budget-col-total"></div><div id="budget-expense-list">불러오는 중…</div>'
     +'<button class="pf-btn" style="margin-top:0.5rem;width:100%" onclick="addBudgetRow(\''+pid+'\',\'expense\')">+ 지출 행 추가</button></div>'
-    +'<div class="budget-col budget-col-balance"><div class="proj-member-group-title">잔액</div><div id="budget-balance-display"></div></div>'
     +'</div>'
     +'<div style="text-align:center;margin-top:1.4rem"><button class="pf-btn" onclick="fillBudgetTemplate(\''+pid+'\')">표준 항목으로 채우기</button></div>';
   loadProjectBudget(pid);
@@ -2280,10 +2421,10 @@ async function loadProjectBudget(pid){
     var incomeTotal=rows.filter(function(b){return b.item_type==='income';}).reduce(function(s,b){return s+(Number(b.planned_amount)||0);},0);
     var expenseTotal=rows.filter(function(b){return b.item_type==='expense';}).reduce(function(s,b){return s+(Number(b.planned_amount)||0);},0);
     var balance=incomeTotal-expenseTotal;
-    var incTotalEl=$('budget-income-total'),expTotalEl=$('budget-expense-total'),balEl=$('budget-balance-display');
+    var incTotalEl=$('budget-income-total'),expTotalEl=$('budget-expense-total'),balEl=$('budget-balance-bar');
     if(incTotalEl)incTotalEl.innerHTML='<div class="budget-col-total-num budget-col-income">'+incomeTotal.toLocaleString()+'원</div>';
     if(expTotalEl)expTotalEl.innerHTML='<div class="budget-col-total-num budget-col-expense">'+expenseTotal.toLocaleString()+'원</div>';
-    if(balEl)balEl.innerHTML='<div class="budget-col-total-num '+(balance>=0?'budget-col-balance-pos':'budget-col-balance-neg')+'" style="font-size:1.6rem;margin-top:1rem">'+balance.toLocaleString()+'원</div>';
+    if(balEl)balEl.innerHTML='현재 잔액 <b class="'+(balance>=0?'budget-col-balance-pos':'budget-col-balance-neg')+'">'+balance.toLocaleString()+'원</b>';
   }catch(e){expEl.innerHTML=incEl.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패</div>';}
 }
 function saveBudgetField(id,field,value,pid){
@@ -3974,7 +4115,8 @@ function showTroupe(tid,push){
   if(tLinks.length){
     tLinksH='<div class="person-links-inline">'+tLinks.map(function(l){return '<a class="person-link-chip" href="'+l.url+'" target="_blank" rel="noopener noreferrer">'+linkLabel(l)+'</a>';}).join('')+'</div>';
   }
-  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+favBtnHtml('troupe',tid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH+'</div>';
+  var h='<div class="detail-header"><div class="eyebrow">단체</div><div class="detail-title">'+fld(troupe,'극단명')+favBtnHtml('troupe',tid)+'</div><div class="detail-meta"><span>공연 '+shows.length+'개</span>'+(memberCnt?'<span>사람 '+memberCnt+'명</span>':'')+(tStatus?'<span>'+tStatus+'</span>':'')+(tRegion?'<span>📍 '+tRegion+'</span>':'')+'</div>'+tLinksH
+    +'<div style="margin-top:0.8rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center" id="troupe-claim-widget"></div></div>';
   h+=buildPhotoGalleryHtml(troupePhotos,fld(troupe,'극단명'),false);
   var tFoundedYear=fld(troupe,'창단연도');
   var tRecruiting=fld(troupe,'모집정보');
@@ -4030,6 +4172,7 @@ function showTroupe(tid,push){
   } else {h+='<div class="empty">등록된 공연이 없습니다.</div>';}
   mn(h);
   if(window._renderTroupeShowGrid)_renderTroupeShowGrid('all');
+  renderTroupeClaimWidget(tid);
   injectBackBtn('← 단체',function(){goTroupes();});
 }
 
@@ -4314,6 +4457,7 @@ function routeFromHash(hash){
   if(m=h.match(/^#venue-(.+)$/)){showVenue(m[1],false);return;}
   if(m=h.match(/^#troupe-(.+)$/)){showTroupe(m[1],false);return;}
   if(m=h.match(/^#project-(.+)$/)){goProject(m[1],false);return;}
+  if(m=h.match(/^#mytroupe-(.+)$/)){goMyTroupe(m[1],false);return;}
   goHome(false);
 }
 window.addEventListener('popstate',function(){routeFromHash(location.hash);});
