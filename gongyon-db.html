@@ -391,6 +391,9 @@ body.is-home .home-nav-dock{display:block}
 .invite-candidate-row:hover{background:var(--bg3)}
 .invite-unjoined-tag{color:var(--muted);font-size:0.7rem;margin-left:auto}
 .proj-toggle-row{display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-size:0.8rem;color:var(--muted);margin-bottom:0.6rem}
+.proj-visibility-toggle{display:flex;gap:0.4rem}
+.proj-vis-btn{flex:1;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:0.5rem;font-size:0.8rem;color:var(--muted);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .15s}
+.proj-vis-btn.on{background:rgba(200,169,110,0.15);border-color:var(--accent);color:var(--accent);font-weight:500}
 .proj-toggle-row:last-child{margin-bottom:0}
 .venue-cand-selected{border-color:var(--accent) !important}
 .proj-request-row{display:flex;justify-content:space-between;align-items:center;gap:0.6rem;padding:0.6rem 0.8rem;background:var(--bg2);border-left:3px solid var(--accent);border-radius:6px;margin-bottom:0.4rem;flex-wrap:wrap}
@@ -541,7 +544,13 @@ body.is-home .home-nav-dock{display:block}
 .cast-card .fav-btn{position:absolute;top:0.4rem;right:0.4rem;z-index:2;background:rgba(14,14,16,0.55);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .cast-card .fav-btn ~ .fav-btn{right:1.9rem}
 .profile-fab:hover{background:var(--bg3);transform:scale(1.06)}
+.profile-dropdown{position:fixed;right:1.2rem;top:3.6rem;background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.35);z-index:601;min-width:190px;padding:0.4rem;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .15s,transform .15s,visibility .15s}
+.profile-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}
+.profile-dropdown-item{display:block;width:100%;text-align:left;background:none;border:none;border-radius:6px;padding:0.55rem 0.7rem;font-size:0.82rem;color:var(--text);cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.profile-dropdown-item:hover{background:var(--bg3)}
+.profile-dropdown-divider{height:1px;background:var(--line);margin:0.3rem 0.2rem}
 @media(max-width:768px){
+  .profile-dropdown{top:3.1rem;right:0.7rem}
   .profile-fab{top:0.6rem;right:0.7rem;width:34px;height:34px;font-size:0.9rem}
 }
 
@@ -706,6 +715,13 @@ body.is-home .home-nav-dock{display:block}
 </div>
 
 <button class="profile-fab" id="profile-fab" onclick="handleProfileFabClick()" title="로그인">👤</button>
+<div class="profile-dropdown" id="profile-dropdown">
+  <button class="profile-dropdown-item" onclick="closeProfileDropdown();goMyPageTab('info')">👤 내 정보</button>
+  <button class="profile-dropdown-item" onclick="closeProfileDropdown();goMyPageTab('troupes')">🏢 내 단체</button>
+  <button class="profile-dropdown-item" onclick="closeProfileDropdown();goMyPageTab('projects')">🎭 내 프로젝트</button>
+  <div class="profile-dropdown-divider"></div>
+  <button class="profile-dropdown-item" onclick="closeProfileDropdown();goMyPageTab('dashboard')">📊 마이페이지 전체 보기</button>
+</div>
 
 <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="">
@@ -859,17 +875,17 @@ function logout(){
 }
 function handleProfileFabClick(){
   if(!CURRENT_USER)return;
-  var overlay=$('ori-modal-overlay');
-  $('ori-modal-message').textContent='무엇을 보시겠어요?';
-  $('ori-modal-input-field').style.display='none';
-  $('ori-modal-actions').innerHTML=''
-    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'info\')">👤 내 정보</button>'
-    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'troupes\')">🏢 내 단체</button>'
-    +'<button class="pf-btn" style="width:100%;margin-bottom:0.5rem;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'projects\')">🎭 내 프로젝트</button>'
-    +'<button class="pf-btn" style="width:100%;text-align:left" onclick="_oriModalClose(null);goMyPageTab(\'dashboard\')">📊 마이페이지 전체 보기</button>';
-  $('ori-modal-actions').style.flexDirection='column';
-  overlay.classList.add('open');
+  var dd=$('profile-dropdown');
+  if(!dd)return;
+  dd.classList.toggle('open');
 }
+function closeProfileDropdown(){
+  var dd=$('profile-dropdown');if(dd)dd.classList.remove('open');
+}
+document.addEventListener('click',function(e){
+  var dd=$('profile-dropdown');if(!dd||!dd.classList.contains('open'))return;
+  if(!dd.contains(e.target)&&e.target.id!=='profile-fab'){dd.classList.remove('open');}
+});
 function goMyPageTab(tab){
   window._myPageTab=tab;
   goMyPage(true,true);
@@ -1972,7 +1988,7 @@ async function goProject(pid,push){
     if(!myPosition){
       mn('<div class="tab-index"><div style="font-size:0.85rem;color:var(--muted);padding:2rem">첫 질문에 답하는 중이에요…</div></div>');
       injectBackBtn('← 마이페이지',function(){goMyPage();});
-      openProjectWizard(pid,['name','visibility','role','venue','troupe','work','date','license'],myMember.id);
+      openProjectWizard(pid,['name','visibility','role','members','venue','troupe','work','date','license'],myMember.id);
       return;
     }
 
@@ -1999,7 +2015,7 @@ async function goProject(pid,push){
     mn('<div class="tab-index"><div class="result-empty">프로젝트를 불러올 수 없어요. 접근 권한이 없거나 삭제되었을 수 있어요.</div></div>');
   }
 }
-var PROJECT_TABS_ALL=[['overview','개요'],['members','팀'],['budget','예산'],['requests','참여 요청']];
+var PROJECT_TABS_ALL=[['overview','개요'],['actor','배우'],['crew','제작진'],['venue','극장'],['team','팀'],['budget','예산'],['requests','참여 요청']];
 function currentProjectTabs(){
   var ctx=window._projectCtx;if(!ctx)return PROJECT_TABS_ALL;
   return PROJECT_TABS_ALL.filter(function(t){
@@ -2017,36 +2033,12 @@ function renderProjectTabContent(){
   var el=$('project-tab-content');if(!el)return;
   var tab=window._projectTab;
   if(tab==='overview')renderProjectOverview(el);
-  else if(tab==='members')renderProjectTeamTab(el);
+  else if(tab==='actor')renderProjectActorTab(el);
+  else if(tab==='crew')renderProjectCrewTab(el);
+  else if(tab==='venue')renderProjectVenueTab(el);
+  else if(tab==='team')renderProjectTeamTab(el);
   else if(tab==='budget')renderProjectBudget(el);
   else if(tab==='requests')renderProjectRequests(el);
-}
-var PROJECT_TEAM_SUBTABS=[['actor','배우'],['staff','스태프'],['other','단체·극장'],['roster','전체']];
-window._teamSubTab=window._teamSubTab||'actor';
-function renderProjectTeamTab(el){
-  var missingSteps=[];
-  var pr=window._projectCtx.pr;
-  if(!pr.troupe_id)missingSteps.push('troupe');
-  if(!pr.work_id)missingSteps.push('work');
-  if(!pr.target_start_date)missingSteps.push('date');
-  if(!pr.is_licensed)missingSteps.push('license');
-  var pid=window._projectCtx.pid;
-  var infoBar=missingSteps.length?('<div style="margin-bottom:1.2rem"><button class="pf-btn pf-active" onclick=\'openProjectWizard("'+pid+'",'+JSON.stringify(missingSteps)+')\'>기본 정보 채우기 ('+missingSteps.length+'개 남음)</button>'+(pr.work_id?'':'<span style="font-size:0.75rem;color:var(--muted);margin-left:0.6rem">작품을 연결하면 배역이 자동으로 채워져요</span>')+'</div>'):'';
-  el.innerHTML=infoBar
-    +'<div class="mypage-tabs" style="margin-bottom:1.4rem;border-bottom:1px solid var(--line)">'+PROJECT_TEAM_SUBTABS.map(function(t){
-      return '<button class="mypage-tab-btn'+(window._teamSubTab===t[0]?' active':'')+'" onclick="switchTeamSubTab(\''+t[0]+'\')" style="font-size:0.8rem">'+t[1]+'</button>';
-    }).join('')+'</div>'
-    +'<div id="team-subtab-content"></div>';
-  renderTeamSubTabContent();
-  loadProjectMembersDetail(pid);
-}
-function switchTeamSubTab(tab){
-  window._teamSubTab=tab;
-  renderProjectTeamTab($('project-tab-content'));
-}
-function renderTeamSubTabContent(){
-  var el=$('team-subtab-content');if(!el)return;
-  el.innerHTML='<div id="project-members-grid">불러오는 중…</div>';
 }
 async function updateProjectStatus(pid,status){
   var ctx=window._projectCtx;
@@ -2084,27 +2076,44 @@ function renderProjectOverview(el){
   var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr;
   var h='<div class="person-overview-grid">';
   var chipClass=PROJECT_STATUS_CHIP_CLASS[pr.status]||'';
+
+  // 상태 + 공개여부 (인라인으로 바로 수정 가능)
   h+='<div class="person-side-card"><div class="person-side-title">상태</div>'
-    +'<span class="status-chip '+chipClass+'">'+(PROJECT_STATUS_LABEL[pr.status]||pr.status)+'</span>'
-    +' <span class="status-chip'+(pr.is_public?' status-chip-upcoming':'')+'">'+(pr.is_public?'🌐 공개':'🔒 비공개')+'</span>'
-    +(ctx.isAdmin?'<select class="wizard-search" style="margin:0.6rem 0 0" onchange="updateProjectStatus(\''+pid+'\',this.value)">'
+    +(ctx.isAdmin?'<select class="wizard-search" style="margin-bottom:0" onchange="updateProjectStatus(\''+pid+'\',this.value)">'
       +Object.keys(PROJECT_STATUS_LABEL).map(function(k){return '<option value="'+k+'"'+(pr.status===k?' selected':'')+'>'+PROJECT_STATUS_LABEL[k]+'</option>';}).join('')
-      +'</select>':'')
-    +(pr.is_licensed?'<div style="margin-top:0.6rem"><span class="status-chip'+(pr.is_licensed==='미확보'?' status-chip-cancelled':'')+'">라이선스 '+pr.is_licensed+'</span></div>':'')
-    +(pr.published_show_id?'<div style="margin-top:0.6rem"><span class="link" data-action="show" data-id="'+pr.published_show_id+'">공연 페이지 보기 →</span></div>':'')
+      +'</select>':'<span class="status-chip '+chipClass+'">'+(PROJECT_STATUS_LABEL[pr.status]||pr.status)+'</span>')
+    +(pr.published_show_id?'<div style="margin-top:0.5rem"><span class="link" data-action="show" data-id="'+pr.published_show_id+'">공연 페이지 보기 →</span></div>':'')
     +'</div>';
+  h+='<div class="person-side-card"><div class="person-side-title">공개 범위</div>'
+    +(ctx.isOwner?('<div class="proj-visibility-toggle"><button class="proj-vis-btn'+(!pr.is_public?' on':'')+'" onclick="toggleProjectPublic(\''+pid+'\',false)">🔒 비공개</button><button class="proj-vis-btn'+(pr.is_public?' on':'')+'" onclick="toggleProjectPublic(\''+pid+'\',true)">🌐 공개</button></div>')
+      :('<span class="status-chip'+(pr.is_public?' status-chip-upcoming':'')+'">'+(pr.is_public?'🌐 공개':'🔒 비공개')+'</span>'))
+    +'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem">공개하면 "프로젝트" 메뉴 목록에 누구나 볼 수 있게 떠요</div></div>';
+
+  h+=overviewFieldCard('날짜',pr.target_start_date?(pr.target_start_date+(pr.target_end_date?' ~ '+pr.target_end_date:'')):null,'date','날짜 정하기',ctx.isAdmin);
+  h+=overviewFieldCard('작품',pr.work_id?nm(pr.work_id):null,'work','작품 정하기',ctx.isAdmin,pr.work_id?{action:'work',id:pr.work_id}:null);
+  h+=overviewFieldCard('단체',pr.troupe_id?nm(pr.troupe_id):null,'troupe','단체 정하기',ctx.isAdmin,pr.troupe_id?{action:'troupe',id:pr.troupe_id}:null);
+  h+=overviewFieldCard('극장',pr.venue_id?nm(pr.venue_id):null,'venue','극장 정하기',ctx.isAdmin,pr.venue_id?{action:'venue',id:pr.venue_id}:null);
+  h+=overviewFieldCard('라이선스',pr.is_licensed,'license','라이선스 정하기',ctx.isAdmin);
+
   h+='<div class="person-side-card"><div class="person-side-title">관리자</div><div id="overview-admin-list" style="font-size:0.85rem">불러오는 중…</div>'
-    +'<button class="pf-btn" style="margin-top:0.7rem;width:100%" onclick="switchProjectTab(\'members\')">전체 구성원 보기 →</button></div>';
-  if(ctx.isAdmin||ctx.isOwner){
-    h+='<div class="person-side-card"><div class="person-side-title">설정</div>';
-    if(ctx.isOwner)h+='<label class="proj-toggle-row"><input type="checkbox" '+(pr.is_public?'checked':'')+' onchange="toggleProjectPublic(\''+pid+'\',this.checked)">오리 웹사이트 "프로젝트" 메뉴에 공개</label>';
-    if(ctx.isAdmin)h+='<label class="proj-toggle-row"><input type="checkbox" '+(pr.is_recruiting?'checked':'')+' onchange="toggleRecruiting(\''+pid+'\',this.checked)">빈 자리를 "프로젝트" 메뉴에 공개</label>';
-    if(ctx.isOwner)h+='<label class="proj-toggle-row"><input type="checkbox" '+(pr.budget_visible_to_members?'checked':'')+' onchange="toggleBudgetVisible(\''+pid+'\',this.checked)">일반 멤버에게도 예산 탭 공개</label>';
-    h+='</div>';
+    +'<button class="pf-btn" style="margin-top:0.7rem;width:100%" onclick="switchProjectTab(\'team\')">전체 팀 보기 →</button></div>';
+
+  if(ctx.isAdmin){
+    h+='<div class="person-side-card"><div class="person-side-title">모집 공개</div>'
+      +'<label class="proj-toggle-row"><input type="checkbox" '+(pr.is_recruiting?'checked':'')+' onchange="toggleRecruiting(\''+pid+'\',this.checked)">빈 자리를 "프로젝트" 메뉴에 공개</label>'
+      +(ctx.isOwner?'<label class="proj-toggle-row"><input type="checkbox" '+(pr.budget_visible_to_members?'checked':'')+' onchange="toggleBudgetVisible(\''+pid+'\',this.checked)">일반 멤버에게도 예산 탭 공개</label>':'')
+      +'</div>';
   }
   h+='</div>';
   el.innerHTML=h;
   loadOverviewAdminList(pid);
+}
+function overviewFieldCard(label,value,wizardStep,ctaLabel,canEdit,linkTo){
+  var valueH=value?(linkTo?('<span class="link" data-action="'+linkTo.action+'" data-id="'+linkTo.id+'">'+escHtml(value)+'</span>'):escHtml(value))
+    :'<span style="color:var(--muted)">비어있어요</span>';
+  return '<div class="person-side-card"><div class="person-side-title">'+label+'</div><div style="font-size:0.9rem">'+valueH+'</div>'
+    +(canEdit?'<button class="pf-btn" style="margin-top:0.6rem;width:100%" onclick=\'openProjectWizard("'+window._projectCtx.pid+'",["'+wizardStep+'"])\'>'+(value?'변경':ctaLabel)+'</button>':'')
+    +'</div>';
 }
 async function toggleProjectPublic(pid,on){
   try{await sbClient.from('projects').update({is_public:on}).eq('id',pid);window._projectCtx.pr.is_public=on;renderProjectOverview($('project-tab-content'));}
@@ -2114,7 +2123,13 @@ async function loadOverviewAdminList(pid){
   var el=$('overview-admin-list');if(!el)return;
   try{
     var r=await sbClient.rpc('list_project_members_detail',{p_project_id:pid});
-    var admins=(r.data||[]).filter(function(m){return m.member_role==='owner'||m.member_role==='admin';});
+    var seen={};
+    var admins=(r.data||[]).filter(function(m){
+      if(m.member_role!=='owner'&&m.member_role!=='admin')return false;
+      if(seen[m.member_id])return false;
+      seen[m.member_id]=true;
+      return true;
+    });
     el.innerHTML=admins.map(function(m){
       var nameH=m.person_id?'<span class="link" data-action="person" data-id="'+m.person_id+'">'+escHtml(m.nickname||m.email)+'</span>':escHtml(m.nickname||m.email);
       return '<div style="margin-bottom:0.35rem">'+(m.member_role==='owner'?'👑 ':'')+nameH+'</div>';
@@ -2189,12 +2204,12 @@ async function removeVenueCandidate(candId,pid){
 function staffCategoryOf(name){
   if(!name)return '기타';
   if(name.indexOf('연출')>-1)return '연출진';
+  if(['기획','제작'].some(function(k){return name.indexOf(k)>-1;}))return '기획/제작';
   if(['무대','미술','안무','음악','조명','소품','메이크업','음향','의상'].some(function(k){return name.indexOf(k)>-1;}))return '크리에이티브';
-  if(['운영','홍보'].some(function(k){return name.indexOf(k)>-1;}))return '운영진';
+  if(['운영','홍보','총무'].some(function(k){return name.indexOf(k)>-1;}))return '운영진';
   return '기타';
 }
-async function loadProjectMembersDetail(pid){
-  var el=$('project-members-grid');if(!el)return;
+async function loadProjectPositionsData(pid,renderFn){
   try{
     var ctx=window._projectCtx;
     var posr=await sbClient.from('project_positions').select('*').eq('project_id',pid);
@@ -2204,62 +2219,81 @@ async function loadProjectMembersDetail(pid){
     ctx.memberDetail=detailR.data||[];
     var emailByMemberId={};(detailR.data||[]).forEach(function(d){emailByMemberId[d.member_id]=d.person_id?('<span class="link" data-action="person" data-id="'+d.person_id+'">'+escHtml(d.nickname||d.email)+'</span>'):escHtml(d.nickname||d.email);});
     ctx.emailByMemberId=emailByMemberId;
-    renderTeamSubTabBody();
-  }catch(e){el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패: '+e.message+'</div>';}
+    renderFn();
+  }catch(e){var el=$('project-tab-content');if(el)el.innerHTML='<div style="font-size:0.82rem;color:var(--muted)">불러오기 실패: '+e.message+'</div>';}
+}
+function renderProjectActorTab(el){
+  el.innerHTML='<div id="actor-tab-body">불러오는 중…</div>';
+  loadProjectPositionsData(window._projectCtx.pid,renderActorTabBody);
+}
+function renderActorTabBody(){
+  var el=$('actor-tab-body');if(!el)return;
+  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr,positions=ctx.positions||[],emailByMemberId=ctx.emailByMemberId||{};
+  var actorPositions=positions.filter(function(p){return p.position_type==='actor';});
+  var rowsH='';
+  if(pr.work_id){
+    var workRoles=DB.roles.filter(function(r){return ids(fld(r,'작품')).indexOf(pr.work_id)>-1&&fld(r,'배역명');});
+    if(workRoles.length){
+      rowsH=workRoles.map(function(r){
+        var matched=actorPositions.filter(function(p){return p.role_id===r.id;});
+        return slotRowsFor('role',pid,r.id,fld(r,'배역명'),matched,emailByMemberId);
+      }).join('');
+    }
+  }
+  if(!rowsH){
+    var freeform=actorPositions.filter(function(p){return !p.role_id;});
+    rowsH=freeform.length?freeform.map(function(p){return slotRowsFor('pos',pid,null,p.position_label||'배우',[p],emailByMemberId);}).join('')
+      :'<div style="font-size:0.78rem;color:var(--muted)">작품을 연결하면 배역이 자동으로 여기 떠요. 개요 탭에서 작품을 먼저 정해주세요.</div>';
+  }
+  el.innerHTML='<div>'+rowsH+'</div>'+infoReportPrompt('배역','role');
+}
+function renderProjectCrewTab(el){
+  el.innerHTML='<div id="crew-tab-body">불러오는 중…</div>';
+  loadProjectPositionsData(window._projectCtx.pid,renderCrewTabBody);
+}
+function renderCrewTabBody(){
+  var el=$('crew-tab-body');if(!el)return;
+  var ctx=window._projectCtx;var pid=ctx.pid,positions=ctx.positions||[],emailByMemberId=ctx.emailByMemberId||{};
+  var staffPositions=positions.filter(function(p){return p.position_type==='staff';});
+  var staffRolesAll=DB.staffRoles.filter(function(s){return fld(s,'Name');}).slice().sort(function(a,b){return(STAFF_ORDER[a.id]||999)-(STAFF_ORDER[b.id]||999);});
+  var staffGroups={'연출진':[],'기획/제작':[],'크리에이티브':[],'운영진':[],'기타':[]};
+  staffRolesAll.forEach(function(sr){staffGroups[staffCategoryOf(fld(sr,'Name'))].push(sr);});
+  var cardsH=Object.keys(staffGroups).map(function(g){
+    if(!staffGroups[g].length)return '';
+    var rowsH=staffGroups[g].map(function(sr){
+      var matched=staffPositions.filter(function(p){return p.staff_role_id===sr.id;});
+      return slotRowsFor('staff',pid,sr.id,fld(sr,'Name'),matched,emailByMemberId);
+    }).join('');
+    return '<div class="person-side-card"><div class="proj-staff-subgroup">'+g+'</div>'+rowsH+'</div>';
+  }).join('');
+  var otherPositions=positions.filter(function(p){return p.position_type==='other';});
+  var otherRowsH=otherPositions.map(function(p){return slotRowsFor('other',pid,null,p.position_label||'기타',[p],emailByMemberId);}).join('');
+  cardsH+='<div class="person-side-card"><div class="proj-staff-subgroup">기타 · 이름만 적은 멤버</div>'+(otherRowsH||'<div style="font-size:0.78rem;color:var(--muted)">없어요.</div>')
+    +'<button class="pf-btn" style="margin-top:0.6rem;width:100%" onclick="showAddPositionForm(\''+pid+'\')">+ 자리 추가</button><div id="add-position-form" style="margin-top:0.5rem"></div></div>';
+  el.innerHTML='<div class="project-members-grid project-members-grid-3col">'+cardsH+'</div>'+infoReportPrompt('스태프 역할','other');
+}
+function renderProjectVenueTab(el){
+  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr;
+  el.innerHTML='<div class="person-side-card" style="max-width:420px"><div class="proj-staff-subgroup">극장</div>'+venueSectionHtml(pid,pr)+'</div>';
+}
+var PROJECT_TEAM_SUBTABS=[['people','사람'],['orgs','단체']];
+window._teamSubTab=window._teamSubTab||'people';
+function renderProjectTeamTab(el){
+  el.innerHTML='<div class="mypage-tabs" style="margin-bottom:1.4rem;border-bottom:1px solid var(--line)">'+PROJECT_TEAM_SUBTABS.map(function(t){
+      return '<button class="mypage-tab-btn'+(window._teamSubTab===t[0]?' active':'')+'" onclick="switchTeamSubTab(\''+t[0]+'\')" style="font-size:0.8rem">'+t[1]+'</button>';
+    }).join('')+'</div>'
+    +'<div id="team-subtab-body">불러오는 중…</div>';
+  loadProjectPositionsData(window._projectCtx.pid,renderTeamSubTabBody);
+}
+function switchTeamSubTab(tab){
+  window._teamSubTab=tab;
+  renderProjectTeamTab($('project-tab-content'));
 }
 function renderTeamSubTabBody(){
-  var el=$('project-members-grid');if(!el)return;
-  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr,positions=ctx.positions||[],emailByMemberId=ctx.emailByMemberId||{};
+  var el=$('team-subtab-body');if(!el)return;
+  var ctx=window._projectCtx;var pid=ctx.pid,pr=ctx.pr;
   var sub=window._teamSubTab;
-  var extraEl=document.getElementById('team-subtab-extra');
-  if(extraEl)extraEl.remove();
-  el.className='';
-  if(sub==='actor'){
-    var actorPositions=positions.filter(function(p){return p.position_type==='actor';});
-    var rowsH='';
-    if(pr.work_id){
-      var workRoles=DB.roles.filter(function(r){return ids(fld(r,'작품')).indexOf(pr.work_id)>-1&&fld(r,'배역명');});
-      if(workRoles.length){
-        rowsH=workRoles.map(function(r){
-          var matched=actorPositions.filter(function(p){return p.role_id===r.id;});
-          return slotRowsFor('role',pid,r.id,fld(r,'배역명'),matched,emailByMemberId);
-        }).join('');
-      }
-    }
-    if(!rowsH){
-      var freeform=actorPositions.filter(function(p){return !p.role_id;});
-      rowsH=freeform.length?freeform.map(function(p){return slotRowsFor('pos',pid,null,p.position_label||'배우',[p],emailByMemberId);}).join('')
-        :'<div style="font-size:0.78rem;color:var(--muted)">작품을 연결하면 배역이 자동으로 여기 떠요.</div>';
-    }
-    el.innerHTML='<div>'+rowsH+'</div>'+infoReportPrompt('배역','role');
-  }else if(sub==='staff'){
-    var staffPositions=positions.filter(function(p){return p.position_type==='staff';});
-    var staffRolesAll=DB.staffRoles.filter(function(s){return fld(s,'Name');}).slice().sort(function(a,b){return(STAFF_ORDER[a.id]||999)-(STAFF_ORDER[b.id]||999);});
-    var staffGroups={'연출진':[],'크리에이티브':[],'운영진':[],'기타':[]};
-    staffRolesAll.forEach(function(sr){staffGroups[staffCategoryOf(fld(sr,'Name'))].push(sr);});
-    var cardsH=Object.keys(staffGroups).map(function(g){
-      if(!staffGroups[g].length)return '';
-      var rowsH=staffGroups[g].map(function(sr){
-        var matched=staffPositions.filter(function(p){return p.staff_role_id===sr.id;});
-        return slotRowsFor('staff',pid,sr.id,fld(sr,'Name'),matched,emailByMemberId);
-      }).join('');
-      return '<div class="person-side-card"><div class="proj-staff-subgroup">'+g+'</div>'+rowsH+'</div>';
-    }).join('');
-    el.className='project-members-grid project-members-grid-3col';
-    el.innerHTML=cardsH;
-    el.insertAdjacentHTML('afterend','<div id="team-subtab-extra">'+infoReportPrompt('스태프 역할','other')+'</div>');
-  }else if(sub==='other'){
-    var otherPositions=positions.filter(function(p){return p.position_type==='other';});
-    var venueH=venueSectionHtml(pid,pr);
-    var troupeH=troupeSectionHtml(pid,pr);
-    var otherRowsH=otherPositions.map(function(p){return slotRowsFor('other',pid,null,p.position_label||'기타',[p],emailByMemberId);}).join('');
-    el.innerHTML='<div class="project-members-grid">'
-      +'<div class="person-side-card"><div class="proj-staff-subgroup">극장</div>'+venueH+'</div>'
-      +'<div class="person-side-card"><div class="proj-staff-subgroup">단체</div>'+troupeH+'</div>'
-      +'<div class="person-side-card"><div class="proj-staff-subgroup">기타</div>'+otherRowsH
-      +'<button class="pf-btn" style="margin-top:0.6rem;width:100%" onclick="showAddPositionForm(\''+pid+'\')">+ 기타 자리 추가</button><div id="add-position-form" style="margin-top:0.5rem"></div></div>'
-      +'</div>';
-  }else if(sub==='roster'){
+  if(sub==='people'){
     var rows=ctx.memberDetail||[];
     var roleLabel={owner:'👑 대표 관리자',admin:'관리자',member:'멤버'};
     var byMember={};var order=[];
@@ -2275,6 +2309,13 @@ function renderTeamSubTabBody(){
       var rolesH=m.positionLabels.length?('<span style="color:var(--muted);font-size:0.76rem;margin-left:0.5rem">'+m.positionLabels.map(escHtml).join(', ')+'</span>'):'';
       return '<div class="proj-member-row"><span class="status-chip" style="font-size:0.68rem;padding:0.15rem 0.55rem">'+roleLabel[m.member_role]+'</span><span style="margin-left:0.6rem">'+nameH+'</span>'+rolesH+adminToggle+'</div>';
     }).join('')||'<div style="font-size:0.82rem;color:var(--muted)">구성원이 없어요.</div>')+'</div>';
+  }else if(sub==='orgs'){
+    var orgRows=[];
+    if(pr.troupe_id)orgRows.push({name:nm(pr.troupe_id),id:pr.troupe_id,type:'troupe',role:'단체'});
+    if(pr.venue_id)orgRows.push({name:nm(pr.venue_id),id:pr.venue_id,type:'venue',role:'극장'});
+    el.innerHTML='<div>'+(orgRows.length?orgRows.map(function(o){
+      return '<div class="proj-member-row"><span class="status-chip" style="font-size:0.68rem;padding:0.15rem 0.55rem">'+o.role+'</span><span class="link" style="margin-left:0.6rem" data-action="'+o.type+'" data-id="'+o.id+'">'+escHtml(o.name)+'</span></div>';
+    }).join(''):'<div style="font-size:0.82rem;color:var(--muted)">아직 연결된 단체·극장이 없어요. 개요 탭에서 정해보세요.</div>')+'</div>';
   }
 }
 function infoReportPrompt(label,targetType){
@@ -2575,6 +2616,7 @@ function buildWizardStepHtml(step){
   if(step==='name')return wizardNameStepHtml();
   if(step==='visibility')return wizardVisibilityStepHtml();
   if(step==='role')return wizardRoleStepHtml();
+  if(step==='members')return wizardMembersStepHtml();
   if(step==='date')return wizardDateStepHtml();
   if(step==='license')return wizardLicenseStepHtml();
   var label=WIZARD_STEP_LABEL[step];
@@ -2626,33 +2668,28 @@ async function wizardSubmitLicense(val){
   wizardNext();
 }
 function wizardRoleStepHtml(){
-  return '<div class="wizard-question">이 프로젝트에서 당신의 역할은 뭐예요?</div>'
+  return '<div class="wizard-question">이 프로젝트, 당신이 관리하시나요?</div>'
+    +'<div style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem">여기서 답하는 내용은 나중에 팀 탭에서 언제든 바꿀 수 있어요.</div>'
     +'<div class="wizard-role-options">'
-    +'<button class="wizard-role-btn" onclick="wizardSubmitRole(\'actor\')">배우</button>'
-    +'<button class="wizard-role-btn" onclick="wizardSubmitRole(\'director\')">연출</button>'
-    +'<button class="wizard-role-btn" onclick="wizardShowStaffPicker()">그 외 스태프</button>'
-    +'<button class="wizard-role-btn" onclick="wizardSubmitRole(\'producer\')">제작 · 기획</button>'
-    +'</div><div id="wizard-staff-picker"></div>'
-    +'<button class="wizard-skip-btn" onclick="wizardSubmitRole(\'unknown\')">아직 잘 모르겠어요</button>';
+    +'<button class="wizard-role-btn" onclick="wizardSubmitRole(\'self\')">네, 제가 관리해요</button>'
+    +'<button class="wizard-role-btn" onclick="wizardShowOtherAdminPrompt()">아니요, 다른 분이 담당이에요</button>'
+    +'</div><div id="wizard-other-admin"></div>';
 }
-function wizardShowStaffPicker(){
-  var el=$('wizard-staff-picker');if(!el)return;
-  var options=DB.staffRoles.filter(function(s){return fld(s,'Name');});
+function wizardShowOtherAdminPrompt(){
+  var el=$('wizard-other-admin');if(!el)return;
   el.innerHTML='<div style="margin-top:0.7rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">'
-    +'<select id="wizard-staff-role-select" class="wizard-search" style="width:auto;flex:1;margin-bottom:0">'
-    +options.map(function(s){return '<option value="'+s.id+'">'+fld(s,'Name')+'</option>';}).join('')
-    +'</select><button class="pf-btn pf-active" onclick="wizardSubmitRole(\'staff\')">확인</button></div>';
+    +'<input type="text" id="wizard-other-admin-name" class="wizard-search" style="width:auto;flex:1;margin-bottom:0" placeholder="담당자 이름">'
+    +'<button class="pf-btn pf-active" onclick="wizardSubmitRole(\'other\')">확인</button></div>';
 }
 async function wizardSubmitRole(choice){
-  if(choice==='unknown'){$('wizard-overlay').classList.remove('open');goMyPage();return;}
-  var row={project_id:_wizardPid,assigned_member_id:_wizardMemberId,status:'filled'};
-  if(choice==='actor'){row.position_type='actor';row.position_label='배우';}
-  else if(choice==='director'){row.position_type='staff';row.position_label='연출';}
-  else if(choice==='producer'){row.position_type='other';row.position_label='제작 · 기획';}
-  else if(choice==='staff'){
-    var sel=$('wizard-staff-role-select');
-    var srid=sel?sel.value:'';
-    row.position_type='staff';row.staff_role_id=srid||null;row.position_label=srid?nm(srid):'스태프';
+  var row={project_id:_wizardPid,assigned_member_id:_wizardMemberId,status:'filled',position_type:'other'};
+  if(choice==='self'){
+    row.position_label='관리자';
+  }else{
+    var nameEl=$('wizard-other-admin-name');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name){oriAlert('담당자 이름을 적어주세요.');return;}
+    row.position_label='관리 지원 (담당자: '+name+')';
   }
   try{await sbClient.from('project_positions').insert(row);}catch(e){oriAlert('저장 실패: '+e.message);return;}
   wizardNext();
@@ -2680,8 +2717,25 @@ async function wizardSelect(id){
 }
 async function wizardSkip(){
   var step=_wizardSteps[_wizardStepIdx];
-  if(step==='date'||step==='license'){wizardNext();return;}
+  if(step==='date'||step==='license'||step==='members'){wizardNext();return;}
   try{await sbClient.from('project_positions').insert({project_id:_wizardPid,position_type:'other',position_label:WIZARD_STEP_LABEL[step]+' 미정',status:'open'});}catch(e){}
+  wizardNext();
+}
+function wizardMembersStepHtml(){
+  return '<div class="wizard-question">다른 멤버들은 누가 있나요?</div>'
+    +'<div style="font-size:0.78rem;color:var(--muted);margin-bottom:1rem">이름을 하나씩 적어주세요. 나중에 팀 탭에서 역할을 정하고 정식으로 연결할 수 있어요.</div>'
+    +'<textarea id="wizard-members-names" class="wizard-search" rows="3" placeholder="예: 홍길동, 김민종, 이보선"></textarea>'
+    +'<button class="pf-btn pf-active" style="width:100%" onclick="wizardSubmitMembers()">다음</button>'
+    +'<button class="wizard-skip-btn" onclick="wizardSkip()">아직 없어요, 나중에 할게요</button>';
+}
+async function wizardSubmitMembers(){
+  var raw=($('wizard-members-names').value||'').trim();
+  if(!raw){wizardNext();return;}
+  var names=raw.split(/[,\n、]/).map(function(s){return s.trim();}).filter(Boolean);
+  try{
+    var rows=names.map(function(n){return {project_id:_wizardPid,position_type:'other',position_label:n,status:'open'};});
+    if(rows.length)await sbClient.from('project_positions').insert(rows);
+  }catch(e){oriAlert('저장 실패: '+e.message);return;}
   wizardNext();
 }
 function wizardDateStepHtml(){
