@@ -272,6 +272,42 @@
     display: inline-block; font-size: 11px; background: #fdecea; color: var(--danger);
     border: 1px solid #f3c6c1; border-radius: 4px; padding: 1px 6px; margin-left: 6px; white-space: nowrap;
   }
+
+  /* ── 권리 분류 큐 ── */
+  .rq-wrap { display: grid; grid-template-columns: 1fr 260px; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .rq-wrap { grid-template-columns: 1fr; } }
+  .rq-bar { height: 4px; background: var(--accent-soft); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+  .rq-bar i { display: block; height: 100%; background: var(--ok); transition: width .3s; }
+  .rq-counts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+  .rq-chip { display: inline-flex; align-items: center; gap: 5px; }
+  .rq-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .rq-eyebrow { font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; margin-bottom: 8px; }
+  .rq-title { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.25; word-break: keep-all; }
+  .rq-title-en { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .rq-facts { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 20px; }
+  .rq-fact { background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 4px 9px; font-size: 12px; color: var(--ink-soft); }
+  .rq-fact b { color: var(--ink); font-weight: 600; }
+  .rq-fact.warn { color: var(--danger); border-color: #f3c6c1; background: #fdecea; }
+  .rq-grp { margin-bottom: 18px; }
+  .rq-grp > span.rq-label { display: block; font-size: 11px; color: var(--ink-soft); letter-spacing: .05em; margin-bottom: 8px; }
+  .rq-opts { display: flex; gap: 7px; flex-wrap: wrap; }
+  .rq-opt { display: inline-flex; align-items: center; gap: 7px; background: #fff; border: 1.5px solid var(--line);
+    color: var(--ink-soft); padding: 8px 13px; border-radius: 7px; font-size: 13.5px; cursor: pointer; font-family: inherit; }
+  .rq-opt:hover { border-color: var(--accent); color: var(--accent); }
+  .rq-opt kbd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: var(--bg);
+    border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; color: var(--ink-soft); }
+  .rq-opt.on { color: #fff; font-weight: 600; }
+  .rq-opt.on kbd { background: rgba(0,0,0,.2); border-color: transparent; color: rgba(255,255,255,.85); }
+  .rq-nav { display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 18px; flex-wrap: wrap; }
+  .rq-hint { margin-left: auto; font-size: 12px; color: var(--ink-soft); }
+  .rq-side ol { list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow-y: auto; }
+  .rq-side li { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 13px;
+    cursor: pointer; color: var(--ink-soft); border-left: 2px solid transparent; border-radius: 4px; }
+  .rq-side li:hover { background: var(--accent-soft); }
+  .rq-side li.cur { background: var(--accent-soft); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .rq-side li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rq-score { display: inline-block; min-width: 26px; text-align: center; background: var(--accent);
+    color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -291,6 +327,7 @@
       <button data-tab="role">배역</button>
       <button data-tab="staffrole">스텝역할</button>
       <button data-tab="creation">창작이력</button>
+      <button data-tab="rights">권리 분류</button>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">장소·단체</div>
@@ -481,6 +518,25 @@
               </div>
             </div>
             <div><label>초연 연도</label><input type="number" name="premiere_year"></div>
+            <div><label>권리 유형</label>
+              <select name="rights_type">
+                <option value="">선택 안 함</option>
+                <option value="창작">창작</option>
+                <option value="번안">번안</option>
+                <option value="해외라이선스">해외라이선스</option>
+                <option value="공유저작물">공유저작물</option>
+                <option value="확인불가">확인불가</option>
+              </select>
+            </div>
+            <div><label>아마추어 라이선스</label>
+              <select name="amateur_license_status">
+                <option value="확인불가">확인불가</option>
+                <option value="제공">제공</option>
+                <option value="협의가능">협의가능</option>
+                <option value="미제공">미제공</option>
+              </select>
+            </div>
+            <div style="grid-column: span 2;"><label>라이선스 안내 (사이트 공개용)</label><input type="text" name="license_note" placeholder="예: 제작사 문의 후 무상 허가 가능"></div>
           </div>
           <div style="margin-top:12px;">
             <label>창작자 (극작/작곡/작사 등)</label>
@@ -816,6 +872,28 @@
     </section>
 
     <!-- ================= 설정 ================= -->
+    <!-- ================= 권리 분류 ================= -->
+    <section class="tab-panel" id="tab-rights">
+      <h2>권리 분류</h2>
+      <p class="sub">작품별로 권리 유형과 아마추어 라이선스 제공 여부를 정리해요. 숫자키 1~5로 권리유형, Q~R로 라이선스 상태를 누르면 바로 저장되고 다음 작품으로 넘어가요.</p>
+
+      <div class="card">
+        <h3>빠른 분류 <span class="count-tag" id="rq-progress-text"></span></h3>
+        <div class="rq-bar"><i id="rq-bar-fill" style="width:0%"></i></div>
+        <div class="rq-counts" id="rq-counts"></div>
+        <div style="margin-bottom:14px;">
+          <button type="button" class="btn secondary small" id="rq-filter-btn">미분류만 보기</button>
+        </div>
+        <div id="rq-body"></div>
+      </div>
+
+      <div class="card">
+        <h3>카탈로그 접촉 후보 <span class="count-tag">권리유형이 창작·확인불가인 작품만</span></h3>
+        <p class="sub">수요 신호, 창작자 특정 가능 여부, 사장 여부로 점수를 매긴 순서예요. 위에서부터 접촉하면 돼요.</p>
+        <div id="rq-candidates">불러오는 중...</div>
+      </div>
+    </section>
+
     <section class="tab-panel" id="tab-claims">
       <h2>클레임 승인</h2>
       <p class="sub">유저가 "이거 나예요"로 요청한 사람(people) 레코드 연결이에요. 자동승인은 없고, 여기서 직접 승인/거절해야 반영돼요.</p>
@@ -2170,6 +2248,12 @@ function renderAllLists() {
     {label:'구분', key:'genre', editable:true, editType:'select', editOptions: genreEditOptions()},
     {label:'국가', key:'country', editable:true, editType:'multiselect', multiCache:'works', render: r => (r.country||[]).join(', ')},
     {label:'태그', key:'tags', editable:true, editType:'multiselect', multiCache:'works', optionsGetter: () => WORK_TAG_OPTIONS, render: r => tagsHtml(r.tags) || ''},
+    {label:'권리유형', key:'rights_type', editable:true, editType:'select',
+      editOptions:[{value:'',label:'(미분류)'},{value:'창작',label:'창작'},{value:'번안',label:'번안'},{value:'해외라이선스',label:'해외라이선스'},{value:'공유저작물',label:'공유저작물'},{value:'확인불가',label:'확인불가'}],
+      render: r => r.rights_type || '<span class="warn-badge">⚠ 미분류</span>'},
+    {label:'아마추어 라이선스', key:'amateur_license_status', editable:true, editType:'select',
+      editOptions:[{value:'확인불가',label:'확인불가'},{value:'제공',label:'제공'},{value:'협의가능',label:'협의가능'},{value:'미제공',label:'미제공'}],
+      render: r => r.amateur_license_status === '제공' ? '<b style="color:var(--ok)">제공</b>' : (r.amateur_license_status || '')},
   ];
   const workGroupBy = document.getElementById('group-work')?.value || '';
   const workGroupFn = workGroupBy === 'genre' ? (r => r.genre || '(구분 미입력)') : null;
@@ -2915,6 +2999,178 @@ async function removeAdminEmail(email) {
 }
 window.addAdminEmail = addAdminEmail;
 window.removeAdminEmail = removeAdminEmail;
+
+// ---------- 권리 분류 ----------
+const RIGHTS_OPTS = [
+  { v: '창작',        k: '1', c: '#8a5a3d' },
+  { v: '번안',        k: '2', c: '#3d6b7d' },
+  { v: '해외라이선스', k: '3', c: '#a34a6b' },
+  { v: '공유저작물',   k: '4', c: '#5c7d3d' },
+  { v: '확인불가',     k: '5', c: '#8b8a83' },
+];
+const LIC_OPTS = [
+  { v: '제공', k: 'Q' }, { v: '협의가능', k: 'W' },
+  { v: '미제공', k: 'E' }, { v: '확인불가', k: 'R' },
+];
+let rqIdx = 0, rqOnlyTodo = true;
+
+function rqQueue() {
+  const all = [...(cache.works || [])].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  return rqOnlyTodo ? all.filter(w => !w.rights_type) : all;
+}
+function rqStats(w) {
+  const shows = (cache.showsFull || []).filter(s => s.work_id === w.id);
+  const yrs = shows.map(s => s.show_year || (s.show_date ? Number(String(s.show_date).slice(0, 4)) : null)).filter(Boolean);
+  return {
+    showCount: shows.length,
+    lastYear: yrs.length ? Math.max(...yrs) : null,
+    creators: (cache.creationRows || []).filter(c => c.work_id === w.id).length,
+  };
+}
+
+async function rqSave(w, patch) {
+  const { error } = await supabase.from('works').update(patch).eq('id', w.id);
+  if (error) { alert('저장 실패: ' + error.message); return false; }
+  Object.assign(w, patch);
+  patchCacheRow('works', w.id, patch);
+  return true;
+}
+async function rqSetRights(v) {
+  const w = rqQueue()[rqIdx]; if (!w) return;
+  const wasEmpty = !w.rights_type;
+  if (!await rqSave(w, { rights_type: v })) return;
+  if (!(rqOnlyTodo && wasEmpty)) rqIdx = Math.min(rqIdx + 1, rqQueue().length - 1);
+  else rqIdx = Math.min(rqIdx, Math.max(0, rqQueue().length - 1));
+  renderRightsTab();
+}
+async function rqSetLicense(v) {
+  const w = rqQueue()[rqIdx]; if (!w) return;
+  if (await rqSave(w, { amateur_license_status: v })) renderRightsTab();
+}
+
+function renderRightsTab() {
+  const works = cache.works || [];
+  const pt = document.getElementById('rq-progress-text');
+  if (!pt) return;
+  const done = works.filter(w => w.rights_type).length;
+  const pct = works.length ? Math.round(done / works.length * 100) : 0;
+  pt.textContent = '(' + done + ' / ' + works.length + ' 분류됨)';
+  document.getElementById('rq-bar-fill').style.width = pct + '%';
+  document.getElementById('rq-counts').innerHTML = RIGHTS_OPTS.map(o =>
+    '<span class="rq-chip"><i class="rq-dot" style="background:' + o.c + '"></i>' + o.v +
+    ' <b>' + works.filter(w => w.rights_type === o.v).length + '</b></span>'
+  ).join('');
+  document.getElementById('rq-filter-btn').textContent = rqOnlyTodo ? '전체 보기' : '미분류만 보기';
+
+  const list = rqQueue();
+  const body = document.getElementById('rq-body');
+  if (!list.length) {
+    body.innerHTML = '<p class="empty">' + (rqOnlyTodo ? '미분류 작품이 없어요. 전체 보기를 눌러보세요.' : '작품이 없어요.') + '</p>';
+    return;
+  }
+  rqIdx = Math.min(rqIdx, list.length - 1);
+  const w = list[rqIdx];
+  const st = rqStats(w);
+
+  const facts = [
+    w.genre ? '<span class="rq-fact">' + escHtmlAdmin(w.genre) + '</span>' : '',
+    (w.country || []).length ? '<span class="rq-fact">' + escHtmlAdmin((w.country || []).join(', ')) + '</span>' : '',
+    w.premiere_year ? '<span class="rq-fact">초연 <b>' + w.premiere_year + '</b></span>' : '',
+    '<span class="rq-fact">공연 <b>' + st.showCount + '</b>건</span>',
+    st.lastYear ? '<span class="rq-fact">최근 <b>' + st.lastYear + '</b></span>' : '',
+    '<span class="rq-fact' + (st.creators ? '' : ' warn') + '">창작자 <b>' + st.creators + '</b>명</span>',
+  ].filter(Boolean).join('');
+
+  const opts = (arr, cur, cls) => arr.map(o =>
+    '<button type="button" class="rq-opt ' + cls + (cur === o.v ? ' on' : '') + '" data-v="' + o.v + '"' +
+    (cur === o.v ? ' style="background:' + (o.c || 'var(--accent)') + ';border-color:' + (o.c || 'var(--accent)') + '"' : '') +
+    '><kbd>' + o.k + '</kbd>' + o.v + '</button>').join('');
+
+  body.innerHTML = '<div class="rq-wrap"><div>' +
+    '<div class="rq-eyebrow">' + (rqIdx + 1) + ' / ' + list.length + '</div>' +
+    '<div class="rq-title">' + escHtmlAdmin(w.title) + '</div>' +
+    (w.title_en ? '<div class="rq-title-en">' + escHtmlAdmin(w.title_en) + '</div>' : '') +
+    '<div class="rq-facts">' + facts + '</div>' +
+    '<div class="rq-grp"><span class="rq-label">권리 유형</span><div class="rq-opts">' + opts(RIGHTS_OPTS, w.rights_type, 'rq-r') + '</div></div>' +
+    '<div class="rq-grp"><span class="rq-label">아마추어 라이선스</span><div class="rq-opts">' + opts(LIC_OPTS, w.amateur_license_status, 'rq-l') + '</div></div>' +
+    '<div class="rq-nav">' +
+      '<button type="button" class="btn secondary small" id="rq-prev">← 이전</button>' +
+      '<button type="button" class="btn secondary small" id="rq-next">다음 →</button>' +
+      '<a href="https://www.google.com/search?q=' + encodeURIComponent(w.title + ' 뮤지컬 연극 원작 초연') + '" target="_blank" rel="noopener" class="btn small secondary" style="text-decoration:none;">검색</a>' +
+      '<span class="rq-hint">1–5 유형 · Q–R 라이선스 · ←→ 이동</span>' +
+    '</div></div>' +
+    '<div class="rq-side"><ol>' + list.map(function (x, i) {
+      const found = RIGHTS_OPTS.find(o => o.v === x.rights_type);
+      const c = found ? found.c : null;
+      return '<li class="' + (i === rqIdx ? 'cur' : '') + '" data-i="' + i + '">' +
+        '<i class="rq-dot" style="' + (c ? 'background:' + c : 'box-shadow:inset 0 0 0 1px var(--line)') + '"></i>' +
+        '<span>' + escHtmlAdmin(x.title) + '</span></li>';
+    }).join('') + '</ol></div></div>';
+
+  body.querySelector('#rq-prev').onclick = () => { rqIdx = Math.max(0, rqIdx - 1); renderRightsTab(); };
+  body.querySelector('#rq-next').onclick = () => { rqIdx = Math.min(list.length - 1, rqIdx + 1); renderRightsTab(); };
+  body.querySelectorAll('.rq-r').forEach(b => b.onclick = () => rqSetRights(b.dataset.v));
+  body.querySelectorAll('.rq-l').forEach(b => b.onclick = () => rqSetLicense(b.dataset.v));
+  body.querySelectorAll('.rq-side li').forEach(li => li.onclick = () => { rqIdx = Number(li.dataset.i); renderRightsTab(); });
+  const cur = body.querySelector('.rq-side .cur');
+  if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+
+document.getElementById('rq-filter-btn').addEventListener('click', () => {
+  rqOnlyTodo = !rqOnlyTodo; rqIdx = 0; renderRightsTab();
+});
+
+document.addEventListener('keydown', (e) => {
+  const panel = document.getElementById('tab-rights');
+  if (!panel || !panel.classList.contains('active')) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const r = RIGHTS_OPTS.find(o => o.k === e.key);
+  if (r) { e.preventDefault(); rqSetRights(r.v); return; }
+  const l = LIC_OPTS.find(o => o.k === e.key.toUpperCase());
+  if (l) { e.preventDefault(); rqSetLicense(l.v); return; }
+  if (e.key === 'ArrowRight') { e.preventDefault(); rqIdx = Math.min(rqQueue().length - 1, rqIdx + 1); renderRightsTab(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); rqIdx = Math.max(0, rqIdx - 1); renderRightsTab(); }
+});
+
+const CATALOG_STATUSES = ['미접촉','접촉중','인터뷰완료','협의중','계약완료','거절','보류'];
+async function loadCatalogCandidates() {
+  const el = document.getElementById('rq-candidates');
+  if (!el) return;
+  const { data, error } = await supabase.from('v_catalog_candidates')
+    .select('*').order('auto_score', { ascending: false }).limit(50);
+  if (error) { el.innerHTML = '<p class="sub">불러오기 실패: ' + error.message + '</p>'; return; }
+  if (!data || !data.length) { el.innerHTML = '<p class="empty">후보가 없어요.</p>'; return; }
+  el.innerHTML = '<table class="edits-table"><thead><tr>' +
+    '<th>점수</th><th>작품</th><th>권리유형</th><th>공연</th><th>최근</th><th>창작자</th><th>수요</th><th>사장</th><th>접촉상태</th>' +
+    '</tr></thead><tbody>' + data.map(r =>
+      '<tr><td><span class="rq-score">' + r.auto_score + '</span></td>' +
+      '<td><b>' + escHtmlAdmin(r.title) + '</b>' + (r.genre ? ' <span class="sub">' + escHtmlAdmin(r.genre) + '</span>' : '') + '</td>' +
+      '<td>' + (r.rights_type === '확인불가' ? '<span class="warn-badge">⚠ 미분류</span>' : escHtmlAdmin(r.rights_type)) + '</td>' +
+      '<td>' + r.show_count + '건</td>' +
+      '<td>' + (r.last_show_year || '') + '</td>' +
+      '<td>' + (r.creator_count ? r.creator_count + '명' : '<span class="warn-badge">⚠ 없음</span>') + '</td>' +
+      '<td>' + (r.demand_score || '') + '</td>' +
+      '<td>' + (r.is_dormant ? '✓' : '') + '</td>' +
+      '<td><select data-catalog-work="' + r.id + '" style="font-size:12px; padding:3px;">' +
+        CATALOG_STATUSES.map(s => '<option value="' + s + '"' + (r.catalog_status === s ? ' selected' : '') + '>' + s + '</option>').join('') +
+      '</select></td></tr>'
+    ).join('') + '</tbody></table>';
+  el.querySelectorAll('select[data-catalog-work]').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const { error } = await supabase.from('work_rights')
+        .upsert({ work_id: sel.dataset.catalogWork, catalog_status: sel.value, updated_at: new Date().toISOString() },
+                { onConflict: 'work_id' });
+      if (error) alert('저장 실패: ' + error.message);
+    });
+  });
+}
+
+document.getElementById('navTabs').addEventListener('click', (e) => {
+  if (!e.target.closest('button[data-tab="rights"]')) return;
+  renderRightsTab();
+  loadCatalogCandidates();
+});
 
 (async () => {
   await ensureAuth();
